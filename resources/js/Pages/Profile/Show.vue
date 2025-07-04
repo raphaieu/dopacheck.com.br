@@ -1,6 +1,6 @@
 <script setup>
 import Separator from '@/components/ui/separator/Separator.vue'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import AppLayout from '@/layouts/AppLayout.vue'
 import DeleteUserForm from '@/Pages/Profile/Partials/DeleteUserForm.vue'
 import LinkedAccountsForm from '@/Pages/Profile/Partials/LinkedAccountsForm.vue'
 import LogoutOtherBrowserSessionsForm from '@/Pages/Profile/Partials/LogoutOtherBrowserSessionsForm.vue'

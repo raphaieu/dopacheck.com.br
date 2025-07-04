@@ -1,7 +1,7 @@
 {
-  "name": "shipfastlabs/larasonic-vue",
+  "name": "raphaieu/dopacheck.com.br",
   "type": "project",
-  "description": "The ultimate VILT starter kit for Laravel.",
+  "description": "DOPA Check é uma plataforma de tracking de hábitos que integra WhatsApp + Web para eliminar fricção no acompanhamento de rotinas.",
   "keywords": [
     "sass",
     "VILT",
@@ -16,6 +16,7 @@
     "knuckleswtf/scribe": "^5.2",
     "laravel/cashier": "^15.5",
     "laravel/framework": "^12.0",
+    "laravel/horizon": "^5.33.1",
     "laravel/jetstream": "^5.3",
     "laravel/octane": "^2.8",
     "laravel/sanctum": "^4.0",

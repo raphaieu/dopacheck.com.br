@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import { Textarea } from '@/components/ui/textarea'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import AppLayout from '@/layouts/AppLayout.vue'
 import ModelSelector from './Components/ModelSelector.vue'
 import TemperatureSelector from './Components/TemperatureSelector.vue'
 

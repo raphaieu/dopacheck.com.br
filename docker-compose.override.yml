@@ -1,0 +1,22 @@
+
+
+services:
+  app:
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+    volumes:
+      - .:/app
+      - ./storage:/app/storage
+      - ./bootstrap/cache:/app/bootstrap/cache
+    command: composer run setup
+
+  horizon:
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+    volumes:
+      - .:/app
+      - ./storage:/app/storage
+      - ./bootstrap/cache:/app/bootstrap/cache
+    command: php artisan horizon 

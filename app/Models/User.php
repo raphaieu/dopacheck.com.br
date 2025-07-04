@@ -4,149 +4,109 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Filament\Panel;
-use Carbon\CarbonImmutable;
-use Laravel\Cashier\Billable;
-use Laravel\Jetstream\HasTeams;
-use Laravel\Cashier\Subscription;
 use Laravel\Sanctum\HasApiTokens;
-use Database\Factories\UserFactory;
+use Laravel\Jetstream\HasTeams;
+use Laravel\Cashier\Billable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\PersonalAccessToken;
-use Filament\Models\Contracts\FilamentUser;
-use Illuminate\Database\Eloquent\Collection;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\DatabaseNotificationCollection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-use function Illuminate\Events\queueable;
-
-/**
- * @property int $id
- * @property string $name
- * @property string $email
- * @property CarbonImmutable|null $email_verified_at
- * @property string $password
- * @property string|null $remember_token
- * @property int|null $current_team_id
- * @property string|null $profile_photo_path
- * @property CarbonImmutable|null $created_at
- * @property CarbonImmutable|null $updated_at
- * @property string|null $deleted_at
- * @property string|null $two_factor_secret
- * @property string|null $two_factor_recovery_codes
- * @property string|null $two_factor_confirmed_at
- * @property string|null $stripe_id
- * @property string|null $pm_type
- * @property string|null $pm_last_four
- * @property string|null $trial_ends_at
- * @property-read Team|null $currentTeam
- * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
- * @property-read int|null $notifications_count
- * @property-read Collection<int, OauthConnection> $oauthConnections
- * @property-read int|null $oauth_connections_count
- * @property-read Collection<int, Team> $ownedTeams
- * @property-read int|null $owned_teams_count
- * @property-read Collection<int, Team> $ownedTeamsBase
- * @property-read int|null $owned_teams_base_count
- * @property-read string $profile_photo_url
- * @property-read Collection<int, Subscription> $subscriptions
- * @property-read int|null $subscriptions_count
- * @property-read Membership|null $membership
- * @property-read Collection<int, Team> $teams
- * @property-read int|null $teams_count
- * @property-read Collection<int, PersonalAccessToken> $tokens
- * @property-read int|null $tokens_count
- *
- * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User hasExpiredGenericTrial()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User onGenericTrial()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCurrentTeamId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDeletedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePmLastFour($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePmType($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereProfilePhotoPath($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStripeId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTrialEndsAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorConfirmedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorRecoveryCodes($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorSecret($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
- *
- * @mixin \Eloquent
- */
-final class User extends Authenticatable implements FilamentUser, MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use Billable;
     use HasApiTokens;
-
-    /** @use HasFactory<UserFactory> */
     use HasFactory;
-
     use HasProfilePhoto;
-    use HasTeams  {
-        ownedTeams as public ownedTeamsBase;
-    }
+    use HasTeams;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use Billable;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var list<string>
      */
-    protected $guarded = [
-        'id',
-        'created_at',
-        'updated_at',
-
+    protected $fillable = [
+        'name',
+        'email',
+        'username',
+        'password',
+        'plan',
+        'whatsapp_number',
+        'phone',
+        'subscription_ends_at',
+        'preferences',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
      */
     protected $hidden = [
         'password',
         'remember_token',
         'two_factor_recovery_codes',
         'two_factor_secret',
-        'stripe_id',
-        'pm_type',
-        'pm_last_four',
-        'trial_ends_at',
     ];
 
     /**
-     * Get the team that the invitation belongs to.
-     *
-     * @return HasMany<Team, covariant $this>
+     * The accessors to append to the model's array form.
      */
-    public function ownedTeams(): HasMany
+    protected $appends = [
+        'profile_photo_url',
+        'is_pro',
+        'public_profile_url',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     */
+    protected function casts(): array
     {
-        return $this->ownedTeamsBase();
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'trial_ends_at' => 'datetime',
+            'subscription_ends_at' => 'datetime',
+            'preferences' => 'array',
+        ];
+    }
+
+    // ========================================
+    // DOPA CHECK SPECIFIC METHODS
+    // ========================================
+
+    /**
+     * Check if user has PRO plan
+     */
+    public function getIsProAttribute(): bool
+    {
+        return $this->plan === 'pro' && 
+               $this->subscription_ends_at && 
+               $this->subscription_ends_at->isFuture();
     }
 
     /**
-     * Get the Oauth Connections for the user.
-     *
-     * @return HasMany<OauthConnection, covariant $this>
+     * Get public profile URL
+     */
+    public function getPublicProfileUrlAttribute(): string
+    {
+        // Correção temporária até implementarmos as rotas
+        try {
+            return route('profile.public', $this->username ?: $this->id);
+        } catch (\Exception $e) {
+            // Fallback se a rota não existir ainda
+            return url('/u/' . ($this->username ?: $this->id));
+        }
+    }
+
+    /**
+     * Get user's OAuth connections
      */
     public function oauthConnections(): HasMany
     {
@@ -154,32 +114,144 @@ final class User extends Authenticatable implements FilamentUser, MustVerifyEmai
     }
 
     /**
-     * Configure the panel access.
+     * Get active challenges for the user
      */
-    public function canAccessPanel(Panel $panel): bool
+    public function activeChallenges(): HasMany
     {
-        return true;
+        return $this->userChallenges()->where('status', 'active');
     }
-
-    protected static function booted(): void
+    
+    /**
+     * Get user's challenge participations
+     */
+    public function userChallenges(): HasMany
     {
-        self::updated(queueable(function (User $customer): void {
-            if ($customer->hasStripeId()) {
-                $customer->syncStripeCustomerDetails();
-            }
-        }));
+        return $this->hasMany(UserChallenge::class);
     }
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Get user's check-ins (through user challenges)
      */
-    protected function casts(): array
+    public function checkins(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
+        return $this->hasManyThrough(
+            Checkin::class,
+            UserChallenge::class,
+            'user_id', // Foreign key on UserChallenge table
+            'user_challenge_id', // Foreign key on Checkin table
+            'id', // Local key on User table
+            'id' // Local key on UserChallenge table
+        );
+    }
+
+    /**
+     * Get WhatsApp session
+     */
+    public function whatsappSession(): HasOne
+    {
+        return $this->hasOne(WhatsAppSession::class);
+    }
+
+    /**
+     * Get challenges created by user
+     */
+    public function createdChallenges(): HasMany
+    {
+        return $this->hasMany(Challenge::class, 'created_by');
+    }
+
+    /**
+     * Get today's check-ins
+     */
+    public function todayCheckins(): HasMany
+    {
+        return $this->checkins()
+            ->whereDate('checked_at', today())
+            ->with('task');
+    }
+
+    /**
+     * Check if user can create more challenges
+     */
+    public function canCreateChallenge(): bool
+    {
+        if ($this->is_pro) {
+            return true;
+        }
+
+        // Free users: 1 active challenge only
+        return $this->activeChallenges()->count() < 1;
+    }
+
+    /**
+     * Get user's current active challenge
+     */
+    public function currentChallenge(): ?UserChallenge
+    {
+        return $this->activeChallenges()->with(['challenge.tasks'])->first();
+    }
+
+    /**
+     * Calculate user's overall stats
+     */
+    public function calculateStats(): array
+    {
+        $totalChallenges = $this->userChallenges()->count();
+        $completedChallenges = $this->userChallenges()->where('status', 'completed')->count();
+        $totalCheckins = $this->checkins()->count();
+        $currentStreak = $this->calculateCurrentStreak();
+
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'total_challenges' => $totalChallenges,
+            'completed_challenges' => $completedChallenges,
+            'completion_rate' => $totalChallenges > 0 ? round(($completedChallenges / $totalChallenges) * 100, 2) : 0,
+            'total_checkins' => $totalCheckins,
+            'current_streak' => $currentStreak,
+            'best_streak' => $this->userChallenges()->max('best_streak') ?? 0,
         ];
+    }
+
+    /**
+     * Calculate current streak across all challenges
+     */
+    private function calculateCurrentStreak(): int
+    {
+        // Logic to calculate consecutive days with check-ins
+        $currentStreak = 0;
+        $date = today();
+
+        while ($date->greaterThan(now()->subDays(365))) { // Max 365 days back
+            $hasCheckin = $this->checkins()
+                ->whereDate('checked_at', $date)
+                ->exists();
+
+            if ($hasCheckin) {
+                $currentStreak++;
+                $date->subDay();
+            } else {
+                break;
+            }
+        }
+
+        return $currentStreak;
+    }
+
+    /**
+     * Scope for PRO users
+     */
+    public function scopePro($query)
+    {
+        return $query->where('plan', 'pro')
+                     ->where('subscription_ends_at', '>', now());
+    }
+
+    /**
+     * Scope for active users (with recent activity)
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereHas('checkins', function ($query) {
+            $query->where('checked_at', '>=', now()->subDays(7));
+        });
     }
 }

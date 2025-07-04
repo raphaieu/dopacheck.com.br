@@ -1,5 +1,5 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue'
+import AppLayout from '@/layouts/AppLayout.vue'
 import ApiTokenManager from '@/Pages/API/Partials/ApiTokenManager.vue'
 
 defineProps({
