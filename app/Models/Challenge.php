@@ -111,7 +111,7 @@ class Challenge extends Model
      */
     public function getAverageProgressAttribute(): float
     {
-        return $this->activeParticipants()
+        return (float) $this->activeParticipants()
             ->avg('completion_rate') ?? 0;
     }
 

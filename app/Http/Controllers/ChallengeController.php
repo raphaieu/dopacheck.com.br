@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Challenge;
+use App\Models\Checkin;
 use App\Models\UserChallenge;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -81,7 +84,7 @@ class ChallengeController extends Controller
     {
         $challenge->load(['creator', 'tasks', 'activeParticipants.user']);
         
-        $user = $request->user(); // Mudança aqui
+        $user = $request->user();
         $userChallenge = null;
         $canJoin = true;
         
@@ -252,5 +255,98 @@ class ChallengeController extends Controller
         
         return redirect()->back()
             ->with('success', 'Você saiu do desafio. Você pode retornar quando quiser!');
+    }
+
+    /**
+     * Desafios recomendados para o usuário (API)
+     */
+    public function recommended(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        $recommended = Cache::remember("recommended_challenges_user_{$user->id}", 1800, function () use ($user) {
+            return Challenge::public()
+                ->where('is_featured', true)
+                ->withCount('userChallenges')
+                ->orderBy('participant_count', 'desc')
+                ->take(6)
+                ->get()
+                ->map(function ($challenge) use ($user) {
+                    return [
+                        'id' => $challenge->id,
+                        'title' => $challenge->title,
+                        'description' => $challenge->description,
+                        'duration_days' => $challenge->duration_days,
+                        'category' => $challenge->category,
+                        'difficulty' => $challenge->difficulty,
+                        'participant_count' => $challenge->participant_count,
+                        'image_url' => $challenge->image_url,
+                        'tasks_count' => $challenge->tasks()->count(),
+                        'is_participating' => $challenge->isUserParticipating($user)
+                    ];
+                });
+        });
+
+        return response()->json([
+            'challenges' => $recommended,
+            'user_can_join' => $user->canCreateChallenge()
+        ]);
+    }
+
+    /**
+     * Estatísticas de um desafio específico (API)
+     */
+    public function stats(Request $request, Challenge $challenge): JsonResponse
+    {
+        // Verificar se é público ou se o usuário está participando
+        if (!$challenge->is_public && !$challenge->isUserParticipating($request->user())) {
+            return response()->json(['message' => 'Desafio não encontrado'], 404);
+        }
+        
+        $stats = Cache::remember("challenge_stats_{$challenge->id}", 900, function () use ($challenge) {
+            $participants = $challenge->userChallenges();
+            $totalParticipants = $participants->count();
+            $activeParticipants = $participants->where('status', 'active')->count();
+            $completedParticipants = $participants->where('status', 'completed')->count();
+            $totalCheckins = Checkin::whereIn('user_challenge_id', $participants->pluck('id'))->count();
+            
+            // Taxa de conclusão
+            $completionRate = $totalParticipants > 0 ? round(($completedParticipants / $totalParticipants) * 100, 1) : 0;
+            
+            // Média de check-ins por participante
+            $avgCheckinsPerUser = $totalParticipants > 0 ? round($totalCheckins / $totalParticipants, 1) : 0;
+            
+            // Últimos participantes (público)
+            $recentParticipants = $participants
+                ->with('user:id,name,avatar')
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(function ($userChallenge) {
+                    return [
+                        'user_name' => $userChallenge->user->name,
+                        'user_avatar' => $userChallenge->user->avatar,
+                        'started_at' => $userChallenge->started_at,
+                        'status' => $userChallenge->status,
+                        'completion_rate' => $userChallenge->completion_rate
+                    ];
+                });
+            
+            return [
+                'total_participants' => $totalParticipants,
+                'active_participants' => $activeParticipants,
+                'completed_participants' => $completedParticipants,
+                'completion_rate' => $completionRate,
+                'total_checkins' => $totalCheckins,
+                'avg_checkins_per_user' => $avgCheckinsPerUser,
+                'recent_participants' => $recentParticipants,
+                'created_at' => $challenge->created_at,
+                'is_trending' => $activeParticipants > 10,
+                'difficulty_level' => $challenge->difficulty,
+                'category' => $challenge->category
+            ];
+        });
+
+        return response()->json(['stats' => $stats]);
     }
 }

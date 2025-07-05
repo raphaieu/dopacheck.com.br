@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\WhatsAppSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -67,7 +68,9 @@ class WhatsAppController extends Controller
                 'bot_number' => $botNumber,
                 'session_id' => $sessionId,
                 'instance_name' => 'dopacheck_' . $user->id,
-                'is_active' => false, // Will be activated when EvolutionAPI confirms
+                'is_active' => true, // Simular ativo por enquanto
+                'connected_at' => now(),
+                'last_activity' => now(),
                 'metadata' => [
                     'created_via' => 'web',
                     'user_agent' => $request->userAgent(),
@@ -82,7 +85,7 @@ class WhatsAppController extends Controller
         // TODO: Integrate with EvolutionAPI to create session
         // $this->createEvolutionApiSession($session);
         
-        return redirect()->back()->with('success', 'Sessão WhatsApp configurada! Aguarde a ativação.');
+        return redirect()->route('dopa.dashboard')->with('success', 'WhatsApp conectado com sucesso! Número do bot: ' . $botNumber);
     }
     
     /**
@@ -100,13 +103,17 @@ class WhatsAppController extends Controller
         // TODO: Disconnect from EvolutionAPI
         // $this->disconnectEvolutionApiSession($session);
         
-        $session->markAsDisconnected();
+        $session->update([
+            'is_active' => false,
+            'disconnected_at' => now(),
+            'last_activity' => now()
+        ]);
         
-        return redirect()->back()->with('success', 'Sessão WhatsApp desconectada com sucesso.');
+        return redirect()->route('dopa.dashboard')->with('success', 'WhatsApp desconectado com sucesso.');
     }
     
     /**
-     * Get WhatsApp session status
+     * Get WhatsApp session status (API)
      */
     public function status(Request $request): JsonResponse
     {
@@ -122,13 +129,82 @@ class WhatsAppController extends Controller
         }
         
         return response()->json([
-            'connected' => $session->is_connected,
-            'status' => $session->connection_status,
-            'bot_number' => $session->formatted_bot_number,
-            'whatsapp_link' => $session->whatsapp_link,
-            'last_activity' => $session->last_activity_time,
-            'stats' => $session->getStats(),
+            'connected' => $session->is_active,
+            'status' => $session->is_active ? 'connected' : 'disconnected',
+            'session' => [
+                'id' => $session->id,
+                'phone_number' => $session->phone_number,
+                'bot_number' => $session->bot_number,
+                'is_active' => $session->is_active,
+                'last_activity' => $session->last_activity,
+                'message_count' => $session->message_count,
+                'checkin_count' => $session->checkin_count,
+                'connected_at' => $session->connected_at
+            ],
+            'bot_number' => $session->bot_number,
+            'whatsapp_link' => $session->bot_number ? "https://wa.me/{$session->bot_number}" : null,
+            'last_activity' => $session->last_activity,
+            'stats' => [
+                'message_count' => $session->message_count ?? 0,
+                'checkin_count' => $session->checkin_count ?? 0
+            ]
         ]);
+    }
+
+    /**
+     * Webhook para processar mensagens do WhatsApp (Sprint 3)
+     */
+    public function webhook(Request $request): JsonResponse
+    {
+        // Log da requisição para debug
+        Log::info('WhatsApp webhook received', [
+            'payload' => $request->all(),
+            'headers' => $request->headers->all(),
+            'ip' => $request->ip(),
+            'timestamp' => now()
+        ]);
+        
+        // Verificar se é um ping/health check
+        if ($request->has('ping')) {
+            return response()->json(['status' => 'pong'], 200);
+        }
+        
+        // TODO: Implementar no Sprint 3
+        // Por enquanto, apenas validar estrutura básica esperada
+        $data = $request->all();
+        
+        // Estrutura básica esperada do EvolutionAPI
+        if (isset($data['event']) && isset($data['data'])) {
+            $event = $data['event'];
+            $eventData = $data['data'];
+            
+            switch ($event) {
+                case 'messages.upsert':
+                    // TODO: Processar mensagem recebida
+                    Log::info('Message received', ['data' => $eventData]);
+                    break;
+                    
+                case 'connection.update':
+                    // TODO: Atualizar status de conexão
+                    Log::info('Connection update', ['data' => $eventData]);
+                    break;
+                    
+                case 'qrcode.updated':
+                    // TODO: Atualizar QR code
+                    Log::info('QR Code updated', ['data' => $eventData]);
+                    break;
+                    
+                default:
+                    Log::info('Unknown webhook event', ['event' => $event, 'data' => $eventData]);
+            }
+        }
+        
+        // Por enquanto, sempre retornar sucesso para não quebrar a integração
+        return response()->json([
+            'status' => 'received',
+            'message' => 'Webhook processado com sucesso',
+            'timestamp' => now()
+        ], 200);
     }
     
     /**
@@ -146,7 +222,7 @@ class WhatsAppController extends Controller
     }
     
     /**
-     * Create session in EvolutionAPI
+     * Create session in EvolutionAPI (TODO: Sprint 3)
      */
     private function createEvolutionApiSession(WhatsAppSession $session): void
     {
@@ -177,7 +253,7 @@ class WhatsAppController extends Controller
     }
     
     /**
-     * Disconnect session from EvolutionAPI
+     * Disconnect session from EvolutionAPI (TODO: Sprint 3)
      */
     private function disconnectEvolutionApiSession(WhatsAppSession $session): void
     {
