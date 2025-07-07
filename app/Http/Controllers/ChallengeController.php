@@ -50,11 +50,39 @@ class ChallengeController extends Controller
         
         $challenges = $query->paginate(12);
         
+        // Get user participation info for each challenge
+        $user = $request->user();
+        if ($user) {
+            $userChallengeIds = $user->userChallenges()
+                ->whereIn('challenge_id', $challenges->pluck('id'))
+                ->pluck('challenge_id')
+                ->toArray();
+            
+            // Add user participation info to each challenge
+            $challenges->getCollection()->transform(function ($challenge) use ($userChallengeIds) {
+                $challenge->user_is_participating = in_array($challenge->id, $userChallengeIds);
+                return $challenge;
+            });
+        }
+        
         // Get featured challenges for hero section
         $featuredChallenges = Challenge::featured()
             ->with(['creator', 'tasks'])
             ->limit(3)
             ->get();
+        
+        // Add user participation info to featured challenges
+        if ($user) {
+            $featuredUserChallengeIds = $user->userChallenges()
+                ->whereIn('challenge_id', $featuredChallenges->pluck('id'))
+                ->pluck('challenge_id')
+                ->toArray();
+            
+            $featuredChallenges->transform(function ($challenge) use ($featuredUserChallengeIds) {
+                $challenge->user_is_participating = in_array($challenge->id, $featuredUserChallengeIds);
+                return $challenge;
+            });
+        }
         
         // Get categories for filter
         $categories = Challenge::public()
@@ -113,6 +141,36 @@ class ChallengeController extends Controller
             'stats' => $stats,
             'recentParticipants' => $recentParticipants,
             'isAuthenticated' => (bool) $user,
+        ]);
+    }
+    
+    /**
+     * Show all participants for a challenge
+     */
+    public function participants(Request $request, Challenge $challenge): Response
+    {
+        // Check if challenge is public or user is participating
+        $user = $request->user();
+        if (!$challenge->is_public && (!$user || !$challenge->isUserParticipating($user))) {
+            abort(404);
+        }
+        
+        $challenge->load(['creator', 'tasks']);
+        
+        // Get all participants with pagination
+        $participants = $challenge->userChallenges()
+            ->with(['user:id,name,username,avatar,profile_photo_path,profile_photo_url,plan,subscription_ends_at'])
+            ->whereIn('status', ['active', 'completed'])
+            ->orderBy('started_at', 'desc')
+            ->paginate(20);
+        
+        // Get challenge stats
+        $stats = $challenge->getStats();
+        
+        return Inertia::render('Challenges/Participants', [
+            'challenge' => $challenge,
+            'participants' => $participants,
+            'stats' => $stats,
         ]);
     }
     

@@ -443,3 +443,80 @@ Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) par
 **#VibeCoding #OpenSource #Laravel #FullStack #WhatsApp #IA**
 
 </div>
+
+## Integração WhatsApp (Novo Fluxo)
+- O DOPA Check utiliza **um único número de WhatsApp** (bot/agent) para toda a comunicação.
+- O botão "Conectar WhatsApp" apenas redireciona o usuário para abrir uma conversa com o número do bot.
+- O usuário envia uma mensagem para o bot, que identifica o número e verifica permissões.
+- **Permissões:**
+  - O backend identifica o usuário pelo número do WhatsApp.
+  - Se o número estiver cadastrado e for assinante PRO, libera as funções (check-in, leitura de imagem, etc).
+  - Caso contrário, o bot incentiva o upgrade ou cadastro.
+- **Sessão/Token:**
+  - Ao autenticar no site e estando com assinatura ativa, o backend pode registrar um token/sessão no Redis (ex: `whatsapp_session:{numero}`) para validação rápida.
+  - O backend consulta o cache antes do banco para validar permissões.
+- **Não há múltiplas sessões EvolutionAPI:**
+  - Apenas uma instância conectada ao número do bot.
+
+## Resumo do Fluxo WhatsApp
+1. Usuário clica em "Conectar WhatsApp" e abre conversa com o bot.
+2. Usuário envia mensagem.
+3. Bot identifica o número e consulta permissões (cache/banco).
+4. Se PRO, libera funcionalidades. Se não, incentiva upgrade.
+
+## Observações
+- Toda autenticação e permissão é feita via número do usuário, usando cache para performance.
+- O sistema é escalável e simples, sem múltiplas instâncias EvolutionAPI.
+
+## Redis e Processamento Assíncrono
+
+### Uso macro do Redis
+- Redis é utilizado para:
+  - Cache de sessões WhatsApp e permissões
+  - Fila de jobs (processamento assíncrono, notificações, etc)
+  - Sessões de usuário web
+  - Locks para evitar processamento duplicado
+
+### Boas práticas
+- **Prefixos diferentes** para cada tipo de dado:
+  - `cache:` para cache de dados (ex: `cache:whatsapp_session:5511999998888`)
+  - `queue:` para jobs/filas (Laravel já faz isso por padrão)
+  - `session:` para sessões de usuário
+  - `lock:` para locks de processamento
+- **Databases separados** para cada finalidade:
+  - `0` para uso geral
+  - `1` para cache
+  - `2` para queue
+  - `3` para session
+- **Defina TTL** para chaves temporárias.
+- **Documente os padrões de chave** para toda a equipe.
+
+### Exemplo de configuração (config/database.php)
+```php
+'redis' => [
+    'client' => 'phpredis',
+    'default' => [..., 'database' => 0], // uso geral
+    'cache'   => [..., 'database' => 1], // cache de sessões WhatsApp, etc
+    'queue'   => [..., 'database' => 2], // jobs/filas
+    'session' => [..., 'database' => 3], // sessões de usuário web
+],
+```
+E no .env:
+```env
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+REDIS_CACHE_DB=1
+REDIS_QUEUE_DB=2
+REDIS_SESSION_DB=3
+```
+
+### Laravel Horizon
+- **Altamente recomendado** para monitorar, escalar e gerenciar jobs/filas.
+- Permite visualizar jobs, workers, throughput, delays e falhas em tempo real.
+- Use o comando `php artisan horizon` para iniciar o painel.
+
+### Resumo
+- Redis é seguro para uso simultâneo de cache, fila, sessão e locks, desde que bem organizado.
+- Prefixos e databases separados evitam conflitos e garantem performance.
+- Horizon facilita o monitoramento e a escalabilidade do sistema.

@@ -242,15 +242,27 @@ class CheckinController extends Controller
         // Calcular dia atual do desafio
         $currentDay = $this->calculateCurrentDay($userChallenge);
 
-        // Verificar se já fez check-in hoje para esta task
+        // Verificar se já fez check-in hoje para esta task (com lock para evitar race condition)
         $existingCheckin = Checkin::where('user_challenge_id', $userChallenge->id)
             ->where('task_id', $task->id)
             ->where('challenge_day', $currentDay)
             ->whereNull('deleted_at')
+            ->lockForUpdate()
             ->first();
 
         if ($existingCheckin) {
-            return response()->json(['message' => 'Check-in já realizado hoje para esta task'], 409);
+            return response()->json([
+                'message' => 'Check-in já realizado hoje para esta task',
+                'checkin' => [
+                    'id' => $existingCheckin->id,
+                    'image_url' => $existingCheckin->image_url,
+                    'message' => $existingCheckin->message,
+                    'source' => $existingCheckin->source,
+                    'checked_at' => $existingCheckin->checked_at,
+                    'ai_analysis' => $existingCheckin->ai_analysis,
+                    'confidence_score' => $existingCheckin->confidence_score
+                ]
+            ], 409);
         }
 
         try {
@@ -301,8 +313,8 @@ class CheckinController extends Controller
         }
 
         try {
-            // Soft delete do check-in
-            $checkin->delete();
+            // deletando o check-in
+            $checkin->forceDelete();
 
             // Remover imagem se existir
             if ($checkin->image_path) {
@@ -395,7 +407,7 @@ class CheckinController extends Controller
         $today = now();
         $diffDays = $startDate->diffInDays($today) + 1;
         
-        return min($diffDays, $userChallenge->challenge->duration_days);
+        return (int) min($diffDays, $userChallenge->challenge->duration_days);
     }
 
     /**

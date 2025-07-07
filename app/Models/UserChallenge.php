@@ -105,7 +105,7 @@ class UserChallenge extends Model
     public function getDaysElapsedAttribute(): int
     {
         if ($this->status === 'active') {
-            return $this->started_at->diffInDays(now()) + 1;
+            return (int) ($this->started_at->diffInDays(now()) + 1);
         }
 
         return $this->current_day;
@@ -125,7 +125,7 @@ class UserChallenge extends Model
      */
     public function getProgressPercentageAttribute(): float
     {
-        return round(($this->current_day / $this->challenge->duration_days) * 100, 2);
+        return round((float) $this->current_day / (float) $this->challenge->duration_days * 100, 2);
     }
 
     /**
@@ -134,7 +134,7 @@ class UserChallenge extends Model
     public function getExpectedCheckinsAttribute(): int
     {
         $tasksPerDay = $this->challenge->tasks()->required()->count();
-        return $this->current_day * $tasksPerDay;
+        return (int) $this->current_day * $tasksPerDay;
     }
 
     /**
@@ -252,7 +252,7 @@ class UserChallenge extends Model
         $this->total_checkins = $this->checkins()->count();
 
         // Update current streak
-        $this->streak_days = $this->calculateCurrentStreak();
+        // $this->streak_days = $this->calculateCurrentStreak();
 
         // Update best streak
         if ($this->streak_days > $this->best_streak) {
@@ -273,9 +273,11 @@ class UserChallenge extends Model
     {
         $streak = 0;
         $date = today();
-        $tasksPerDay = $this->challenge->tasks()->required()->count();
+        $tasksPerDay = (int) $this->challenge->tasks()->required()->count();
+        $maxDays = 365; // Limite de segurança para evitar loop infinito
+        $daysChecked = 0;
 
-        while ($date->greaterThanOrEqualTo($this->started_at->toDateString())) {
+        while ($date->greaterThanOrEqualTo($this->started_at->toDateString()) && $daysChecked < $maxDays) {
             $dayNumber = $this->started_at->diffInDays($date) + 1;
             
             if ($dayNumber > $this->current_day) {
@@ -288,10 +290,12 @@ class UserChallenge extends Model
 
             if ($checkinsForDay >= $tasksPerDay) {
                 $streak++;
-                $date->subDay();
+                $date = $date->copy()->subDay(); // Usar copy() para não modificar a data original
             } else {
                 break;
             }
+            
+            $daysChecked++;
         }
 
         return $streak;

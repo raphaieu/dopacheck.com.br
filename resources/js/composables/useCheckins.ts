@@ -22,6 +22,9 @@ export function useCheckins() {
       
       if (!response.ok) {
         const errorData = await response.json()
+        if (response.status === 409 && errorData.checkin) {
+          return errorData.checkin
+        }
         throw new Error(errorData.message || 'Erro ao fazer check-in')
       }
       

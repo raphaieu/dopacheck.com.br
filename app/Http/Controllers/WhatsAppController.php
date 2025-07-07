@@ -12,6 +12,9 @@ use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
+use App\Services\WhatsappSessionService;
+use App\Services\WhatsappBufferService;
+use App\Jobs\ProcessWhatsappBufferJob;
 
 class WhatsAppController extends Controller
 {
@@ -21,10 +24,7 @@ class WhatsAppController extends Controller
     public function connect(Request $request): Response
     {
         $user = $request->user();
-        $session = $user->whatsappSession;
-        
         return Inertia::render('WhatsApp/Connect', [
-            'session' => $session,
             'user' => [
                 'phone' => $user->phone,
                 'whatsapp_number' => $user->whatsapp_number,
@@ -33,83 +33,51 @@ class WhatsAppController extends Controller
     }
     
     /**
-     * Create or update WhatsApp session
+     * Registrar número e gravar sessão no Redis
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, WhatsappSessionService $whatsappSession): JsonResponse
     {
         $user = $request->user();
-        
         $validated = $request->validate([
             'phone_number' => [
                 'required', 
                 'string', 
                 'regex:/^[0-9]{10,15}$/',
-                'unique:whatsapp_sessions,phone_number,' . ($user->whatsappSession?->id ?? 'NULL')
             ],
         ]);
-        
-        // Clean phone number (remove any formatting)
         $cleanPhone = preg_replace('/\D/', '', $validated['phone_number']);
-        
-        // Ensure Brazilian format
         if (strlen($cleanPhone) === 11 && !str_starts_with($cleanPhone, '55')) {
             $cleanPhone = '55' . $cleanPhone;
         }
-        
-        // Generate unique session ID and bot number
-        $sessionId = 'dopa_' . $user->id . '_' . Str::random(8);
-        $botNumber = $this->generateBotNumber();
-        
-        // Create or update session
-        $session = WhatsAppSession::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'phone_number' => $cleanPhone,
-                'bot_number' => $botNumber,
-                'session_id' => $sessionId,
-                'instance_name' => 'dopacheck_' . $user->id,
-                'is_active' => true, // Simular ativo por enquanto
-                'connected_at' => now(),
-                'last_activity' => now(),
-                'metadata' => [
-                    'created_via' => 'web',
-                    'user_agent' => $request->userAgent(),
-                    'ip_address' => $request->ip(),
-                ],
-            ]
-        );
-        
-        // Update user's whatsapp_number
         $user->update(['whatsapp_number' => $cleanPhone]);
+        // Grava sessão no Redis
+        $whatsappSession->store($cleanPhone, $user->id, $user->is_pro ? 'pro' : 'free');
+        // Retorna URL do WhatsApp para o frontend abrir
+        $botNumber = env('WHATSAPP_BOT_NUMBER', '5571993676365'); // Número padrão se não configurado
+        $whatsappUrl = 'https://wa.me/' . $botNumber . '?text=Oi%20DOPA%20Check';
         
-        // TODO: Integrate with EvolutionAPI to create session
-        // $this->createEvolutionApiSession($session);
-        
-        return redirect()->route('dopa.dashboard')->with('success', 'WhatsApp conectado com sucesso! Número do bot: ' . $botNumber);
+        return response()->json([
+            'success' => true,
+            'whatsapp_url' => $whatsappUrl,
+            'message' => 'WhatsApp conectado com sucesso!'
+        ]);
     }
     
     /**
      * Disconnect WhatsApp session
      */
-    public function disconnect(Request $request): RedirectResponse
+    public function disconnect(Request $request)
     {
         $user = $request->user();
-        $session = $user->whatsappSession;
-        
-        if (!$session) {
-            return redirect()->back()->with('error', 'Nenhuma sessão WhatsApp encontrada.');
+        $service = app(WhatsappSessionService::class);
+
+        if (!$service->get($user->whatsapp_number)) {
+            return response()->json(['error' => 'Nenhuma sessão WhatsApp encontrada.'], 404);
         }
-        
-        // TODO: Disconnect from EvolutionAPI
-        // $this->disconnectEvolutionApiSession($session);
-        
-        $session->update([
-            'is_active' => false,
-            'disconnected_at' => now(),
-            'last_activity' => now()
-        ]);
-        
-        return redirect()->route('dopa.dashboard')->with('success', 'WhatsApp desconectado com sucesso.');
+
+        $service->remove($user->whatsapp_number);
+
+        return response()->json(['success' => true]);
     }
     
     /**
@@ -118,150 +86,71 @@ class WhatsAppController extends Controller
     public function status(Request $request): JsonResponse
     {
         $user = $request->user();
-        $session = $user->whatsappSession;
-        
-        if (!$session) {
+        $service = app(WhatsappSessionService::class);
+
+        $sessionData = $service->get($user->whatsapp_number);
+
+        if (!$sessionData) {
             return response()->json([
                 'connected' => false,
                 'status' => 'not_configured',
-                'message' => 'WhatsApp não configurado',
+                'session' => null,
+                'bot_number' => null,
+                'whatsapp_link' => null,
+                'last_activity' => null,
+                'stats' => [
+                    'message_count' => 0,
+                    'checkin_count' => 0
+                ]
             ]);
         }
-        
+
         return response()->json([
-            'connected' => $session->is_active,
-            'status' => $session->is_active ? 'connected' : 'disconnected',
+            'connected' => true,
+            'status' => 'connected',
             'session' => [
-                'id' => $session->id,
-                'phone_number' => $session->phone_number,
-                'bot_number' => $session->bot_number,
-                'is_active' => $session->is_active,
-                'last_activity' => $session->last_activity,
-                'message_count' => $session->message_count,
-                'checkin_count' => $session->checkin_count,
-                'connected_at' => $session->connected_at
+                'phone_number' => $sessionData['phone_number'] ?? null,
+                'bot_number' => $sessionData['bot_number'] ?? null,
+                'is_active' => $sessionData['is_active'] ?? true,
+                'last_activity' => $sessionData['last_activity'] ?? null,
+                'message_count' => $sessionData['message_count'] ?? 0,
+                'checkin_count' => $sessionData['checkin_count'] ?? 0,
+                'connected_at' => $sessionData['connected_at'] ?? null,
             ],
-            'bot_number' => $session->bot_number,
-            'whatsapp_link' => $session->bot_number ? "https://wa.me/{$session->bot_number}" : null,
-            'last_activity' => $session->last_activity,
+            'bot_number' => $sessionData['bot_number'] ?? null,
+            'whatsapp_link' => isset($sessionData['bot_number']) ? "https://wa.me/{$sessionData['bot_number']}" : null,
+            'last_activity' => $sessionData['last_activity'] ?? null,
             'stats' => [
-                'message_count' => $session->message_count ?? 0,
-                'checkin_count' => $session->checkin_count ?? 0
+                'message_count' => $sessionData['message_count'] ?? 0,
+                'checkin_count' => $sessionData['checkin_count'] ?? 0
             ]
         ]);
     }
 
     /**
-     * Webhook para processar mensagens do WhatsApp (Sprint 3)
+     * Webhook para processar mensagens do WhatsApp
      */
-    public function webhook(Request $request): JsonResponse
+    public function webhook(Request $request, WhatsappBufferService $bufferService): JsonResponse
     {
-        // Log da requisição para debug
-        Log::info('WhatsApp webhook received', [
-            'payload' => $request->all(),
-            'headers' => $request->headers->all(),
-            'ip' => $request->ip(),
-            'timestamp' => now()
-        ]);
-        
-        // Verificar se é um ping/health check
-        if ($request->has('ping')) {
-            return response()->json(['status' => 'pong'], 200);
-        }
-        
-        // TODO: Implementar no Sprint 3
-        // Por enquanto, apenas validar estrutura básica esperada
         $data = $request->all();
-        
-        // Estrutura básica esperada do EvolutionAPI
-        if (isset($data['event']) && isset($data['data'])) {
-            $event = $data['event'];
+        // Exemplo para EvolutionAPI: $data['event'] == 'messages.upsert'
+        if (isset($data['event']) && $data['event'] === 'messages.upsert' && isset($data['data'])) {
             $eventData = $data['data'];
-            
-            switch ($event) {
-                case 'messages.upsert':
-                    // TODO: Processar mensagem recebida
-                    Log::info('Message received', ['data' => $eventData]);
-                    break;
-                    
-                case 'connection.update':
-                    // TODO: Atualizar status de conexão
-                    Log::info('Connection update', ['data' => $eventData]);
-                    break;
-                    
-                case 'qrcode.updated':
-                    // TODO: Atualizar QR code
-                    Log::info('QR Code updated', ['data' => $eventData]);
-                    break;
-                    
-                default:
-                    Log::info('Unknown webhook event', ['event' => $event, 'data' => $eventData]);
+            // Extrair número e mensagem
+            $phone = $eventData['from'] ?? null;
+            $message = $eventData['body'] ?? null;
+            $type = $eventData['type'] ?? 'text';
+            if ($phone && $message) {
+                // Bufferizar mensagem no Redis
+                $bufferService->addMessage($phone, [
+                    'type' => $type,
+                    'content' => $message,
+                    'timestamp' => now()->toIso8601String(),
+                ]);
+                // Agendar job de processamento se necessário
+                $bufferService->scheduleProcessingJob($phone);
             }
         }
-        
-        // Por enquanto, sempre retornar sucesso para não quebrar a integração
-        return response()->json([
-            'status' => 'received',
-            'message' => 'Webhook processado com sucesso',
-            'timestamp' => now()
-        ], 200);
-    }
-    
-    /**
-     * Generate a unique bot number for the user
-     */
-    private function generateBotNumber(): string
-    {
-        // In a real implementation, this would be managed by your WhatsApp provider
-        // For now, we'll generate a fake number for demonstration
-        
-        $areaCode = '11'; // São Paulo area code
-        $baseNumber = '9' . str_pad((string) rand(10000000, 99999999), 8, '0', STR_PAD_LEFT);
-        
-        return '55' . $areaCode . $baseNumber;
-    }
-    
-    /**
-     * Create session in EvolutionAPI (TODO: Sprint 3)
-     */
-    private function createEvolutionApiSession(WhatsAppSession $session): void
-    {
-        // TODO: Implement EvolutionAPI integration
-        /*
-        $response = Http::post(config('services.evolution_api.base_url') . '/instance/create', [
-            'instanceName' => $session->instance_name,
-            'token' => $session->session_id,
-            'qrcode' => true,
-            'number' => $session->phone_number,
-            'webhook' => route('webhook.whatsapp'),
-            'webhook_by_events' => false,
-            'events' => [
-                'APPLICATION_STARTUP',
-                'QRCODE_UPDATED',
-                'CONNECTION_UPDATE',
-                'MESSAGES_UPSERT',
-                'MESSAGES_UPDATE',
-            ],
-        ], [
-            'Authorization' => 'Bearer ' . config('services.evolution_api.api_key'),
-        ]);
-        
-        if ($response->successful()) {
-            $session->markAsConnected();
-        }
-        */
-    }
-    
-    /**
-     * Disconnect session from EvolutionAPI (TODO: Sprint 3)
-     */
-    private function disconnectEvolutionApiSession(WhatsAppSession $session): void
-    {
-        // TODO: Implement EvolutionAPI integration
-        /*
-        $response = Http::delete(config('services.evolution_api.base_url') . '/instance/delete/' . $session->instance_name, [], [
-            'Authorization' => 'Bearer ' . config('services.evolution_api.api_key'),
-        ]);
-        */
+        return response()->json(['status' => 'ok']);
     }
 }

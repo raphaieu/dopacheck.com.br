@@ -83,7 +83,7 @@
               
               <button
                 @click="handleRemoveCheckin"
-                class="text-gray-400 hover:text-red-500 transition-colors"
+                class="cursor-pointer text-gray-400 hover:text-red-500 transition-colors"
                 title="Desfazer check-in"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,7 +234,8 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           task_id: props.task.id,
@@ -247,11 +248,19 @@
         const data = await response.json()
         emit('checkin-completed', props.task.id, data.checkin)
       } else {
-        throw new Error('Erro ao fazer check-in')
+        const errorData = await response.json()
+        
+        // Se já existe check-in, atualizar o estado local
+        if (response.status === 409 && errorData.checkin) {
+          emit('checkin-completed', props.task.id, errorData.checkin)
+          return
+        }
+        
+        throw new Error(errorData.message || 'Erro ao fazer check-in')
       }
     } catch (error) {
       console.error('Erro:', error)
-      alert('Erro ao fazer check-in. Tente novamente.')
+      alert('Erro ao fazer check-in: ' + error.message)
     } finally {
       submitting.value = false
     }
@@ -266,7 +275,8 @@
       const response = await fetch(`/checkins/${props.checkin.id}`, {
         method: 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+          'Accept': 'application/json'
         }
       })
       

@@ -13,13 +13,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\WhatsappSessionService;
 
 class DopaController extends Controller
 {
     /**
      * Show the DOPA Check dashboard
      */
-    public function dashboard(Request $request): Response
+    public function dashboard(Request $request, WhatsappSessionService $whatsappSessionService): Response
     {
         $user = $request->user();
         
@@ -47,7 +48,6 @@ class DopaController extends Controller
                 ->with('task')
                 ->get()
                 ->keyBy('task_id');
-            
             // Build today's tasks with completion status
             $todayTasks = $allTasks->map(function ($task) use ($todayCheckins) {
                 $checkin = $todayCheckins->get($task->id);
@@ -80,7 +80,7 @@ class DopaController extends Controller
         }
         
         // Get user's overall stats
-        $userStats = $user->calculateStats();
+        $userStats = [];
         
         // Get popular challenges for recommendations
         $recommendedChallenges = Challenge::getRecommendedForUser($user, 3);
@@ -94,6 +94,14 @@ class DopaController extends Controller
         
         // Check if user can create more challenges
         $canCreateChallenge = $user->canCreateChallenge();
+        
+        $whatsappSession = $user->whatsapp_number
+            ? $whatsappSessionService->get($user->whatsapp_number)
+            : null;
+        
+        $userArray = $user->toArray();
+        $userArray['whatsapp_connected'] = $whatsappSession !== null;
+        $userArray['whatsapp_session'] = $whatsappSession;
         
         return Inertia::render('Dashboard/Index', [
             'currentChallenge' => $currentChallenge ? [
@@ -134,16 +142,9 @@ class DopaController extends Controller
             'recommendedChallenges' => $recommendedChallenges,
             'recentCheckins' => $recentCheckins,
             'canCreateChallenge' => $canCreateChallenge,
-            'whatsappSession' => $user->whatsappSession ? [
-                'id' => $user->whatsappSession->id,
-                'phone_number' => $user->whatsappSession->phone_number,
-                'bot_number' => $user->whatsappSession->bot_number,
-                'is_active' => $user->whatsappSession->is_active,
-                'last_activity' => $user->whatsappSession->last_activity,
-                'message_count' => $user->whatsappSession->message_count ?? 0,
-                'checkin_count' => $user->whatsappSession->checkin_count ?? 0,
-                'connected_at' => $user->whatsappSession->connected_at
-            ] : null,
+            'auth' => [
+                'user' => $userArray,
+            ],
         ]);
     }
 

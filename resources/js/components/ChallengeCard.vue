@@ -124,8 +124,8 @@ const user = computed(() => pageProps.auth?.user)
 
 // Computed
 const isParticipating = computed(() => {
-    // TODO: Check if user is participating in this challenge
-    return false // For now, always show join button
+    // Check if user is participating in this challenge
+    return props.challenge.user_is_participating || false
 })
 
 // Methods

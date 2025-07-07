@@ -154,9 +154,10 @@
                         </div>
 
                         <div class="mt-6 text-center">
-                            <button class="cursor-pointer text-blue-600 hover:text-blue-700 font-medium text-sm">
+                            <Link :href="`/challenges/${challenge.id}/participants`" 
+                                class="cursor-pointer text-blue-600 hover:text-blue-700 font-medium text-sm">
                                 Ver todos os participantes
-                            </button>
+                            </Link>
                         </div>
                     </section>
                 </div>
@@ -232,7 +233,7 @@
                             <div v-if="userChallenge" class="bg-green-50 rounded-lg p-4 mb-4">
                                 <div class="grid grid-cols-2 gap-4 text-center">
                                     <div>
-                                        <div class="text-lg font-bold text-green-600">{{ userChallenge.current_day || 1
+                                        <div class="text-lg font-bold text-green-600">{{ parseInt(userChallenge.current_day) || 1
                                         }}</div>
                                         <div class="text-xs text-green-600">Dia Atual</div>
                                     </div>

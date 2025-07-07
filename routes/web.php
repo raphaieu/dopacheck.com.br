@@ -55,6 +55,9 @@ Route::prefix('challenges')->group(function () {
     Route::get('/{challenge}', [ChallengeController::class, 'show'])
     ->where('challenge', '[0-9]+')
     ->name('challenges.show');
+    Route::get('/{challenge}/participants', [ChallengeController::class, 'participants'])
+    ->where('challenge', '[0-9]+')
+    ->name('challenges.participants');
 });
 
 // ========================================
@@ -86,9 +89,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // Original dashboard (mantido para compatibilidade)
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     
-    // DOPA Check dashboard (principal)
-    Route::get('/dopa', [DopaController::class, 'dashboard'])->name('dopa.dashboard');
-    
     // OAuth management
     Route::delete('/auth/destroy/{provider}', [OauthController::class, 'destroy'])->name('oauth.destroy');
     
@@ -99,6 +99,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::resource('/subscriptions', SubscriptionController::class)
         ->names('subscriptions')
         ->only(['index', 'create', 'store', 'show']);
+
+
     
     // ========================================
     // DOPA CHECK MAIN ROUTES
@@ -130,6 +132,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
     
     // ========================================
+    // WHATSAPP INTEGRATION
+    // ========================================
+    Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
+        Route::get('/connect', [WhatsAppController::class, 'connect'])->name('connect');
+        Route::post('/connect', [WhatsAppController::class, 'store'])->name('store');
+        Route::get('/status', [WhatsAppController::class, 'status'])->name('status');
+        Route::delete('/disconnect', [WhatsAppController::class, 'disconnect'])->name('disconnect');
+    });
+
+    // ========================================
     // CHECK-INS SYSTEM
     // ========================================
     Route::prefix('checkins')->name('checkins.')->group(function () {
@@ -137,16 +149,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::post('/', [CheckinController::class, 'store'])->name('store');
         Route::get('/{checkin}', [CheckinController::class, 'show'])->name('show');
         Route::delete('/{checkin}', [CheckinController::class, 'destroy'])->name('destroy');
-    });
-    
-    // ========================================
-    // WHATSAPP INTEGRATION
-    // ========================================
-    Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
-        Route::get('/connect', [WhatsAppController::class, 'connect'])->name('connect');
-        Route::post('/connect', [WhatsAppController::class, 'store'])->name('store');
-        Route::delete('/disconnect', [WhatsAppController::class, 'disconnect'])->name('disconnect');
-        Route::get('/status', [WhatsAppController::class, 'status'])->name('status');
     });
     
     // ========================================

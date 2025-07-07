@@ -160,11 +160,7 @@
           </div>
   
           <!-- WhatsApp Connection -->
-          <WhatsAppConnection 
-            :user="user"
-            :whatsapp-session="whatsappSession"
-            @connection-updated="handleWhatsAppUpdate"
-          />
+          <WhatsAppConnection :user="user" @connection-updated="handleWhatsAppUpdate" />
   
           <!-- Quick Actions -->
           <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

@@ -354,3 +354,63 @@ test('unregistered user gets signup message')
 ---
 
 *Documentação técnica complementar gerada para início do desenvolvimento do DOPA Check*
+
+## Stack Atualizada
+- **PHP:** >= 8.3
+- **Laravel:** 12
+- **Node.js/Bun**
+- **Redis** (para cache de sessões WhatsApp)
+
+## Integração WhatsApp (Novo Fluxo)
+- O sistema utiliza um único número de WhatsApp (bot/agent).
+- O botão "Conectar WhatsApp" apenas abre conversa com o bot.
+- O backend identifica o usuário pelo número do WhatsApp e valida permissões via cache/Redis.
+- Se PRO, libera funções. Se não, incentiva upgrade.
+- Não há múltiplas sessões EvolutionAPI.
+
+## Sessão/Token
+- Ao autenticar no site e estando com assinatura ativa, o backend pode registrar um token/sessão no Redis (ex: `whatsapp_session:{numero}`) para validação rápida.
+- O backend consulta o cache antes do banco para validar permissões.
+
+## Integração Macro com Redis
+
+### Uso do Redis no DOPA Check
+- **Cache:** Sessões WhatsApp, permissões, dados temporários
+- **Queue:** Jobs assíncronos (notificações, processamento de imagens, etc)
+- **Session:** Sessões de usuário web
+- **Locks:** Controle de concorrência e processamento único
+
+### Boas práticas
+- Prefixos diferentes para cada tipo de dado (`cache:`, `queue:`, `session:`, `lock:`)
+- Databases separados para cada finalidade (ex: 0 para cache, 1 para queue, 2 para session)
+- TTL para chaves temporárias
+- Documentação dos padrões de chave
+
+### Exemplo de configuração
+```php
+'redis' => [
+    'client' => 'phpredis',
+    'default' => [..., 'database' => 0],
+    'cache'   => [..., 'database' => 1],
+    'queue'   => [..., 'database' => 2],
+    'session' => [..., 'database' => 3],
+],
+```
+No .env:
+```env
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+REDIS_CACHE_DB=1
+REDIS_QUEUE_DB=2
+REDIS_SESSION_DB=3
+```
+
+### Laravel Horizon
+- Recomendado para monitorar e escalar jobs/filas.
+- Permite visualizar jobs, workers, throughput, delays e falhas em tempo real.
+
+### Resumo
+- Redis pode ser usado para múltiplas finalidades, desde que bem organizado.
+- Prefixos e databases separados evitam conflitos e garantem performance.
+- Horizon facilita o monitoramento e a escalabilidade do sistema.

@@ -624,3 +624,22 @@ routes/web.php (updated with API routes)
 *Gerado em: 04/07/2025*  
 *Sprint 2 - Interface Funcional Completa*  
 *Próximo: Sprint 3 - Integração WhatsApp + Jobs*
+
+## Stack Atualizada
+- **PHP:** >= 8.3
+- **Laravel:** 12
+- **Node.js/Bun**
+- **Redis** (para cache de sessões WhatsApp)
+
+## Integração WhatsApp (Novo Fluxo)
+- Apenas um número de WhatsApp (bot/agent) para toda a comunicação.
+- O botão "Conectar WhatsApp" apenas abre conversa com o bot.
+- O backend identifica o usuário pelo número do WhatsApp e valida permissões via cache/Redis.
+- Se PRO, libera funções. Se não, incentiva upgrade.
+- Não há múltiplas sessões EvolutionAPI.
+
+## Resumo do Fluxo
+1. Usuário abre conversa com o bot.
+2. Envia mensagem.
+3. Bot identifica e valida permissões (cache/banco).
+4. Libera funções ou incentiva upgrade.
