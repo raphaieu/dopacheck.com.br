@@ -22,7 +22,22 @@ class ChallengeController extends Controller
      */
     public function index(Request $request): Response
     {
+        $user = $request->user();
+        $showPrivate = $request->boolean('show_private', false);
+        
+        // Base query - public challenges
         $query = Challenge::public()->with(['creator', 'tasks']);
+        
+        // If user wants to see private challenges, include them
+        if ($showPrivate && $user) {
+            $query = Challenge::where(function ($q) use ($user) {
+                $q->public() // Public challenges
+                  ->orWhere(function ($subQ) use ($user) {
+                      $subQ->where('is_public', false) // Private challenges
+                           ->where('created_by', $user->id); // Created by current user
+                  });
+            })->with(['creator', 'tasks']);
+        }
         
         // Filter by category
         if ($request->category) {
@@ -40,7 +55,7 @@ class ChallengeController extends Controller
         }
         
         // Sort
-        $sort = $request->sort ?? 'popular';
+        $sort = $request->sort ?? 'newest';
         match ($sort) {
             'popular' => $query->popular(),
             'newest' => $query->latest(),
@@ -48,7 +63,7 @@ class ChallengeController extends Controller
             default => $query->popular(),
         };
         
-        $challenges = $query->paginate(12);
+        $challenges = $query->paginate(6);
         
         // Get user participation info for each challenge
         $user = $request->user();
@@ -101,6 +116,7 @@ class ChallengeController extends Controller
                 'difficulty' => $request->difficulty,
                 'search' => $request->search,
                 'sort' => $sort,
+                'show_private' => $showPrivate,
             ],
         ]);
     }
@@ -159,7 +175,7 @@ class ChallengeController extends Controller
         
         // Get all participants with pagination
         $participants = $challenge->userChallenges()
-            ->with(['user:id,name,username,avatar,profile_photo_path,profile_photo_url,plan,subscription_ends_at'])
+            ->with(['user:id,name,username,profile_photo_path,plan,subscription_ends_at'])
             ->whereIn('status', ['active', 'completed'])
             ->orderBy('started_at', 'desc')
             ->paginate(20);

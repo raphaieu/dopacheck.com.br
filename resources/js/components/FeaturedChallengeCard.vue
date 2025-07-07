@@ -2,10 +2,16 @@
     <div
         class="relative bg-white rounded-3xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-500 group">
         <!-- Featured Badge -->
-        <div class="absolute top-4 left-4 z-10">
+        <div class="absolute top-4 left-4 z-10 flex flex-col space-y-2">
             <span
                 class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-md">
                 ⭐ Destaque
+            </span>
+
+            <!-- Private Badge -->
+            <span v-if="!challenge.is_public"
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white shadow-md">
+                🔒 Privado
             </span>
         </div>
 

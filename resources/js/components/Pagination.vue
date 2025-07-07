@@ -1,5 +1,5 @@
 <template>
-    <nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
+    <nav class="flex items-center justify-between md:border-t md:border-gray-200 md:bg-white px-0 py-3 sm:px-4 rounded-lg">
         <!-- Mobile View -->
         <div class="flex flex-1 justify-between sm:hidden">
             <button v-if="currentPage > 1" @click="$emit('page-changed', currentPage - 1)"

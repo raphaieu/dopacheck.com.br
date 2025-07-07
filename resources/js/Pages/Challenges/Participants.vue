@@ -11,8 +11,8 @@
                             </svg>
                         </Link>
                         <div>
-                            <h1 class="text-xl font-semibold text-gray-900">Participantes</h1>
-                            <p class="text-sm text-gray-500">{{ challenge.title }}</p>
+                            <h1 class="text-xl font-semibold text-gray-900">{{ challenge.title }}</h1>
+                            <p class="text-sm text-gray-500">Participantes</p>
                         </div>
                     </div>
                     
@@ -91,51 +91,8 @@
 
                             <!-- Pagination -->
                             <div v-if="participants.data.length > 0" class="mt-8">
-                                <nav class="flex items-center justify-between">
-                                    <div class="flex-1 flex justify-between sm:hidden">
-                                        <Link v-if="participants.prev_page_url" 
-                                            :href="participants.prev_page_url"
-                                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            Anterior
-                                        </Link>
-                                        <Link v-if="participants.next_page_url" 
-                                            :href="participants.next_page_url"
-                                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                            Próximo
-                                        </Link>
-                                    </div>
-                                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                        <div>
-                                            <p class="text-sm text-gray-700">
-                                                Mostrando <span class="font-medium">{{ participants.from }}</span> a 
-                                                <span class="font-medium">{{ participants.to }}</span> de 
-                                                <span class="font-medium">{{ participants.total }}</span> participantes
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                                <template v-for="(link, index) in participants.links" :key="index">
-                                                    <Link
-                                                        v-if="link.url"
-                                                        :href="link.url"
-                                                        :class="[
-                                                            'relative inline-flex items-center px-4 py-2 text-sm font-medium',
-                                                            link.active
-                                                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                                        ]"
-                                                        v-html="link.label"
-                                                    />
-                                                    <span
-                                                        v-else
-                                                        class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed"
-                                                        v-html="link.label"
-                                                    />
-                                                </template>
-                                            </nav>
-                                        </div>
-                                    </div>
-                                </nav>
+                                <Pagination :links="participants.links" :current-page="participants.current_page"
+                                    :last-page="participants.last_page" @page-changed="handlePageChange" />
                             </div>
                         </div>
                     </div>
@@ -194,7 +151,7 @@
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Dificuldade</span>
                                 <span :class="getDifficultyTextClasses(challenge.difficulty)">
-                                    {{ getDifficultyIcon(challenge.difficulty) }} {{ formatDifficulty(challenge.difficulty) }}
+                                    {{ formatDifficulty(challenge.difficulty) }}
                                 </span>
                             </div>
                             <div class="flex justify-between items-center">
@@ -214,7 +171,8 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
+import Pagination from '@/components/Pagination.vue'
 
 // Props
 const props = defineProps({
@@ -248,43 +206,43 @@ const getCategoryIcon = (category) => {
 }
 
 const formatCategory = (category) => {
-    const categories = {
-        'fitness': 'Fitness',
-        'mindfulness': 'Mindfulness',
-        'productivity': 'Produtividade',
-        'learning': 'Aprendizado',
-        'health': 'Saúde',
-        'creativity': 'Criatividade',
-        'social': 'Social',
-        'lifestyle': 'Estilo de Vida'
+    const categoryMap = {
+        'fitness': '💪 Fitness',
+        'mindfulness': '🧘 Mindfulness',
+        'productivity': '⚡ Produtividade',
+        'learning': '📚 Aprendizado',
+        'health': '🏥 Saúde',
+        'creativity': '🎨 Criatividade',
+        'social': '👥 Social',
+        'lifestyle': '🌟 Estilo de Vida'
     }
-    return categories[category] || category
+    return categoryMap[category] || category
 }
 
-const getDifficultyIcon = (difficulty) => {
-    const icons = {
-        'easy': '🟢',
-        'medium': '🟡',
-        'hard': '🔴'
-    }
-    return icons[difficulty] || '⚪'
-}
 
 const getDifficultyTextClasses = (difficulty) => {
     const classes = {
-        'easy': 'text-green-600 font-medium',
-        'medium': 'text-yellow-600 font-medium',
-        'hard': 'text-red-600 font-medium'
+        'beginner': 'text-green-600 font-medium',
+        'intermediate': 'text-yellow-600 font-medium',
+        'advanced': 'text-red-600 font-medium'
     }
     return classes[difficulty] || 'text-gray-600 font-medium'
 }
 
 const formatDifficulty = (difficulty) => {
-    const difficulties = {
-        'easy': 'Fácil',
-        'medium': 'Médio',
-        'hard': 'Difícil'
+    const difficultyMap = {
+        'beginner': '🟢 Iniciante',
+        'intermediate': '🟡 Intermediário',
+        'advanced': '🔴 Avançado'
     }
-    return difficulties[difficulty] || difficulty
+    return difficultyMap[difficulty] || difficulty
+}
+
+
+const handlePageChange = (page) => {
+    router.get(route('challenges.participants', { challenge: props.challenge.id }), { page }, {
+        preserveState: true,
+        preserveScroll: true
+    })
 }
 </script> 

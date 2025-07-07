@@ -37,9 +37,9 @@
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto px-4 py-8">
+        <main class="max-w-7xl mx-auto px-4 pt-8">
             <!-- Hero Section - Featured Challenges -->
-            <section v-if="featuredChallenges.length > 0" class="mb-12">
+            <section v-if="featuredChallenges.length > 0" class="mb-12 hidden">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-gray-900 mb-4">Desafios em Destaque</h2>
                     <p class="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -99,6 +99,18 @@
                                 <option value="newest" class="text-gray-900">Mais recentes</option>
                                 <option value="featured" class="text-gray-900">Em destaque</option>
                             </select>
+
+                            <!-- Show Private Challenges -->
+                            <label v-if="user" class="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                                <div class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors" 
+                                     :class="showPrivateChallenges ? 'bg-blue-600' : 'bg-gray-200'">
+                                    <input v-model="showPrivateChallenges" type="checkbox" @change="handleFilter"
+                                        class="sr-only">
+                                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                                          :class="showPrivateChallenges ? 'translate-x-6' : 'translate-x-1'"></span>
+                                </div>
+                                <span class="text-sm text-gray-700 font-medium">Incluir Privados</span>
+                            </label>
                         </div>
                     </div>
 
@@ -118,6 +130,15 @@
                         <button v-if="selectedDifficulty" @click="clearFilter('difficulty')"
                             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors">
                             {{ formatDifficulty(selectedDifficulty) }}
+                            <svg class="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <button v-if="showPrivateChallenges" @click="clearFilter('private')"
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors">
+                            🔒 Desafio Privado
                             <svg class="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
@@ -223,9 +244,15 @@ const props = defineProps({
     filters: {
         type: Object,
         default: () => ({})
+    },
+    auth: {
+        type: Object,
+        default: () => null
     }
 })
 
+const user = computed(() => props.auth.user)
+  
 // Composables
 const { loading, joinChallenge } = useChallenges()
 
@@ -233,12 +260,13 @@ const { loading, joinChallenge } = useChallenges()
 const searchQuery = ref(props.filters.search || '')
 const selectedCategory = ref(props.filters.category || '')
 const selectedDifficulty = ref(props.filters.difficulty || '')
-const selectedSort = ref(props.filters.sort || 'popular')
+const selectedSort = ref(props.filters.sort || 'newest')
+const showPrivateChallenges = ref(props.filters.show_private !== undefined ? props.filters.show_private : true)
 const searchTimeout = ref(null)
 
 // Computed
 const hasActiveFilters = computed(() => {
-    return selectedCategory.value || selectedDifficulty.value || searchQuery.value
+    return selectedCategory.value || selectedDifficulty.value || searchQuery.value || showPrivateChallenges.value
 })
 
 // Methods
@@ -255,6 +283,7 @@ const handleFilter = () => {
         category: selectedCategory.value || undefined,
         difficulty: selectedDifficulty.value || undefined,
         sort: selectedSort.value || undefined,
+        show_private: showPrivateChallenges.value || undefined,
     }
 
     Object.keys(params).forEach(key => {
@@ -276,6 +305,7 @@ const handlePageChange = (page) => {
         category: selectedCategory.value || undefined,
         difficulty: selectedDifficulty.value || undefined,
         sort: selectedSort.value || undefined,
+        show_private: showPrivateChallenges.value || undefined,
     }
 
     router.get('/challenges', params, {
@@ -294,6 +324,9 @@ const clearFilter = (filterType) => {
         case 'search':
             searchQuery.value = ''
             break
+        case 'private':
+            showPrivateChallenges.value = true
+            break
     }
     handleFilter()
 }
@@ -302,7 +335,8 @@ const clearAllFilters = () => {
     searchQuery.value = ''
     selectedCategory.value = ''
     selectedDifficulty.value = ''
-    selectedSort.value = 'popular'
+    selectedSort.value = 'newest'
+    showPrivateChallenges.value = true
     handleFilter()
 }
 
@@ -342,7 +376,8 @@ watch(() => props.filters, (newFilters) => {
     searchQuery.value = newFilters.search || ''
     selectedCategory.value = newFilters.category || ''
     selectedDifficulty.value = newFilters.difficulty || ''
-    selectedSort.value = newFilters.sort || 'popular'
+    selectedSort.value = newFilters.sort || 'newest'
+    showPrivateChallenges.value = newFilters.show_private !== undefined ? newFilters.show_private : true
 }, { immediate: true })
 </script>
 

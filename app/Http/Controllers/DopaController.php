@@ -24,26 +24,15 @@ class DopaController extends Controller
     {
         $user = $request->user();
         
-        // Get user's current active challenge
-        $currentChallenge = $user->activeChallenges()
-            ->with(['challenge.tasks'])
-            ->first();
-        
-        // Initialize variables
-        $todayTasks = collect([]);
-        $missingTasks = collect([]);
-        $todayCheckins = collect([]);
-        $currentDay = 0;
-        
-        if ($currentChallenge) {
-            // Calculate current day
-            $currentDay = $this->calculateCurrentDay($currentChallenge);
-            
-            // Get all tasks for the current challenge
-            $allTasks = $currentChallenge->challenge->tasks()->orderBy('order')->get();
-            
+        // Get all active challenges for the user
+        $activeChallengesEloquent = $user->activeChallenges()->with(['challenge.tasks'])->get();
+        $activeChallenges = $activeChallengesEloquent->map(function ($userChallenge) {
+            // Calculate current day for this challenge
+            $currentDay = $this->calculateCurrentDay($userChallenge);
+            // Get all tasks for the challenge
+            $allTasks = $userChallenge->challenge->tasks()->orderBy('order')->get();
             // Get today's completed check-ins
-            $todayCheckins = $currentChallenge->checkins()
+            $todayCheckins = $userChallenge->checkins()
                 ->where('challenge_day', $currentDay)
                 ->with('task')
                 ->get()
@@ -72,10 +61,52 @@ class DopaController extends Controller
                     ] : null,
                 ];
             });
-            
-            // Get missing tasks (not completed today and required)
-            $missingTasks = $todayTasks->filter(function ($task) {
+            return [
+                'id' => $userChallenge->id,
+                'status' => $userChallenge->status,
+                'started_at' => $userChallenge->started_at,
+                'current_day' => $currentDay,
+                'total_checkins' => $userChallenge->total_checkins,
+                'streak_days' => $userChallenge->streak_days,
+                'best_streak' => $userChallenge->best_streak,
+                'completion_rate' => $userChallenge->completion_rate,
+                'challenge' => [
+                    'id' => $userChallenge->challenge->id,
+                    'title' => $userChallenge->challenge->title,
+                    'description' => $userChallenge->challenge->description,
+                    'duration_days' => $userChallenge->challenge->duration_days,
+                    'category' => $userChallenge->challenge->category,
+                    'difficulty' => $userChallenge->challenge->difficulty,
+                    'image_url' => $userChallenge->challenge->image_url,
+                    'tasks' => $userChallenge->challenge->tasks->map(function ($task) {
+                        return [
+                            'id' => $task->id,
+                            'name' => $task->name,
+                            'hashtag' => $task->hashtag,
+                            'description' => $task->description,
+                            'icon' => $task->icon,
+                            'color' => $task->color,
+                            'is_required' => $task->is_required,
+                            'order' => $task->order
+                        ];
+                    })
+                ],
+                'today_tasks' => $todayTasks->values(),
+            ];
+        });
+
+        // O resto permanece igual, mas currentChallenge e todayTasks agora são derivados do primeiro desafio ativo (se houver)
+        $currentChallenge = $activeChallenges->first();
+        $todayTasks = $currentChallenge['today_tasks'] ?? collect([]);
+        $missingTasks = collect([]);
+        $todayCheckins = collect([]);
+        $currentDay = $currentChallenge['current_day'] ?? 0;
+        if ($currentChallenge) {
+            $missingTasks = collect($todayTasks)->filter(function ($task) {
                 return !$task['is_completed'] && $task['is_required'];
+            });
+            $todayCheckins = collect($todayTasks)->filter(function ($task) {
+                return $task['is_completed'];
             });
         }
         
@@ -104,38 +135,9 @@ class DopaController extends Controller
         $userArray['whatsapp_session'] = $whatsappSession;
         
         return Inertia::render('Dashboard/Index', [
-            'currentChallenge' => $currentChallenge ? [
-                'id' => $currentChallenge->id,
-                'status' => $currentChallenge->status,
-                'started_at' => $currentChallenge->started_at,
-                'current_day' => $currentDay,
-                'total_checkins' => $currentChallenge->total_checkins,
-                'streak_days' => $currentChallenge->streak_days,
-                'best_streak' => $currentChallenge->best_streak,
-                'completion_rate' => $currentChallenge->completion_rate,
-                'challenge' => [
-                    'id' => $currentChallenge->challenge->id,
-                    'title' => $currentChallenge->challenge->title,
-                    'description' => $currentChallenge->challenge->description,
-                    'duration_days' => $currentChallenge->challenge->duration_days,
-                    'category' => $currentChallenge->challenge->category,
-                    'difficulty' => $currentChallenge->challenge->difficulty,
-                    'image_url' => $currentChallenge->challenge->image_url,
-                    'tasks' => $currentChallenge->challenge->tasks->map(function ($task) {
-                        return [
-                            'id' => $task->id,
-                            'name' => $task->name,
-                            'hashtag' => $task->hashtag,
-                            'description' => $task->description,
-                            'icon' => $task->icon,
-                            'color' => $task->color,
-                            'is_required' => $task->is_required,
-                            'order' => $task->order
-                        ];
-                    })
-                ]
-            ] : null,
-            'todayTasks' => $todayTasks->values(),
+            'activeChallenges' => $activeChallenges,
+            'currentChallenge' => $currentChallenge,
+            'todayTasks' => $todayTasks,
             'missingTasks' => $missingTasks->values(),
             'todayCheckins' => $todayCheckins->values(),
             'userStats' => $userStats,
@@ -154,8 +156,12 @@ class DopaController extends Controller
     public function todayTasks(Request $request): JsonResponse
     {
         $user = $request->user();
-        $currentChallenge = $user->activeChallenges()->with('challenge.tasks')->first();
-
+        $challengeId = $request->get('challenge_id');
+        $currentChallenge = $user->activeChallenges()->with('challenge.tasks');
+        if ($challengeId) {
+            $currentChallenge = $currentChallenge->where('id', $challengeId);
+        }
+        $currentChallenge = $currentChallenge->first();
         if (!$currentChallenge) {
             return response()->json([
                 'tasks' => [],
@@ -163,19 +169,15 @@ class DopaController extends Controller
                 'challenge' => null
             ]);
         }
-
         $currentDay = $this->calculateCurrentDay($currentChallenge);
         $tasks = $currentChallenge->challenge->tasks;
         $todayTasks = [];
-
         foreach ($tasks as $task) {
-            // Verificar se já fez check-in hoje
             $todayCheckin = Checkin::where('user_challenge_id', $currentChallenge->id)
                 ->where('task_id', $task->id)
                 ->where('challenge_day', $currentDay)
                 ->whereNull('deleted_at')
                 ->first();
-
             $todayTasks[] = [
                 'id' => $task->id,
                 'name' => $task->name,
@@ -197,12 +199,10 @@ class DopaController extends Controller
                 ] : null
             ];
         }
-
         // Ordenar por order
         usort($todayTasks, function ($a, $b) {
             return $a['order'] <=> $b['order'];
         });
-
         return response()->json([
             'tasks' => $todayTasks,
             'current_day' => $currentDay,
