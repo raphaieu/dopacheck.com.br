@@ -184,6 +184,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::post('/quick-checkin', [CheckinController::class, 'quickCheckin'])->name('quick-checkin');
         });
         Route::get('/checkin-stats', [CheckinController::class, 'stats'])->name('checkin-stats');
+        Route::post('/share-card', [CheckinController::class, 'shareCard'])->name('share-card');
         
         // Challenge APIs
         Route::middleware('cache.headers:public;max_age=1800')->group(function () {

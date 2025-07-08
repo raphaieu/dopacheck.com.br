@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Intervention\Image\ImageManager;
 
 class CheckinController extends Controller
 {
@@ -456,15 +457,272 @@ class CheckinController extends Controller
      */
     private function calculateAverageCheckinsPerDay($user): float
     {
-        $firstCheckin = $user->checkins()->oldest('checked_at')->first();
+        $totalCheckins = $user->checkins()->count();
+        $daysSinceRegistration = $user->created_at->diffInDays(now()) + 1;
         
-        if (!$firstCheckin) {
-            return 0;
+        return $daysSinceRegistration > 0 ? $totalCheckins / $daysSinceRegistration : 0;
+    }
+
+    /**
+     * Gerar card compartilhável do dia
+     */
+    public function shareCard(Request $request): \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+
+        // Validação
+        $validator = Validator::make($request->all(), [
+            'challenge_id' => ['required', 'exists:user_challenges,id'],
+            'day' => ['required', 'integer', 'min:1'],
+            'total_days' => ['required', 'integer', 'min:1'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:500'],
+            'tasks' => ['required', 'array', 'min:1'],
+            'tasks.*.name' => ['required', 'string', 'max:255'],
+            'tasks.*.completed' => ['required', 'boolean']
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Dados inválidos',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $daysSinceFirst = $firstCheckin->checked_at->diffInDays(now()) + 1;
-        $totalCheckins = $user->checkins()->count();
+        // Verificar se o user challenge pertence ao usuário
+        $userChallenge = UserChallenge::where('id', $request->challenge_id)
+            ->where('user_id', $user->id)
+            ->where('status', 'active')
+            ->first();
 
-        return round($totalCheckins / $daysSinceFirst, 1);
+        if (!$userChallenge) {
+            return response()->json(['message' => 'Desafio não encontrado ou inativo'], 404);
+        }
+
+        try {
+            // Gerar imagem usando Intervention Image
+            $image = $this->generateShareCardImage($request->all(), $user);
+            
+            // Retornar imagem como resposta
+            return response($image, 200, [
+                'Content-Type' => 'image/png',
+                'Content-Disposition' => 'attachment; filename="dopa-check-card-' . date('Y-m-d') . '.png"'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao gerar card compartilhável: ' . $e->getMessage());
+            return response()->json(['message' => 'Erro ao gerar imagem'], 500);
+        }
+    }
+
+    /**
+     * Gerar imagem do card compartilhável baseado no template DOPA Check
+     */
+    private function generateShareCardImage(array $data, $user): string
+    {
+        $manager = new ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+        
+        // Carregar template base
+        $templatePath = public_path('images/share_card_template.png');
+        
+        if (file_exists($templatePath)) {
+            // Usar template existente
+            $canvas = $manager->read($templatePath);
+            
+            // Redimensionar se necessário para garantir o tamanho correto
+            $canvas = $canvas->resize(1080, 1920);
+        } else {
+            // Fallback: criar template básico se não existir
+            $width = 1080;
+            $height = 1920;
+            $canvas = $manager->create($width, $height);
+            $canvas->fill('#f8fafc');
+            
+            // Área azul do rodapé como fallback
+            $footerHeight = 240;
+            $footer = $manager->create($width, $footerHeight);
+            $footer->fill('#22d3ee');
+            $canvas->place($footer, '0', (int)($height - $footerHeight));
+            
+            \Log::warning('Template de card não encontrado em: ' . $templatePath);
+        }
+
+        // Caminhos das fontes (com fallback)
+        $fontRegular = public_path('fonts/Poppins-Regular.ttf');
+        $fontSemiBold = public_path('fonts/Poppins-SemiBold.ttf');
+        $fontBold = public_path('fonts/Poppins-Bold.ttf');
+        
+        // Verificar se as fontes existem
+        if (!file_exists($fontRegular)) $fontRegular = null;
+        if (!file_exists($fontSemiBold)) $fontSemiBold = null;
+        if (!file_exists($fontBold)) $fontBold = null;
+
+        // ========================================
+        // TÍTULO DO DESAFIO (abaixo do logo)
+        // ========================================
+        
+        $canvas->text(strtoupper($data['title']), 540, 480, function ($font) use ($fontBold) {
+            if ($fontBold) $font->file($fontBold);
+            $font->size(48);
+            $font->color('#0f766e'); // Verde escuro (teal)
+            $font->align('center');
+            $font->valign('center');
+        });
+
+        // ========================================
+        // DESCRIÇÃO (logo abaixo do título)
+        // ========================================
+        
+        // Quebrar descrição em múltiplas linhas se necessário
+        $description = $this->wrapText($data['description'], 65);
+        $descriptionLines = explode("\n", $description);
+        
+        $descY = 560;
+        foreach ($descriptionLines as $line) {
+            $canvas->text($line, 540, $descY, function ($font) use ($fontRegular) {
+                if ($fontRegular) $font->file($fontRegular);
+                $font->size(32);
+                $font->color('#374151'); // Cinza médio
+                $font->align('center');
+                $font->valign('center');
+            });
+            $descY += 42;
+        }
+
+        // ========================================
+        // LISTA DE TASKS
+        // ========================================
+        
+        // Margin top maior para evitar sobreposição com descrições longas
+        $tasksStartY = $descY + 100; // Aumentado de 60 para 100
+        $taskSpacing = 80;
+        $leftMargin = 140;
+        
+        foreach ($data['tasks'] as $index => $task) {
+            $y = $tasksStartY + ($index * $taskSpacing);
+            
+            // Definir ícone baseado no status
+            if ($task['completed']) {
+                // Usar imagem PNG para check verde
+                $checkIconPath = public_path('images/check-green.png');
+                if (file_exists($checkIconPath)) {
+                    $checkIcon = $manager->read($checkIconPath);
+                    $checkIcon = $checkIcon->resize(40, 40); // Redimensionar para 40x40px
+                    $canvas->place($checkIcon, 'top-left', (int)($leftMargin - 20), (int)($y - 20));
+                } else {
+                    // Fallback: usar caractere
+                    $canvas->text('✓', $leftMargin, $y, function ($font) use ($fontBold) {
+                        if ($fontBold) $font->file($fontBold);
+                        $font->size(48);
+                        $font->color('#10b981');
+                        $font->align('center');
+                        $font->valign('center');
+                    });
+                }
+                $textColor = '#374151'; // Cinza escuro
+            } else {
+                // Usar imagem PNG para X vermelho
+                $xIconPath = public_path('images/x-red.png');
+                if (file_exists($xIconPath)) {
+                    $xIcon = $manager->read($xIconPath);
+                    $xIcon = $xIcon->resize(40, 40); // Redimensionar para 40x40px
+                    $canvas->place($xIcon, 'top-left', (int)($leftMargin - 20), (int)($y - 20));
+                } else {
+                    // Fallback: usar caractere
+                    $canvas->text('✗', $leftMargin, $y, function ($font) use ($fontBold) {
+                        if ($fontBold) $font->file($fontBold);
+                        $font->size(48);
+                        $font->color('#ef4444');
+                        $font->align('center');
+                        $font->valign('center');
+                    });
+                }
+                $textColor = '#6b7280'; // Cinza médio
+            }
+            
+            // Desenhar texto da task (maiúsculo)
+            $taskText = strtoupper($task['name']);
+            $canvas->text($taskText, $leftMargin + 80, $y, function ($font) use ($fontSemiBold, $textColor) {
+                if ($fontSemiBold) $font->file($fontSemiBold);
+                $font->size(36);
+                $font->color($textColor);
+                $font->align('left');
+                $font->valign('center');
+            });
+        }
+
+        // ========================================
+        // INDICADOR DE PROGRESSO (CANTO DIREITO DO RODAPÉ)
+        // ========================================
+        
+        // Posição no canto direito da área azul do rodapé
+        $progressX = 940; // Canto direito
+        $progressY = 1760; // Na área azul do rodapé
+        
+        // "dia." (pequeno, branco)
+        $canvas->text('dia.', $progressX, $progressY - 25, function ($font) use ($fontRegular) {
+            if ($fontRegular) $font->file($fontRegular);
+            $font->size(22);
+            $font->color('#ffffff');
+            $font->align('center');
+            $font->valign('center');
+        });
+        
+        // Número do dia (grande, branco)
+        $canvas->text((string)$data['day'], $progressX, $progressY + 15, function ($font) use ($fontBold) {
+            if ($fontBold) $font->file($fontBold);
+            $font->size(72);
+            $font->color('#ffffff');
+            $font->align('center');
+            $font->valign('center');
+        });
+        
+        // "/" + total de dias (menor, branco) - posição mais à esquerda
+        $canvas->text('/' . $data['total_days'], $progressX + 35, $progressY + 40, function ($font) use ($fontSemiBold) {
+            if ($fontSemiBold) $font->file($fontSemiBold);
+            $font->size(36);
+            $font->color('#ffffff');
+            $font->align('left');
+            $font->valign('center');
+        });
+
+        return $canvas->encode(new \Intervention\Image\Encoders\PngEncoder())->toString();
+    }
+
+    /**
+     * Quebra texto em múltiplas linhas
+     */
+    private function wrapText(string $text, int $maxLength): string
+    {
+        if (strlen($text) <= $maxLength) {
+            return $text;
+        }
+        
+        $words = explode(' ', $text);
+        $lines = [];
+        $currentLine = '';
+        
+        foreach ($words as $word) {
+            $testLine = $currentLine . ($currentLine ? ' ' : '') . $word;
+            
+            if (strlen($testLine) <= $maxLength) {
+                $currentLine = $testLine;
+            } else {
+                if ($currentLine) {
+                    $lines[] = $currentLine;
+                    $currentLine = $word;
+                } else {
+                    // Palavra muito longa, forçar quebra
+                    $lines[] = $word;
+                    $currentLine = '';
+                }
+            }
+        }
+        
+        if ($currentLine) {
+            $lines[] = $currentLine;
+        }
+        
+        return implode("\n", $lines);
     }
 }

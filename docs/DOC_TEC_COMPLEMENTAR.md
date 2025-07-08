@@ -414,3 +414,66 @@ REDIS_SESSION_DB=3
 - Redis pode ser usado para múltiplas finalidades, desde que bem organizado.
 - Prefixos e databases separados evitam conflitos e garantem performance.
 - Horizon facilita o monitoramento e a escalabilidade do sistema.
+
+## Geração de Card Compartilhável do Desafio (Share Card)
+
+### Objetivo
+Permitir que o usuário gere uma imagem personalizada do seu progresso diário em um desafio, para compartilhar nas redes sociais ou grupos. O card mostra o nome do desafio, descrição, lista de tarefas do dia (completas ou não), progresso e branding do DOPA Check.
+
+### Fluxo de Uso
+1. Usuário finaliza as tasks do dia (ou a qualquer momento deseja compartilhar).
+2. No frontend, aparece um botão "Compartilhar meu dia".
+3. Ao clicar, o frontend faz uma requisição para o endpoint `/api/share-card`, enviando os dados do desafio, dia e status das tasks.
+4. O backend gera a imagem dinamicamente em memória e retorna para download (sem salvar no servidor).
+5. O usuário pode baixar ou compartilhar a imagem.
+
+### Exemplo de Payload (POST)
+```json
+{
+  "challenge_id": 123,
+  "day": 3,
+  "total_days": 21,
+  "title": "21 Dias de Leitura",
+  "description": "Desenvolva o hábito de leitura diária por 21 dias consecutivos. Ideal para quem quer criar uma rotina de aprendizado.",
+  "tasks": [
+    { "name": "Beber pelo menos 2L de água", "completed": true },
+    { "name": "10 minutos de leitura", "completed": false },
+    { "name": "Dormir entre 7 a 8 horas por noite", "completed": false },
+    { "name": "Fazer refeições equilibradas e conscientes", "completed": false },
+    { "name": "Diminuir tempo de tela (detox digital)", "completed": false },
+    { "name": "Mín. 30 minutos de atividade física", "completed": false }
+  ]
+}
+```
+
+### Endpoint
+- **POST** `/api/share-card`
+- **Auth:** Usuário autenticado
+- **Body:** JSON conforme exemplo acima
+- **Response:** Imagem PNG pronta para download
+- **Headers:**
+  - `Content-Type: image/png`
+  - `Content-Disposition: attachment; filename="meu-desafio-dopacheck.png"`
+
+### Exemplo de Resposta
+- Download direto da imagem gerada
+- Não há payload JSON, apenas o arquivo PNG
+
+### Detalhes Técnicos
+- A imagem é gerada dinamicamente usando a biblioteca [Intervention Image](http://image.intervention.io/) (ou similar).
+- O layout segue o template visual padrão do DOPA Check (logo, cores, rodapé, etc).
+- As tasks são renderizadas com ícones de check, x ou caixa vazia conforme status.
+- O progresso (dia atual/total) aparece no rodapé.
+- Branding e informações do site/@dopacheck são fixos no rodapé.
+- Nenhum arquivo é salvo no servidor (imagem gerada em memória).
+
+### Segurança e Performance
+- O endpoint só pode ser acessado por usuários autenticados.
+- Não há armazenamento de arquivos temporários.
+- O tempo de geração da imagem é baixo (apenas processamento em memória).
+- O template pode ser facilmente atualizado para campanhas ou branding especial.
+
+### Observações
+- O frontend pode exibir um preview da imagem antes do download, se desejar (ex: usando um blob URL).
+- Futuramente, pode-se adicionar QR Code, avatar do usuário ou outras informações dinâmicas.
+- O template visual pode ser customizado para cada tipo de desafio ou campanha.

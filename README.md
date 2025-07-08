@@ -2,16 +2,16 @@
 
 <div align="center">
 
-**Transforme seu WhatsApp em um tracker de hábitos inteligente**
+**Transforme seu smartphone em um tracker de hábitos inteligente**
 
-*Um projeto open-source que nasceu da necessidade real de centralizar o acompanhamento de hábitos saudáveis sem fricção*
+*O primeiro sistema que unifica WhatsApp + Web para tracking de hábitos sem fricção*
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![Laravel](https://img.shields.io/badge/Laravel-11-FF2D20?logo=laravel)](https://laravel.com)
+[![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?logo=vue.js)](https://vuejs.org)
 [![WhatsApp](https://img.shields.io/badge/WhatsApp-Bot-25D366?logo=whatsapp)](https://whatsapp.com)
 
-[🚀 Demo Live](#) • [📖 Documentação](#funcionalidades) • [🎯 Como Usar](#como-funciona) • [🛠️ Instalação](#instalação)
+[🚀 Demo Live](https://dopacheck.com.br) • [📖 Documentação](#como-funciona) • [🛠️ Instalação](#instalação) • [🎯 Roadmap](#roadmap)
 
 </div>
 
@@ -19,381 +19,248 @@
 
 ## 🧩 O Problema que Resolve
 
-> **"Eu usava vários apps (Strava, Notion, Google Keep), mas nada centralizava meu progresso real de hábitos. Então criei o DOPA Check para simplesmente enviar uma imagem via WhatsApp e acompanhar minha jornada completa."**
+> **"Tentei vários apps (Strava, Notion, planilhas), mas nenhum centralizava meu progresso real de hábitos de forma simples. O DOPA Check nasceu para resolver isso: uma foto via WhatsApp e pronto!"**
 
-**DOPA Check** nasceu da comunidade [Reservatório de Dopamina](https://t.me/reservatoriodedopamina), onde desafios como *"7 dias de leitura"*, *"21 dias sem açúcar"* são comuns, mas o acompanhamento era fragmentado e trabalhoso.
+**DOPA Check** nasceu da comunidade [Reservatório de Dopamina](https://t.me/reservatoriodedopamina), onde desafios como *"21 dias de leitura"* e *"30 dias sem açúcar"* são comuns, mas o acompanhamento era fragmentado entre múltiplos apps.
 
 ### 💡 A Solução
-- ✅ **Zero apps extras** - Use o WhatsApp que você já tem
-- ✅ **Check-in por imagem** - Uma foto vale mais que mil planilhas
-- ✅ **Progresso visual** - Veja sua evolução em tempo real
-- ✅ **Compartilhamento viral** - Mostre suas conquistas para o mundo
-- ✅ **IA Inteligente** - Analisa suas fotos automaticamente (Premium)
+- ✅ **Zero apps extras** - Use seu WhatsApp + navegador
+- ✅ **Check-in visual** - Uma foto vale mais que mil planilhas
+- ✅ **Dashboard centralizado** - Veja tudo em um lugar
+- ✅ **Compartilhamento automático** - Cards gerados para stories
+- ✅ **IA inteligente** - Analisa suas fotos automaticamente (PRO)
+- ✅ **Desafios comunitários** - Participe com outras pessoas
 
 ---
 
-## 🚀 Funcionalidades
+## 🚀 Status Atual - Beta Funcional
 
-### 🆓 **Versão Gratuita**
-- **Login social** sem fricção (Google/GitHub)
-- **1 desafio ativo** com tasks personalizadas
-- **Check-ins manuais** via WhatsApp ou Web
-- **Dashboard pessoal** com progresso visual
-- **Bot WhatsApp** com número único
-- **Perfil público** para compartilhar (`/u/seu-nome`)
-- **Imagens básicas** para stories (90 dias TTL)
-- **Participação** em desafios populares da comunidade
+### ✅ **Já Funcionando**
+- **🔐 Autenticação** completa (login/senha)
+- **📱 Dashboard mobile-first** responsivo e moderno
+- **🏆 Sistema de desafios** completo (criar, participar, filtrar)
+- **✅ Check-ins web** com ou sem imagem
+- **👥 Participantes** e detalhes de desafios
+- **🎯 Progresso visual** com anéis e estatísticas
+- **📊 Estados dinâmicos** (ativo, concluído, pausado)
+- **🎨 Interface polida** seguindo design system
 
-### 🤖 **DOPA Check PRO**
-- **Desafios ilimitados** simultâneos
-- **IA Vision Agent** que analisa imagens automaticamente
-- **Storage permanente** de todas as imagens
-- **Templates personalizados** de compartilhamento
-- **Analytics avançados** com insights
-- **Respostas do bot** personalizadas
-- **Suporte prioritário** e features beta
+### 🚧 **Em Desenvolvimento**
+- **🤖 Bot WhatsApp** (integração EvolutionAPI pronta)
+- **🖼️ Geração de cards** para compartilhamento
+- **👤 Páginas de perfil** e configurações
+- **📈 Relatórios detalhados** com métricas
+- **🎨 Compartilhamento nativo** mobile
 
 ---
 
 ## 🎯 Como Funciona
 
-### 🚀 **Onboarding Simplificado (3 cliques)**
+### 🚀 **Fluxo Principal (3 cliques)**
 
 ```mermaid
 graph TD
-    A[📱 Vê post no grupo] --> B[🔗 Clica no link]
-    B --> C[📝 Login Social Google/GitHub]
-    C --> D[🎯 Escolhe Desafio Existente]
-    D --> E[✏️ Ou Cria Desafio Próprio]
-    E --> F[📋 Define Tasks Personalizadas]
-    F --> G[🏠 Home: Lista de Tasks Hoje]
-    G --> H[🤖 Conecta Bot WhatsApp]
-    H --> I[📸 Primeiro Check-in]
-    I --> J[🎉 Jornada Iniciada!]
-    
-    D --> G
+    A[📱 Acessa dopacheck.com.br] --> B[🔐 Login rápido]
+    B --> C[🎯 Escolhe/Cria Desafio]
+    C --> D[📋 Define Tasks Diárias]
+    D --> E[🏠 Dashboard com Tasks]
+    E --> F[📸 Check-in Web ou WhatsApp]
+    F --> G[🎉 Progresso Atualizado!]
+    G --> H[🎨 Compartilha Card Gerado]
 ```
 
-### 📋 **Fluxo Detalhado**
+### 📱 **Interface Atual**
 
-#### **1. Descoberta Orgânica**
-- **Post no grupo**: *"Criei o DOPA Check para resolver nossos desafios de hábitos... [link]"*
-- **Landing page** com explicação clara do problema/solução
-- **Login social** (Google/GitHub) - zero fricção
+#### **1. Dashboard Principal**
+- **Progresso visual** com anel de completude
+- **Tasks do dia** com status e check-ins
+- **Estatísticas rápidas** (sequência, dias restantes)
+- **Estado de celebração** quando completa o dia
+- **Conexão WhatsApp** (pronto para integração)
 
-#### **2. Escolha do Desafio**
-```
-Tela: "Escolha seu desafio"
-┌────────────────────────────────────────┐
-│ 🔥 Desafios Populares                  │
-├────────────────────────────────────────┤
-│ 📚 21 dias de leitura (847 pessoas)    │
-│ 🏃 30 dias de exercício (623 pessoas)  │
-│ 💧 7 dias bebendo 2L água (412 pessoas)│
-│ 🧘 14 dias de meditação (289 pessoas)  │
-├────────────────────────────────────────┤
-│ ➕ Criar meu próprio desafio           │
-└────────────────────────────────────────┘
-```
-
-#### **3. Criação Personalizada** (se escolher)
-```
-Formulário simples:
-- Nome do desafio: "Minha jornada fitness"
-- Duração: [21] dias
-- Tasks diárias:
-  ✅ #treino - Exercitar 30min
-  ✅ #agua - Beber 2L de água  
-  ✅ #sono - Dormir antes das 23h
-  [+ Adicionar task]
-```
-
-#### **4. Home Dashboard**
-```
-┌─────────────────────────────────────┐
-│ 🎯 Dia 3 de 21 - "21 dias leitura"  │
-├─────────────────────────────────────┤
-│ Hoje - Quinta, 04 Jul               │
-│                                     │
-│ ⏳ #leitura - Ler 30min             │
-│    [📸 Check-in] [✅ Concluído]     │
-│                                     │
-│ ✅ #agua - Beber 2L                 │
-│    ✓ Feito às 14:30                │
-├─────────────────────────────────────┤
-│ 🤖 [Bot WhatsApp] 📊 [Relatórios]   │
-│ 🔗 [Meu Perfil]   ⚙️ [Config]       │
-└─────────────────────────────────────┘
-```
-
-#### **5. Conexão com Bot**
-```
-Modal: "Conectar WhatsApp"
-┌─────────────────────────────────────┐
-│ 🤖 Seu Bot Pessoal                  │
-│                                     │
-│ 📱 (71) 9999-0000                   │
-│ 💾 [Salvar Contato]                 │
-│                                     │
-│ 📝 Como usar:                       │
-│ 1. Salve o número                   │
-│ 2. Envie foto + #hashtag            │
-│ 3. Receba confirmação automática    │
-│                                     │
-│ 💡 Exemplo: Foto da corrida + "#treino"│
-└─────────────────────────────────────┘
-```
-
----
-
-## 🚀 Funcionalidades Detalhadas
-
-### 🎯 **Sistema de Desafios**
-- **Desafios populares** com contador de participantes
+#### **2. Sistema de Desafios**
+- **Catálogo completo** com filtros e categorias
 - **Criação personalizada** com tasks customizadas
-- **1 desafio ativo** por usuário (foco total)
-- **Saída livre** a qualquer momento (dados preservados)
+- **Detalhes ricos** (participantes, progresso, dificuldade)
+- **Templates populares** (21 dias leitura, 30 dias exercício)
 
-### 📋 **Tasks Inteligentes**
-- **Hashtags únicas** por task (`#leitura`, `#treino`, `#agua`)
-- **Status visual** (pendente/concluído/atrasado)
-- **Timeline diária** com horários de conclusão
-- **Streak counter** para motivação
-
-### 🤖 **Bot WhatsApp Pessoal**
-- **Número único** para cada usuário
-- **Check-in por foto** + hashtag
-- **Confirmações automáticas** em tempo real
-- **Geração de imagens** de progresso para compartilhar
-- **Link do perfil** enviado automaticamente
-
-### 📊 **Relatórios e Sharing**
-- **Dashboard pessoal** com métricas
-- **Perfil público** (`/u/seunome`) para compartilhar
-- **Imagens auto-geradas** para stories/redes sociais
-- **Exportação de dados** completa
-
-### 🆓 **Limitações Freemium**
-```php
-'free_limits' => [
-    'active_challenges' => 1,
-    'image_retention_days' => 90, // TTL para economia storage
-    'manual_checkins' => true,
-    'ai_analysis' => false,
-    'custom_sharing_templates' => false
-]
-
-'pro_benefits' => [
-    'unlimited_challenges' => true,
-    'permanent_image_storage' => true,
-    'ai_auto_checkin' => true,
-    'advanced_analytics' => true,
-    'custom_bot_responses' => true,
-    'priority_support' => true
-]
-```
+#### **3. Check-ins Inteligentes**
+- **Upload de imagem** com drag & drop
+- **Check-in rápido** sem imagem
+- **Validação automática** (um por task/dia)
+- **Fonte rastreada** (web/whatsapp)
 
 ---
 
-## 🛠️ Estrutura Técnica do MVP
+## 🆓 Modelo Freemium
 
-### 📊 **Banco de Dados Simplificado**
-```sql
--- Tabelas essenciais para MVP
-users (id, name, email, avatar, created_at)
-challenges (id, title, duration_days, is_template, created_by)
-challenge_tasks (id, challenge_id, name, hashtag, description)
-user_challenges (id, user_id, challenge_id, started_at, status)
-checkins (id, user_challenge_id, task_id, image_url, checked_at)
-```
+### **Versão Gratuita**
+- ✅ **1 desafio ativo** simultâneo
+- ✅ **Check-ins manuais** via web
+- ✅ **Dashboard completo** com progresso
+- ✅ **Participação** em desafios públicos
+- ✅ **Compartilhamento básico** de progresso
+- ✅ **Storage 90 dias** para imagens
 
-### 🔄 **Jobs e Queues**
-```php
-// Jobs essenciais para performance
-ProcessWhatsAppMessage::class    // Webhook WhatsApp
-GenerateProgressImage::class     // Imagem para sharing  
-SendDailyReminder::class         // Lembretes opcionais
-CleanupExpiredImages::class      // TTL para storage
-CalculateUserStats::class        // Métricas do perfil
-```
-
-### 📱 **Componentes Vue Principais**
-```
-/resources/js/Pages/
-├── Landing.vue              # Landing page
-├── ChallengeSelector.vue    # Escolha/criação de desafio
-├── Dashboard.vue            # Home com tasks do dia
-├── Reports.vue              # Relatórios pessoais
-├── Profile.vue              # Perfil público
-└── Settings.vue             # Configurações
-
-/resources/js/Components/
-├── TaskCard.vue             # Card de task com check-in
-├── ProgressBar.vue          # Visualização de progresso
-├── ChallengeCard.vue        # Card de desafio
-├── WhatsAppBot.vue          # Modal conexão bot
-└── ShareModal.vue           # Modal compartilhamento
-```
-
-### 🤖 **API WhatsApp Simplificada**
-```php
-// Endpoints essenciais
-POST /api/webhook           // Recebe mensagens WhatsApp
-GET  /api/bot-number/{user} // Número do bot para usuário
-POST /api/checkin          // Check-in manual via web
-GET  /api/progress-image/{user} // Gera imagem compartilhamento
-```
+### 🤖 **DOPA Check PRO** (Em breve)
+- 🚀 **Desafios ilimitados** simultâneos
+- 🤖 **Bot WhatsApp** com IA automática
+- 🧠 **Análise IA** de imagens e dados
+- 📊 **Relatórios avançados** com insights
+- 💾 **Storage permanente** de todas as imagens
+- 🎨 **Templates personalizados** de compartilhamento
+- 📈 **Integração Strava/Nike** (futuro)
 
 ---
 
-## 📦 Instalação Rápida
+## 🛠️ Instalação e Setup
 
 ### Pré-requisitos
 - PHP 8.3+
 - Node.js 18+
 - MySQL 8.0+
-- Redis
-- [EvolutionAPI](https://github.com/EvolutionAPI/evolution-api) configurada
+- Redis 6.0+
+- Composer 2.0+
+- Bun ou npm
 
-### 🚀 Deploy em 5 minutos
+### 🚀 Setup Rápido
 
 ```bash
 # 1. Clone o repositório
 git clone https://github.com/raphaieu/dopacheck.com.br.git
-cd dopa-check
+cd dopacheck.com.br
 
 # 2. Instale dependências
 composer install
-npm install
+bun install
 
 # 3. Configure ambiente
 cp .env.example .env
 php artisan key:generate
 
-# 4. Configure banco e Redis
+# 4. Configure banco de dados (.env)
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=dopacheck
+DB_USERNAME=root
+DB_PASSWORD=
+
+# 5. Configure Redis (.env)
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+# 6. Execute migrations e seeders
 php artisan migrate --seed
 
-# 5. Build assets
-npm run build
+# 7. Build assets
+bun run build
 
-# 6. Configure queues
-php artisan horizon:install
-php artisan horizon:start
-
-# 7. Configure webhook da EvolutionAPI
-# Endpoint: https://dopacheck.com.br/api/webhook
+# 8. Inicie servidores
+php artisan serve          # Backend (port 8000)
+php artisan horizon:start  # Queue worker
 ```
 
-### ⚙️ Variáveis de Ambiente Essenciais
+### ⚙️ Configuração WhatsApp (Opcional)
 
 ```env
-# EvolutionAPI
+# EvolutionAPI para WhatsApp Bot
 EVOLUTION_BASE_URL=https://sua-evolution-api.com
 EVOLUTION_API_KEY=sua_api_key
 
-# OpenAI (Premium)
-OPENAI_API_KEY=sk-sua_openai_key
-
-# Stripe (Premium)
-STRIPE_KEY=pk_sua_stripe_key
-STRIPE_SECRET=sk_sua_stripe_secret
-
-# Cloudflare R2 (Imagens)
-CLOUDFLARE_R2_ACCESS_KEY_ID=sua_access_key
-CLOUDFLARE_R2_SECRET_ACCESS_KEY=sua_secret_key
+# Número do bot (formato: 5511999998888)
+WHATSAPP_BOT_NUMBER=5511999998888
 ```
 
 ---
 
-## 📊 Métricas e Performance
+## 🧪 Dados de Teste
 
-### 🎯 **Benchmarks Atuais**
-- ⚡ **Response Time**: < 200ms (API)
-- 🤖 **Bot Response**: < 2s (webhook processing)
-- 🧠 **IA Analysis**: < 5s (OpenAI Vision)
-- 📈 **Uptime**: 99.9% (objetivo)
+Após executar `php artisan migrate --seed`, você terá:
 
-### 📈 **Métricas de Produto**
-- 👥 **Usuários Ativos**: Crescendo 🚀
-- ✅ **Taxa de Conclusão**: 68% dos desafios iniciados
-- 💰 **Conversão Premium**: 15% dos usuários ativos
-- 🔄 **Retenção D7**: 73%
+### **👤 Usuários de Teste**
+```
+🆓 Free User
+Email: free@test.com
+Senha: password
+
+💎 PRO User  
+Email: rapha@raphael-martins.com
+Senha: password
+```
+
+### **🏆 Desafios Templates**
+- 📚 **21 Dias de Leitura** (847 participantes)
+- 🏃 **30 Dias de Movimento** (623 participantes)  
+- 🧘 **14 Dias de Mindfulness** (412 participantes)
+- 📱 **7 Dias Detox Digital** (289 participantes)
+- 🙏 **21 Dias de Gratidão** (334 participantes)
 
 ---
 
-## 🧪 Roadmap & Visão de Futuro
+## 📊 Stack Tecnológico
 
-### 🎯 **Próximas Releases**
+### **Backend**
+- **Framework**: Laravel 12 (PHP 8.3+)
+- **Database**: MySQL 8.0 com Redis para cache
+- **Queue**: Laravel Horizon + Redis
+- **Authentication**: Laravel Fortify + Jetstream
+- **Storage**: Local (futuro: Cloudflare R2)
 
-#### v1.1 - Comunidades (4 semanas)
-- [ ] Grupos de desafio compartilhados
-- [ ] Rankings entre amigos
-- [ ] Eventos comunitários
+### **Frontend**
+- **Framework**: Vue 3 + Composition API + TypeScript
+- **Build**: Vite + Bun
+- **Styling**: TailwindCSS + ShadCN components
+- **Routing**: Inertia.js (SSR + SPA)
+- **State**: Composables pattern
 
-#### v1.2 - Integrações (6 semanas)
-- [ ] Strava, Fitbit, Apple Health
-- [ ] Google Calendar (lembretes)
-- [ ] Notion, Obsidian (journaling)
+### **Integrações**
+- **WhatsApp**: EvolutionAPI (webhook pronto)
+- **IA**: OpenAI Vision API (PRO)
+- **Payments**: Stripe (futuro)
+- **Analytics**: Implementação própria
 
-#### v1.3 - IA Avançada (8 semanas)
-- [ ] Análise de sentimento
-- [ ] Sugestões personalizadas
-- [ ] Coaching automatizado
+---
 
-### 🌟 **Visão 2025**
-Transformar o DOPA Check na **plataforma definitiva de hábitos dopaminérgicos**, integrando:
-- 🧠 **Neurociência** aplicada
-- 🤝 **Comunidades engajadas**
-- 📊 **Analytics preditivos**
-- 🎮 **Gamificação inteligente**
+## 📱 Features Técnicas
+
+### **Performance**
+- ⚡ **SSR + SPA** com Inertia.js
+- 🔄 **Auto-refresh** inteligente das tasks
+- 💾 **Cache estratégico** (Redis + Laravel)
+- 📱 **Mobile-first** responsivo
+- 🎯 **Optimistic updates** para UX fluida
+
+### **Segurança**
+- 🔐 **Autenticação robusta** com rate limiting
+- 🛡️ **Validação completa** de uploads e dados
+- 🔑 **CSRF protection** em todas as requests
+- 📸 **Upload seguro** com validação de tipo/tamanho
+
+### **Arquitetura**
+- 🏗️ **Clean Architecture** com Services e Jobs
+- 🔄 **Queue processing** para operações pesadas
+- 📊 **Event-driven** para atualizações automáticas
+- 🧩 **Modular** com composables e componentes
 
 ---
 
 ## 🤝 Como Contribuir
 
-Adoramos contribuições! Este projeto é **open-source** para que possamos construir juntos a melhor experiência de tracking de hábitos.
+### 🛠️ **Áreas que Precisam de Ajuda**
+- 🎨 **UI/UX**: Melhorias na interface mobile
+- 🤖 **Integração WhatsApp**: Testes do webhook
+- 📊 **Analytics**: Dashboard de métricas
+- 🧪 **Testing**: Testes automatizados
+- 📖 **Documentação**: Exemplos e tutoriais
 
-### 🛠️ **Formas de Contribuir**
-- 🐛 **Bug Reports**: [Issues](https://github.com/seuusuario/dopa-check/issues)
-- 💡 **Feature Requests**: [Discussions](https://github.com/seuusuario/dopa-check/discussions)
-- 🔧 **Pull Requests**: Sempre bem-vindos!
-- 📖 **Documentação**: Melhore este README
-- 🎨 **Design/UX**: Componentes e fluxos
-- 🧪 **Testing**: Casos de teste e QA
-
-### 🎯 **Issues em Aberto**
-- [ ] **[Good First Issue]** Adicionar templates de desafio
-- [ ] **[Enhancement]** Dark mode para dashboard
-- [ ] **[Feature]** Integração com Google Fit
-- [ ] **[Bug]** Fix timezone em lembretes
-
-### 📋 **Guidelines**
+### 📋 **Process de Contribuição**
 1. Fork o repositório
-2. Crie branch: `git checkout -b feature/amazing-feature`
-3. Commit: `git commit -m 'Add amazing feature'`
-4. Push: `git push origin feature/amazing-feature`
-5. Abra Pull Request
-
----
-
-## 💰 Modelo de Negócio
-
-### 🎯 **Sustentabilidade Open-Source**
-O DOPA Check é **free forever** para uso pessoal, com modelo **freemium** que sustenta o desenvolvimento:
-
-| **Feature** | **Gratuito** | **PRO (R$ 19/mês)** |
-|-------------|--------------|-------------------|
-| Desafios | 3 ativos | Ilimitados |
-| Check-ins | Manuais | IA Automática |
-| Análise | Básica | Avançada + Insights |
-| Compartilhamento | Público | Personalizado |
-| Suporte | Comunidade | Prioritário |
-
-### 🎁 **Para Desenvolvedores**
-- ✅ **Código 100% aberto**
-- ✅ **Documentação completa**
-- ✅ **APIs públicas**
-- ✅ **Self-hosting suportado**
+2. Crie uma branch: `git checkout -b feature/nova-feature`
+3. Faça suas mudanças e commit: `git commit -m 'Add: nova feature'`
+4. Push para a branch: `git push origin feature/nova-feature`
+5. Abra um Pull Request
 
 ---
 
@@ -403,120 +270,37 @@ O DOPA Check é **free forever** para uso pessoal, com modelo **freemium** que s
 
 ### 👨‍💻 **Criado por Raphael Martins**
 
-*FullStack Developer • Laravel Specialist • Open Source Advocate*
+*FullStack Developer • Laravel Expert • Open Source Advocate*
 
-[![GitHub](https://img.shields.io/badge/GitHub-000?logo=github)](https://github.com/raphaieu)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?logo=linkedin)](https://linkedin.com/in/raphaelmartins)
-[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?logo=twitter)](https://twitter.com/raphaieu)
-[![Instagram](https://img.shields.io/badge/Instagram-5851DB?logo=instagram)](https://instagram.com/raphaieu)
+[![GitHub](https://img.shields.io/badge/GitHub-raphaieu-000?logo=github)](https://github.com/raphaieu)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-raphaelmartins-0A66C2?logo=linkedin)](https://linkedin.com/in/raphaelmartins)
+[![Twitter](https://img.shields.io/badge/Twitter-@raphaieu-1DA1F2?logo=twitter)](https://twitter.com/raphaieu)
 
 **📧 Email**: [rapha@raphael-martins.com](mailto:rapha@raphael-martins.com)  
 **💬 WhatsApp**: [(11) 94886-3848](https://wa.me/5511948863848)  
-**🌐 Website**: [raphai.eu](https://raphai.eu)
+**🌐 Portfolio**: [raphai.eu](https://raphai.eu)
 
 </div>
 
-### 💼 **Disponível para Projetos**
-Precisa de um **FullStack Developer** experiente? Estou disponível para:
-- 🚀 **Desenvolvimento de MVPs**
-- 🏗️ **Arquitetura de sistemas**
-- 🤖 **Integração de IA**
-- 📱 **Aplicações WhatsApp**
-- 🔧 **Mentoria técnica**
+### 💼 **Desenvolvimento FullStack**
+Disponível para projetos de **MVP**, **arquitetura de sistemas**, **integração de IA** e **aplicações WhatsApp**.
 
 ---
 
 ## 📄 Licença
 
-Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-**TL;DR**: Faça o que quiser com o código, mas mantenha os créditos! 😉
+**TL;DR**: Use livremente, mas mantenha os créditos! 😉
 
 ---
 
 <div align="center">
 
-**⭐ Se este projeto te ajudou, deixe uma estrela!**
+**⭐ Se este projeto te inspirou, deixe uma estrela!**
 
-*Construído com ❤️ por [Raphael Martins](https://raphai.eu) • Salvador, BA 🇧🇷*
+*Desenvolvido com ❤️ em Salvador, BA 🇧🇷*
 
-**#VibeCoding #OpenSource #Laravel #FullStack #WhatsApp #IA**
+**#FullStack #Laravel #Vue #WhatsApp #OpenSource #HabitTracker**
 
 </div>
-
-## Integração WhatsApp (Novo Fluxo)
-- O DOPA Check utiliza **um único número de WhatsApp** (bot/agent) para toda a comunicação.
-- O botão "Conectar WhatsApp" apenas redireciona o usuário para abrir uma conversa com o número do bot.
-- O usuário envia uma mensagem para o bot, que identifica o número e verifica permissões.
-- **Permissões:**
-  - O backend identifica o usuário pelo número do WhatsApp.
-  - Se o número estiver cadastrado e for assinante PRO, libera as funções (check-in, leitura de imagem, etc).
-  - Caso contrário, o bot incentiva o upgrade ou cadastro.
-- **Sessão/Token:**
-  - Ao autenticar no site e estando com assinatura ativa, o backend pode registrar um token/sessão no Redis (ex: `whatsapp_session:{numero}`) para validação rápida.
-  - O backend consulta o cache antes do banco para validar permissões.
-- **Não há múltiplas sessões EvolutionAPI:**
-  - Apenas uma instância conectada ao número do bot.
-
-## Resumo do Fluxo WhatsApp
-1. Usuário clica em "Conectar WhatsApp" e abre conversa com o bot.
-2. Usuário envia mensagem.
-3. Bot identifica o número e consulta permissões (cache/banco).
-4. Se PRO, libera funcionalidades. Se não, incentiva upgrade.
-
-## Observações
-- Toda autenticação e permissão é feita via número do usuário, usando cache para performance.
-- O sistema é escalável e simples, sem múltiplas instâncias EvolutionAPI.
-
-## Redis e Processamento Assíncrono
-
-### Uso macro do Redis
-- Redis é utilizado para:
-  - Cache de sessões WhatsApp e permissões
-  - Fila de jobs (processamento assíncrono, notificações, etc)
-  - Sessões de usuário web
-  - Locks para evitar processamento duplicado
-
-### Boas práticas
-- **Prefixos diferentes** para cada tipo de dado:
-  - `cache:` para cache de dados (ex: `cache:whatsapp_session:5511999998888`)
-  - `queue:` para jobs/filas (Laravel já faz isso por padrão)
-  - `session:` para sessões de usuário
-  - `lock:` para locks de processamento
-- **Databases separados** para cada finalidade:
-  - `0` para uso geral
-  - `1` para cache
-  - `2` para queue
-  - `3` para session
-- **Defina TTL** para chaves temporárias.
-- **Documente os padrões de chave** para toda a equipe.
-
-### Exemplo de configuração (config/database.php)
-```php
-'redis' => [
-    'client' => 'phpredis',
-    'default' => [..., 'database' => 0], // uso geral
-    'cache'   => [..., 'database' => 1], // cache de sessões WhatsApp, etc
-    'queue'   => [..., 'database' => 2], // jobs/filas
-    'session' => [..., 'database' => 3], // sessões de usuário web
-],
-```
-E no .env:
-```env
-CACHE_DRIVER=redis
-QUEUE_CONNECTION=redis
-SESSION_DRIVER=redis
-REDIS_CACHE_DB=1
-REDIS_QUEUE_DB=2
-REDIS_SESSION_DB=3
-```
-
-### Laravel Horizon
-- **Altamente recomendado** para monitorar, escalar e gerenciar jobs/filas.
-- Permite visualizar jobs, workers, throughput, delays e falhas em tempo real.
-- Use o comando `php artisan horizon` para iniciar o painel.
-
-### Resumo
-- Redis é seguro para uso simultâneo de cache, fila, sessão e locks, desde que bem organizado.
-- Prefixos e databases separados evitam conflitos e garantem performance.
-- Horizon facilita o monitoramento e a escalabilidade do sistema.

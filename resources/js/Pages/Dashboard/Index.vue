@@ -90,7 +90,7 @@
         <!-- challenges carousel arrows -->
         <div class="flex items-center justify-center relative py-6">
           <!-- left arrow -->
-          <button v-if="activeChallenges.length > 1" @click="prevChallenge" class="absolute -left-3.5 md:left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-blue-600 shadow-lg transition text-white
+          <button v-if="activeChallenges.length > 1" @click="prevChallenge" class="cursor-pointer absolute -left-3.5 md:left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-blue-600 shadow-lg transition text-white
                 opacity-60 hover:opacity-100 focus:opacity-100 md:opacity-100 md:hover:opacity-100"
             aria-label="Desafio anterior">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@
           </div>
 
           <!-- right arrow -->
-          <button v-if="activeChallenges.length > 1" @click="nextChallenge" class="absolute -right-3.5 md:right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-blue-600 shadow-lg transition text-white
+          <button v-if="activeChallenges.length > 1" @click="nextChallenge" class="cursor-pointer absolute -right-3.5 md:right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-blue-600 shadow-lg transition text-white
                 opacity-60 hover:opacity-100 focus:opacity-100 md:opacity-100 md:hover:opacity-100"
             aria-label="Próximo desafio">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
@@ -202,6 +202,17 @@
               @checkin-completed="handleCheckinCompleted" @checkin-removed="handleCheckinRemoved" />
           </div>
 
+          <!-- Botão Compartilhar Card do Dia -->
+          <div v-if="todayTasks.some(task => task.checkin)" class="flex justify-center mt-6">
+            <button @click="showShareModal = true"
+              class="bg-gradient-to-r cursor-pointer from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all flex items-center space-x-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-check" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0"/>
+              </svg>
+              <span>Compartilhar meu dia</span>
+            </button>
+          </div>
+
           <!-- All Tasks Completed -->
           <div v-if="allTasksCompleted"
             class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 text-center border border-green-200 mt-6">
@@ -228,6 +239,45 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Preview do Card do Dia -->
+    <template v-if="showShareModal">
+      <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-xl p-4 md:p-8 max-w-md md:max-w-xl w-full relative" style="max-height:95vh; overflow:auto;">
+          <button @click="showShareModal = false" class="cursor-pointer absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <h2 class="text-xl font-bold mb-4 text-center">Compartilhar meu dia</h2>
+          <div class="w-full flex justify-center items-center" style="min-height: 60vh;">
+            <div class="relative" style="aspect-ratio:9/16; height:70vh; max-height:80vh; max-width:calc(80vh*9/16);">
+              <div v-if="generatingImage" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded">
+                <div class="text-4xl mb-2">⏳</div>
+                <p class="text-sm">Gerando imagem personalizada...</p>
+                <p class="text-xs text-gray-500 mt-1">Aguarde alguns segundos</p>
+              </div>
+              <img v-else-if="shareCardImageUrl" :src="shareCardImageUrl" alt="Preview do Card do Dia" class="absolute inset-0 w-full h-full object-contain rounded shadow" />
+              <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded">
+                <div class="text-4xl mb-2">❌</div>
+                <p class="text-sm">Erro ao gerar imagem</p>
+              </div>
+            </div>
+          </div>
+          <button 
+            @click="downloadShareCard"
+            :disabled="!shareCardImageUrl"
+            class="cursor-pointer w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center space-x-2 mt-6"
+          >
+            <svg v-if="generatingImage" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>{{ generatingImage ? 'Gerando...' : 'Baixar imagem' }}</span>
+          </button>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -256,6 +306,9 @@ watch(currentIndex, (idx) => {
 // State
 const loading = ref(false)
 const showMenu = ref(false)
+const showShareModal = ref(false)
+const generatingImage = ref(false)
+const shareCardImageUrl = ref(null)
 
 // Computed
 const currentDay = computed(() => {
@@ -357,6 +410,59 @@ const handleCheckinRemoved = (taskId) => {
 
 const handleWhatsAppUpdate = (session) => {
   // ...
+}
+
+watch(showShareModal, async (val) => {
+  if (val) {
+    await generateShareCard()
+  } else {
+    shareCardImageUrl.value = null
+  }
+})
+
+const generateShareCard = async () => {
+  generatingImage.value = true
+  shareCardImageUrl.value = null
+  try {
+    if (!currentChallenge.value) return
+    const payload = {
+      challenge_id: currentChallenge.value.id,
+      day: currentDay.value,
+      total_days: currentChallenge.value.challenge.duration_days,
+      title: currentChallenge.value.challenge.title,
+      description: currentChallenge.value.challenge.description,
+      tasks: todayTasks.value.map(task => ({
+        name: task.name,
+        completed: task.is_completed
+      }))
+    }
+    const response = await fetch('/api/share-card', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        'Accept': 'image/png'
+      },
+      body: JSON.stringify(payload)
+    })
+    if (!response.ok) throw new Error('Erro ao gerar imagem')
+    const blob = await response.blob()
+    shareCardImageUrl.value = URL.createObjectURL(blob)
+  } catch (e) {
+    alert('Erro ao gerar imagem')
+  } finally {
+    generatingImage.value = false
+  }
+}
+
+const downloadShareCard = () => {
+  if (!shareCardImageUrl.value) return
+  const a = document.createElement('a')
+  a.href = shareCardImageUrl.value
+  a.download = `dopa-check-card-${new Date().toISOString().split('T')[0]}.png`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
 }
 
 // Lifecycle
