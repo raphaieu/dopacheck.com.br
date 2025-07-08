@@ -70,6 +70,7 @@ class ChallengeController extends Controller
         if ($user) {
             $userChallengeIds = $user->userChallenges()
                 ->whereIn('challenge_id', $challenges->pluck('id'))
+                ->where('status', 'active')
                 ->pluck('challenge_id')
                 ->toArray();
             
@@ -90,6 +91,7 @@ class ChallengeController extends Controller
         if ($user) {
             $featuredUserChallengeIds = $user->userChallenges()
                 ->whereIn('challenge_id', $featuredChallenges->pluck('id'))
+                ->where('status', 'active')
                 ->pluck('challenge_id')
                 ->toArray();
             
@@ -135,6 +137,7 @@ class ChallengeController extends Controller
         if ($user) {
             $userChallenge = $user->userChallenges()
                 ->where('challenge_id', $challenge->id)
+                ->where('status', 'active')
                 ->first();
             
             $canJoin = !$userChallenge && $user->canCreateChallenge();
@@ -241,6 +244,7 @@ class ChallengeController extends Controller
             'category' => $validated['category'],
             'difficulty' => $validated['difficulty'],
             'is_public' => $validated['is_public'] ?? true,
+            'participant_count' => 1,
             'created_by' => $user->id,
         ]);
         
@@ -282,9 +286,10 @@ class ChallengeController extends Controller
                 ->with('error', 'Você já tem o máximo de desafios ativos. Upgrade para PRO para desafios ilimitados.');
         }
         
-        // Check if user is already participating
+        // Check if user is already participating with active status
         $existingParticipation = $user->userChallenges()
             ->where('challenge_id', $challenge->id)
+            ->where('status', 'active')
             ->first();
         
         if ($existingParticipation) {
@@ -292,13 +297,26 @@ class ChallengeController extends Controller
                 ->with('error', 'Você já está participando deste desafio.');
         }
         
-        // Create participation
-        $userChallenge = UserChallenge::create([
-            'user_id' => $user->id,
-            'challenge_id' => $challenge->id,
-            'status' => 'active',
-            'started_at' => now(),
-        ]);
+        // Check if user has any participation (regardless of status)
+        $anyParticipation = $user->userChallenges()
+            ->where('challenge_id', $challenge->id)
+            ->first();
+        
+        if ($anyParticipation) {
+            // Update existing participation to active
+            $anyParticipation->update([
+                'status' => 'active',
+                'started_at' => now(),
+            ]);
+        } else {
+            // Create new participation
+            UserChallenge::create([
+                'user_id' => $user->id,
+                'challenge_id' => $challenge->id,
+                'status' => 'active',
+                'started_at' => now(),
+            ]);
+        }
         
         // Update challenge participant count
         $challenge->updateParticipantCount();

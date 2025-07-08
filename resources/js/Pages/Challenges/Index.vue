@@ -211,8 +211,14 @@
 
                 <!-- Pagination -->
                 <div v-if="challenges.last_page > 1" class="mt-8">
-                    <Pagination :links="challenges.links" :current-page="challenges.current_page"
-                        :last-page="challenges.last_page" @page-changed="handlePageChange" />
+                    <Pagination
+                    :links="challenges.links"
+                    :current-page="challenges.current_page"
+                    :last-page="challenges.last_page"
+                    :total="challenges.total"
+                    :from="challenges.from"
+                    :to="challenges.to"
+                    @page-changed="handlePageChange" />
                 </div>
             </section>
         </main>
@@ -250,7 +256,7 @@ const props = defineProps({
         default: () => null
     }
 })
-
+console.log(props.challenges);
 const user = computed(() => props.auth.user)
   
 // Composables
