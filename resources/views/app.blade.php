@@ -15,24 +15,26 @@
     <link rel="manifest" href="/site.webmanifest">
 
     <!-- Structured Data (Example: JSON-LD Schema.org) -->
+    @verbatim
     <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "Larasonic",
-            "url": "https://larasonic.com/",
-            "image": "https://larasonic.com/images/og.webp",
-            "description": "A modern Laravel SaaS starter kit for the VILT stack. Clone the repo, start building scalable and maintainable applications quickly.",
-            "applicationCategory": "DeveloperTool",
-            "operatingSystem": "All",
-            "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD",
-                "category": "Free"
-            }
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Larasonic",
+        "url": "https://larasonic.com/",
+        "image": "https://larasonic.com/images/og.webp",
+        "description": "A modern Laravel SaaS starter kit for the VILT stack. Clone the repo, start building scalable and maintainable applications quickly.",
+        "applicationCategory": "DeveloperTool",
+        "operatingSystem": "All",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "category": "Free"
         }
+    }
     </script>
+    @endverbatim
 
     <!-- Scripts -->
     @routes

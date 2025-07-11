@@ -194,6 +194,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         
         // User Challenge APIs  
         Route::get('/user-challenge-progress/{userChallenge}', [UserChallengeController::class, 'progress'])->name('user-challenge-progress');
+        Route::post('/user-challenge-recalculate-stats/{userChallenge}', [UserChallengeController::class, 'recalculateStats'])->name('api.user-challenge-recalculate-stats');
         
         // WhatsApp APIs
         Route::get('/whatsapp-status', [WhatsAppController::class, 'status'])->name('whatsapp-status');

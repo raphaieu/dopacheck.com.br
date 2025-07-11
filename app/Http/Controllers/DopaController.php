@@ -282,10 +282,16 @@ class DopaController extends Controller
     /**
      * Calcular dia atual do desafio
      */
-    private function calculateCurrentDay(UserChallenge $userChallenge): int
+    private function calculateCurrentDay(UserChallenge $userChallenge, $onlyDate = false): int
     {
         $startDate = $userChallenge->started_at;
         $today = now();
+        
+        if ($onlyDate) {
+            $startDate = $userChallenge->started_at->startOfDay();
+            $today = now()->startOfDay();
+        }
+
         $diffDays = $startDate->diffInDays($today) + 1;
         
         return (int) min($diffDays, $userChallenge->challenge->duration_days);

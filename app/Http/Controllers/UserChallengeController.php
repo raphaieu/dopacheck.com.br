@@ -191,6 +191,33 @@ class UserChallengeController extends Controller
     }
 
     /**
+     * Recalcula e retorna os stats do desafio do usuário (API)
+     */
+    public function recalculateStats(Request $request, UserChallenge $userChallenge): JsonResponse
+    {
+        // Verificar autorização
+        if ($userChallenge->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Não autorizado'], 403);
+        }
+
+        // Atualiza todos os stats (centralizado)
+        $userChallenge->updateStats();
+
+        // Recarrega o modelo para garantir dados atualizados
+        $userChallenge->refresh();
+
+        // Retorna os stats atualizados
+        return response()->json([
+            'completion_rate' => $userChallenge->completion_rate,
+            'streak_days' => $userChallenge->streak_days,
+            'best_streak' => $userChallenge->best_streak,
+            'total_checkins' => $userChallenge->total_checkins,
+            'current_day' => $userChallenge->current_day,
+            // Adicione outros stats se necessário
+        ]);
+    }
+
+    /**
      * Calcular dia atual do desafio
      */
     private function calculateCurrentDay($userChallenge): int

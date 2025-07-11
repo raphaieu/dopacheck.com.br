@@ -168,7 +168,7 @@ class CheckinController extends Controller
             }
 
             // Atualizar stats do user challenge
-            $userChallenge->updateStats();
+            // $userChallenge->updateStats();
 
             if ($request->expectsJson()) {
                 return response()->json([

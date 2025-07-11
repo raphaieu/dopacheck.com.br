@@ -142,8 +142,25 @@ class UserChallenge extends Model
      */
     public function updateCompletionRate(): void
     {
-        $expected = $this->expected_checkins;
-        $actual = $this->total_checkins;
+        // Tarefas obrigatórias do desafio
+        $requiredTasksCount = $this->challenge->tasks()->where('is_required', true)->count();
+
+        // Dias desde o início do desafio até hoje (ou até o fim do desafio)
+        $startDate = $this->started_at->copy()->startOfDay();
+        $today = now()->startOfDay();
+        $duration = $this->challenge->duration_days;
+
+        // Calcula o número de dias válidos (não pode passar do duration_days)
+        $daysSinceStart = $startDate->diffInDays($today) + 1;
+        $validDays = min($daysSinceStart, $duration);
+
+        // Check-ins esperados
+        $expected = $requiredTasksCount * $validDays;
+
+        // Check-ins realizados (apenas tarefas obrigatórias)
+        $actual = $this->checkins()
+            ->whereIn('task_id', $this->challenge->tasks()->where('is_required', true)->pluck('id'))
+            ->count();
 
         $this->completion_rate = $expected > 0 ? round(($actual / $expected) * 100, 2) : 0;
         $this->save();
@@ -252,7 +269,7 @@ class UserChallenge extends Model
         $this->total_checkins = $this->checkins()->count();
 
         // Update current streak
-        // $this->streak_days = $this->calculateCurrentStreak();
+        $this->streak_days = $this->calculateCurrentStreak();
 
         // Update best streak
         if ($this->streak_days > $this->best_streak) {

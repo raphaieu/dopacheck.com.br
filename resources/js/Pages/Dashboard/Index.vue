@@ -287,6 +287,7 @@ import { Link, usePage } from '@inertiajs/vue3'
 import TaskCard from '@/components/TaskCard.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
 import WhatsAppConnection from '@/components/WhatsAppConnection.vue'
+import { useApi } from '@/composables/useApi'
 
 // Props do Inertia
 const { props } = usePage()
@@ -364,7 +365,23 @@ const nextChallenge = () => {
 }
 
 // Methods
-const handleCheckinCompleted = (taskId, checkin) => {
+const { post: apiPost, loading: apiLoading } = useApi()
+
+const atualizarStats = async () => {
+  if (!currentChallenge.value) return
+  try {
+    const data = await apiPost(`/api/user-challenge-recalculate-stats/${currentChallenge.value.id}`)
+    currentChallenge.value.total_checkins = data.total_checkins
+    currentChallenge.value.completion_rate = data.completion_rate
+    currentChallenge.value.streak_days = data.streak_days
+    currentChallenge.value.best_streak = data.best_streak
+    currentChallenge.value.current_day = data.current_day
+  } catch (e) {
+    console.error('Erro ao atualizar stats:', e)
+  }
+}
+
+const handleCheckinCompleted = async (taskId, checkin) => {
   loading.value = true
 
   // Atualizar state local
@@ -374,19 +391,11 @@ const handleCheckinCompleted = (taskId, checkin) => {
     todayTasks.value[taskIndex].checkin = checkin
   }
 
-  // Atualizar stats do challenge
-  if (currentChallenge.value) {
-    currentChallenge.value.total_checkins += 1
-
-    // Recalcular completion rate
-    const totalExpected = currentDay.value * currentChallenge.value.challenge.tasks.length
-    currentChallenge.value.completion_rate = (currentChallenge.value.total_checkins / totalExpected) * 100
-  }
-
+  await atualizarStats()
   loading.value = false
 }
 
-const handleCheckinRemoved = (taskId) => {
+const handleCheckinRemoved = async (taskId) => {
   loading.value = true
 
   // Atualizar state local
@@ -396,15 +405,7 @@ const handleCheckinRemoved = (taskId) => {
     todayTasks.value[taskIndex].checkin = null
   }
 
-  // Atualizar stats do challenge
-  if (currentChallenge.value) {
-    currentChallenge.value.total_checkins = Math.max(0, currentChallenge.value.total_checkins - 1)
-
-    // Recalcular completion rate
-    const totalExpected = currentDay.value * currentChallenge.value.challenge.tasks.length
-    currentChallenge.value.completion_rate = (currentChallenge.value.total_checkins / totalExpected) * 100
-  }
-
+  await atualizarStats()
   loading.value = false
 }
 

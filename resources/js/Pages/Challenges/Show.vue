@@ -200,7 +200,7 @@
                                 já estão transformando seus hábitos</p>
 
                             <button @click="handleJoinChallenge" :disabled="joining"
-                                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transition-all duration-200 flex items-center justify-center space-x-2">
+                                class="cursor-pointer w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transition-all duration-200 flex items-center justify-center space-x-2">
                                 <svg v-if="joining" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none"
                                     viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
