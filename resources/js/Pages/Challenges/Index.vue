@@ -256,7 +256,7 @@ const props = defineProps({
         default: () => null
     }
 })
-console.log(props.challenges);
+
 const user = computed(() => props.auth.user)
   
 // Composables
