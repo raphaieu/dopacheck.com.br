@@ -10,6 +10,8 @@ use App\Http\Controllers\User\OauthController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\User\LoginLinkController;
 
+use Illuminate\Support\Facades\Artisan;
+
 // ========================================
 // DOPA CHECK CONTROLLERS
 // ========================================
@@ -21,6 +23,9 @@ use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\ReportController;
 
+// ========================================
+// HEALTH CHECK
+// ========================================
 Route::get('/health', function () {
     return response()->json([
         'status' => 'ok',
@@ -30,6 +35,9 @@ Route::get('/health', function () {
     ]);
 });
 
+// ========================================
+// PUBLIC ROUTES
+// ========================================
 Route::get('/', [WelcomeController::class, 'home'])->name('home');
 
 // ========================================
@@ -44,7 +52,12 @@ Route::prefix('u')->group(function () {
 // Public challenges
 Route::prefix('challenges')->group(function () {
     Route::get('/', [ChallengeController::class, 'index'])->name('challenges.index');
-    Route::get('/{challenge}', [ChallengeController::class, 'show'])->name('challenges.show');
+    Route::get('/{challenge}', [ChallengeController::class, 'show'])
+    ->where('challenge', '[0-9]+')
+    ->name('challenges.show');
+    Route::get('/{challenge}/participants', [ChallengeController::class, 'participants'])
+    ->where('challenge', '[0-9]+')
+    ->name('challenges.participants');
 });
 
 // ========================================
@@ -56,6 +69,7 @@ Route::prefix('auth')->group(
         // OAuth
         Route::get('/redirect/{provider}', [OauthController::class, 'redirect'])->name('oauth.redirect');
         Route::get('/callback/{provider}', [OauthController::class, 'callback'])->name('oauth.callback');
+        
         // Magic Link
         Route::middleware('throttle:login-link')->group(function () {
             Route::post('/login-link', [LoginLinkController::class, 'store'])->name('login-link.store');
@@ -75,9 +89,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     // Original dashboard (mantido para compatibilidade)
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     
-    // DOPA Check dashboard (principal)
-    Route::get('/dopa', [DopaController::class, 'dashboard'])->name('dopa.dashboard');
-    
     // OAuth management
     Route::delete('/auth/destroy/{provider}', [OauthController::class, 'destroy'])->name('oauth.destroy');
     
@@ -88,66 +99,169 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::resource('/subscriptions', SubscriptionController::class)
         ->names('subscriptions')
         ->only(['index', 'create', 'store', 'show']);
+
+
     
     // ========================================
-    // DOPA CHECK AUTHENTICATED ROUTES
+    // DOPA CHECK MAIN ROUTES
     // ========================================
     
-    // Challenges management
-    Route::prefix('challenges')->group(function () {
-        Route::post('/', [ChallengeController::class, 'store'])->name('challenges.store');
-        Route::get('/create', [ChallengeController::class, 'create'])->name('challenges.create');
-        Route::post('/{challenge}/join', [ChallengeController::class, 'join'])->name('challenges.join');
-        Route::delete('/{challenge}/leave', [ChallengeController::class, 'leave'])->name('challenges.leave');
+    // DOPA Check dashboard (principal)
+    Route::get('/dopa', [DopaController::class, 'dashboard'])->name('dopa.dashboard');
+    
+    // ========================================
+    // CHALLENGES MANAGEMENT
+    // ========================================
+    Route::prefix('challenges')->name('challenges.')->group(function () {
+        // Authenticated challenge routes
+        Route::get('/create', [ChallengeController::class, 'create'])->name('create');
+        Route::post('/', [ChallengeController::class, 'store'])->name('store');
+        Route::post('/{challenge}/join', [ChallengeController::class, 'join'])->name('join');
+        Route::post('/{challenge}/leave', [ChallengeController::class, 'leave'])->name('leave');
     });
     
-    // User challenges management
-    Route::prefix('my-challenges')->group(function () {
-        Route::get('/', [UserChallengeController::class, 'index'])->name('user-challenges.index');
-        Route::get('/{userChallenge}', [UserChallengeController::class, 'show'])->name('user-challenges.show');
-        Route::patch('/{userChallenge}/pause', [UserChallengeController::class, 'pause'])->name('user-challenges.pause');
-        Route::patch('/{userChallenge}/resume', [UserChallengeController::class, 'resume'])->name('user-challenges.resume');
-        Route::patch('/{userChallenge}/abandon', [UserChallengeController::class, 'abandon'])->name('user-challenges.abandon');
+    // ========================================
+    // USER CHALLENGES MANAGEMENT
+    // ========================================
+    Route::prefix('my-challenges')->name('user-challenges.')->group(function () {
+        Route::get('/', [UserChallengeController::class, 'index'])->name('index');
+        Route::get('/{userChallenge}', [UserChallengeController::class, 'show'])->name('show');
+        Route::patch('/{userChallenge}/pause', [UserChallengeController::class, 'pause'])->name('pause');
+        Route::patch('/{userChallenge}/resume', [UserChallengeController::class, 'resume'])->name('resume');
+        Route::patch('/{userChallenge}/abandon', [UserChallengeController::class, 'abandon'])->name('abandon');
     });
     
-    // Check-ins
-    Route::prefix('checkins')->group(function () {
-        Route::get('/', [CheckinController::class, 'index'])->name('checkins.index');
-        Route::post('/', [CheckinController::class, 'store'])->name('checkins.store');
-        Route::get('/{checkin}', [CheckinController::class, 'show'])->name('checkins.show');
-        Route::delete('/{checkin}', [CheckinController::class, 'destroy'])->name('checkins.destroy');
+    // ========================================
+    // WHATSAPP INTEGRATION
+    // ========================================
+    Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
+        Route::get('/connect', [WhatsAppController::class, 'connect'])->name('connect');
+        Route::post('/connect', [WhatsAppController::class, 'store'])->name('store');
+        Route::get('/status', [WhatsAppController::class, 'status'])->name('status');
+        Route::delete('/disconnect', [WhatsAppController::class, 'disconnect'])->name('disconnect');
+    });
+
+    // ========================================
+    // CHECK-INS SYSTEM
+    // ========================================
+    Route::prefix('checkins')->name('checkins.')->group(function () {
+        Route::get('/', [CheckinController::class, 'index'])->name('index');
+        Route::post('/', [CheckinController::class, 'store'])->name('store');
+        Route::get('/{checkin}', [CheckinController::class, 'show'])->name('show');
+        Route::delete('/{checkin}', [CheckinController::class, 'destroy'])->name('destroy');
     });
     
-    // WhatsApp integration
-    Route::prefix('whatsapp')->group(function () {
-        Route::get('/connect', [WhatsAppController::class, 'connect'])->name('whatsapp.connect');
-        Route::post('/connect', [WhatsAppController::class, 'store'])->name('whatsapp.store');
-        Route::delete('/disconnect', [WhatsAppController::class, 'disconnect'])->name('whatsapp.disconnect');
-        Route::get('/status', [WhatsAppController::class, 'status'])->name('whatsapp.status');
+    // ========================================
+    // PROFILE & SETTINGS
+    // ========================================
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/settings', [ProfileController::class, 'settings'])->name('settings');
+        Route::patch('/settings', [ProfileController::class, 'updateSettings'])->name('update-settings');
+        Route::get('/stats', [ProfileController::class, 'stats'])->name('stats');
     });
     
-    // Profile settings específicas do DOPA Check
-    Route::prefix('profile')->group(function () {
-        Route::get('/settings', [ProfileController::class, 'settings'])->name('profile.settings');
-        Route::patch('/settings', [ProfileController::class, 'updateSettings'])->name('profile.update-settings');
-        Route::get('/stats', [ProfileController::class, 'stats'])->name('profile.stats');
-    });
-    
-    // Reports and analytics
-    Route::prefix('reports')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('/challenge/{userChallenge}', [ReportController::class, 'challenge'])->name('reports.challenge');
-        Route::get('/export', [ReportController::class, 'export'])->name('reports.export');
+    // ========================================
+    // REPORTS & ANALYTICS
+    // ========================================
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/challenge/{userChallenge}', [ReportController::class, 'challenge'])->name('challenge');
+        Route::get('/export', [ReportController::class, 'export'])->name('export');
     });
     
     // ========================================
     // API ROUTES FOR AJAX/MOBILE
     // ========================================
-    
-    // Quick actions (AJAX endpoints)
-    Route::prefix('api')->group(function () {
-        Route::post('/quick-checkin', [CheckinController::class, 'quickCheckin'])->name('api.quick-checkin');
-        Route::get('/today-tasks', [CheckinController::class, 'todayTasks'])->name('api.today-tasks');
-        Route::get('/whatsapp-status', [WhatsAppController::class, 'status'])->name('api.whatsapp-status');
+    Route::prefix('api')->name('api.')->group(function () {
+        
+        // Dashboard APIs
+        Route::get('/today-tasks', [DopaController::class, 'todayTasks'])->name('today-tasks');
+        Route::get('/quick-stats', [DopaController::class, 'quickStats'])->name('quick-stats');
+        Route::get('/activity-feed', [DopaController::class, 'activityFeed'])->name('activity-feed');
+        
+        // Check-in APIs
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::post('/quick-checkin', [CheckinController::class, 'quickCheckin'])->name('quick-checkin');
+        });
+        Route::get('/checkin-stats', [CheckinController::class, 'stats'])->name('checkin-stats');
+        Route::post('/share-card', [CheckinController::class, 'shareCard'])->name('share-card');
+        
+        // Challenge APIs
+        Route::middleware('cache.headers:public;max_age=1800')->group(function () {
+            Route::get('/recommended-challenges', [ChallengeController::class, 'recommended'])->name('recommended-challenges');
+        });
+        Route::get('/challenge-stats/{challenge}', [ChallengeController::class, 'stats'])->name('challenge-stats');
+        
+        // User Challenge APIs  
+        Route::get('/user-challenge-progress/{userChallenge}', [UserChallengeController::class, 'progress'])->name('user-challenge-progress');
+        Route::post('/user-challenge-recalculate-stats/{userChallenge}', [UserChallengeController::class, 'recalculateStats'])->name('api.user-challenge-recalculate-stats');
+        
+        // WhatsApp APIs
+        Route::get('/whatsapp-status', [WhatsAppController::class, 'status'])->name('whatsapp-status');
+        
     });
+    
+});
+
+// ========================================
+// WEBHOOK ROUTES (sem autenticação)
+// ========================================
+Route::prefix('webhook')->name('webhook.')->group(function () {
+    
+    // WhatsApp webhook (EvolutionAPI) - para Sprint 3
+    Route::post('/whatsapp', [WhatsAppController::class, 'webhook'])->name('whatsapp');
+    
+    // Stripe webhook (futuro)
+    // Route::post('/stripe', [SubscriptionController::class, 'webhook'])->name('stripe');
+    
+});
+
+// ========================================
+// FALLBACK & REDIRECTS
+// ========================================
+
+// Redirect antigos
+Route::get('/home', function () {
+    return redirect()->route('dopa.dashboard');
+});
+
+// Redirect dashboard genérico para DOPA
+Route::middleware('auth')->group(function () {
+    Route::get('/dash', function () {
+        return redirect()->route('dopa.dashboard');
+    });
+});
+
+// ========================================
+// DEVELOPMENT/DEBUG ROUTES (remover em produção)
+// ========================================
+if (app()->environment('local', 'staging')) {
+    Route::prefix('dev')->group(function () {
+        Route::get('/reset-demo', function () {
+            // Reset para dados de demonstração
+            Artisan::call('migrate:fresh --seed');
+            return redirect()->route('dopa.dashboard')->with('success', 'Dados de demonstração resetados!');
+        });
+        
+        Route::get('/cache-clear', function () {
+            Artisan::call('cache:clear');
+            Artisan::call('view:clear');
+            Artisan::call('route:clear');
+            return response()->json(['message' => 'Cache limpo com sucesso!']);
+        });
+    });
+}
+
+// ========================================
+// 404 PERSONALIZADA
+// ========================================
+Route::fallback(function () {
+    if (request()->expectsJson()) {
+        return response()->json(['message' => 'Endpoint não encontrado'], 404);
+    }
+    
+    return inertia('Error404', [
+        'status' => 404,
+        'message' => 'Página não encontrada'
+    ]);
 });

@@ -12,6 +12,8 @@ class WhatsAppSession extends Model
 {
     use HasFactory;
 
+    protected $table = 'whatsapp_sessions';
+
     /**
      * The attributes that are mass assignable.
      */

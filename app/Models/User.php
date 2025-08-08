@@ -216,21 +216,23 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     private function calculateCurrentStreak(): int
     {
-        // Logic to calculate consecutive days with check-ins
+        $checkins = $this->checkins()
+            ->where('checked_at', '>=', now()->subDays(365)->startOfDay())
+            ->orderBy('checked_at', 'desc')
+            ->get()
+            ->groupBy(function ($checkin) {
+                return $checkin->checked_at instanceof \Carbon\Carbon
+                    ? $checkin->checked_at->toDateString()
+                    : \Carbon\Carbon::parse($checkin->checked_at)->toDateString();
+            });
+
         $currentStreak = 0;
         $date = today();
+        $maxDays = 366; // Limite de segurança
 
-        while ($date->greaterThan(now()->subDays(365))) { // Max 365 days back
-            $hasCheckin = $this->checkins()
-                ->whereDate('checked_at', $date)
-                ->exists();
-
-            if ($hasCheckin) {
-                $currentStreak++;
-                $date->subDay();
-            } else {
-                break;
-            }
+        while (isset($checkins[$date->toDateString()]) && $maxDays-- > 0) {
+            $currentStreak++;
+            $date->subDay();
         }
 
         return $currentStreak;

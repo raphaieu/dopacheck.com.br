@@ -105,7 +105,7 @@ class UserChallenge extends Model
     public function getDaysElapsedAttribute(): int
     {
         if ($this->status === 'active') {
-            return $this->started_at->diffInDays(now()) + 1;
+            return (int) ($this->started_at->diffInDays(now()) + 1);
         }
 
         return $this->current_day;
@@ -125,7 +125,7 @@ class UserChallenge extends Model
      */
     public function getProgressPercentageAttribute(): float
     {
-        return round(($this->current_day / $this->challenge->duration_days) * 100, 2);
+        return round((float) $this->current_day / (float) $this->challenge->duration_days * 100, 2);
     }
 
     /**
@@ -134,7 +134,7 @@ class UserChallenge extends Model
     public function getExpectedCheckinsAttribute(): int
     {
         $tasksPerDay = $this->challenge->tasks()->required()->count();
-        return $this->current_day * $tasksPerDay;
+        return (int) $this->current_day * $tasksPerDay;
     }
 
     /**
@@ -142,8 +142,25 @@ class UserChallenge extends Model
      */
     public function updateCompletionRate(): void
     {
-        $expected = $this->expected_checkins;
-        $actual = $this->total_checkins;
+        // Tarefas obrigatórias do desafio
+        $requiredTasksCount = $this->challenge->tasks()->where('is_required', true)->count();
+
+        // Dias desde o início do desafio até hoje (ou até o fim do desafio)
+        $startDate = $this->started_at->copy()->startOfDay();
+        $today = now()->startOfDay();
+        $duration = $this->challenge->duration_days;
+
+        // Calcula o número de dias válidos (não pode passar do duration_days)
+        $daysSinceStart = $startDate->diffInDays($today) + 1;
+        $validDays = min($daysSinceStart, $duration);
+
+        // Check-ins esperados
+        $expected = $requiredTasksCount * $validDays;
+
+        // Check-ins realizados (apenas tarefas obrigatórias)
+        $actual = $this->checkins()
+            ->whereIn('task_id', $this->challenge->tasks()->where('is_required', true)->pluck('id'))
+            ->count();
 
         $this->completion_rate = $expected > 0 ? round(($actual / $expected) * 100, 2) : 0;
         $this->save();
@@ -273,9 +290,11 @@ class UserChallenge extends Model
     {
         $streak = 0;
         $date = today();
-        $tasksPerDay = $this->challenge->tasks()->required()->count();
+        $tasksPerDay = (int) $this->challenge->tasks()->required()->count();
+        $maxDays = 365; // Limite de segurança para evitar loop infinito
+        $daysChecked = 0;
 
-        while ($date->greaterThanOrEqualTo($this->started_at->toDateString())) {
+        while ($date->greaterThanOrEqualTo($this->started_at->toDateString()) && $daysChecked < $maxDays) {
             $dayNumber = $this->started_at->diffInDays($date) + 1;
             
             if ($dayNumber > $this->current_day) {
@@ -288,10 +307,12 @@ class UserChallenge extends Model
 
             if ($checkinsForDay >= $tasksPerDay) {
                 $streak++;
-                $date->subDay();
+                $date = $date->copy()->subDay(); // Usar copy() para não modificar a data original
             } else {
                 break;
             }
+            
+            $daysChecked++;
         }
 
         return $streak;

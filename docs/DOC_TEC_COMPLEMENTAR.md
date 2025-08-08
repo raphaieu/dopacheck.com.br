@@ -354,3 +354,126 @@ test('unregistered user gets signup message')
 ---
 
 *Documentação técnica complementar gerada para início do desenvolvimento do DOPA Check*
+
+## Stack Atualizada
+- **PHP:** >= 8.3
+- **Laravel:** 12
+- **Node.js/Bun**
+- **Redis** (para cache de sessões WhatsApp)
+
+## Integração WhatsApp (Novo Fluxo)
+- O sistema utiliza um único número de WhatsApp (bot/agent).
+- O botão "Conectar WhatsApp" apenas abre conversa com o bot.
+- O backend identifica o usuário pelo número do WhatsApp e valida permissões via cache/Redis.
+- Se PRO, libera funções. Se não, incentiva upgrade.
+- Não há múltiplas sessões EvolutionAPI.
+
+## Sessão/Token
+- Ao autenticar no site e estando com assinatura ativa, o backend pode registrar um token/sessão no Redis (ex: `whatsapp_session:{numero}`) para validação rápida.
+- O backend consulta o cache antes do banco para validar permissões.
+
+## Integração Macro com Redis
+
+### Uso do Redis no DOPA Check
+- **Cache:** Sessões WhatsApp, permissões, dados temporários
+- **Queue:** Jobs assíncronos (notificações, processamento de imagens, etc)
+- **Session:** Sessões de usuário web
+- **Locks:** Controle de concorrência e processamento único
+
+### Boas práticas
+- Prefixos diferentes para cada tipo de dado (`cache:`, `queue:`, `session:`, `lock:`)
+- Databases separados para cada finalidade (ex: 0 para cache, 1 para queue, 2 para session)
+- TTL para chaves temporárias
+- Documentação dos padrões de chave
+
+### Exemplo de configuração
+```php
+'redis' => [
+    'client' => 'phpredis',
+    'default' => [..., 'database' => 0],
+    'cache'   => [..., 'database' => 1],
+    'queue'   => [..., 'database' => 2],
+    'session' => [..., 'database' => 3],
+],
+```
+No .env:
+```env
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+REDIS_CACHE_DB=1
+REDIS_QUEUE_DB=2
+REDIS_SESSION_DB=3
+```
+
+### Laravel Horizon
+- Recomendado para monitorar e escalar jobs/filas.
+- Permite visualizar jobs, workers, throughput, delays e falhas em tempo real.
+
+### Resumo
+- Redis pode ser usado para múltiplas finalidades, desde que bem organizado.
+- Prefixos e databases separados evitam conflitos e garantem performance.
+- Horizon facilita o monitoramento e a escalabilidade do sistema.
+
+## Geração de Card Compartilhável do Desafio (Share Card)
+
+### Objetivo
+Permitir que o usuário gere uma imagem personalizada do seu progresso diário em um desafio, para compartilhar nas redes sociais ou grupos. O card mostra o nome do desafio, descrição, lista de tarefas do dia (completas ou não), progresso e branding do DOPA Check.
+
+### Fluxo de Uso
+1. Usuário finaliza as tasks do dia (ou a qualquer momento deseja compartilhar).
+2. No frontend, aparece um botão "Compartilhar meu dia".
+3. Ao clicar, o frontend faz uma requisição para o endpoint `/api/share-card`, enviando os dados do desafio, dia e status das tasks.
+4. O backend gera a imagem dinamicamente em memória e retorna para download (sem salvar no servidor).
+5. O usuário pode baixar ou compartilhar a imagem.
+
+### Exemplo de Payload (POST)
+```json
+{
+  "challenge_id": 123,
+  "day": 3,
+  "total_days": 21,
+  "title": "21 Dias de Leitura",
+  "description": "Desenvolva o hábito de leitura diária por 21 dias consecutivos. Ideal para quem quer criar uma rotina de aprendizado.",
+  "tasks": [
+    { "name": "Beber pelo menos 2L de água", "completed": true },
+    { "name": "10 minutos de leitura", "completed": false },
+    { "name": "Dormir entre 7 a 8 horas por noite", "completed": false },
+    { "name": "Fazer refeições equilibradas e conscientes", "completed": false },
+    { "name": "Diminuir tempo de tela (detox digital)", "completed": false },
+    { "name": "Mín. 30 minutos de atividade física", "completed": false }
+  ]
+}
+```
+
+### Endpoint
+- **POST** `/api/share-card`
+- **Auth:** Usuário autenticado
+- **Body:** JSON conforme exemplo acima
+- **Response:** Imagem PNG pronta para download
+- **Headers:**
+  - `Content-Type: image/png`
+  - `Content-Disposition: attachment; filename="meu-desafio-dopacheck.png"`
+
+### Exemplo de Resposta
+- Download direto da imagem gerada
+- Não há payload JSON, apenas o arquivo PNG
+
+### Detalhes Técnicos
+- A imagem é gerada dinamicamente usando a biblioteca [Intervention Image](http://image.intervention.io/) (ou similar).
+- O layout segue o template visual padrão do DOPA Check (logo, cores, rodapé, etc).
+- As tasks são renderizadas com ícones de check, x ou caixa vazia conforme status.
+- O progresso (dia atual/total) aparece no rodapé.
+- Branding e informações do site/@dopacheck são fixos no rodapé.
+- Nenhum arquivo é salvo no servidor (imagem gerada em memória).
+
+### Segurança e Performance
+- O endpoint só pode ser acessado por usuários autenticados.
+- Não há armazenamento de arquivos temporários.
+- O tempo de geração da imagem é baixo (apenas processamento em memória).
+- O template pode ser facilmente atualizado para campanhas ou branding especial.
+
+### Observações
+- O frontend pode exibir um preview da imagem antes do download, se desejar (ex: usando um blob URL).
+- Futuramente, pode-se adicionar QR Code, avatar do usuário ou outras informações dinâmicas.
+- O template visual pode ser customizado para cada tipo de desafio ou campanha.

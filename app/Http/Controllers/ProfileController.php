@@ -49,7 +49,7 @@ class ProfileController extends Controller
         
         // Get recent checkins with images
         $recentCheckins = $user->checkins()
-            ->approved()
+            ->where('checkins.status', 'approved')
             ->withImage()
             ->with(['task', 'userChallenge.challenge'])
             ->latest('checked_at')
