@@ -7,9 +7,11 @@ namespace App\Http\Controllers;
 use App\Models\ChallengeTask;
 use App\Models\Checkin;
 use App\Models\UserChallenge;
+use App\Helpers\CacheHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -117,14 +119,18 @@ class CheckinController extends Controller
             return back()->withErrors(['message' => 'Task não encontrada']);
         }
 
-        // Calcular dia atual do desafio
+        // Atualizar dia atual do desafio antes de calcular
+        $userChallenge->updateCurrentDay();
+        
+        // Calcular dia atual do desafio (já atualizado)
         $currentDay = $this->calculateCurrentDay($userChallenge);
 
-        // Verificar se já fez check-in hoje para esta task
+        // Verificar se já fez check-in hoje para esta task (com lock para evitar race condition)
         $existingCheckin = Checkin::where('user_challenge_id', $userChallenge->id)
             ->where('task_id', $task->id)
             ->where('challenge_day', $currentDay)
             ->whereNull('deleted_at')
+            ->lockForUpdate()
             ->first();
 
         if ($existingCheckin) {
@@ -134,32 +140,56 @@ class CheckinController extends Controller
             return back()->withErrors(['message' => 'Check-in já realizado hoje para esta task']);
         }
 
+        $imagePath = null;
+        $imageUrl = null;
+        $checkin = null;
+
         try {
-            // Upload da imagem (se fornecida)
-            $imagePath = null;
-            $imageUrl = null;
-            
+            // Upload da imagem (se fornecida) - com validação adicional
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
-                $filename = 'checkin_' . $user->id . '_' . time() . '.' . $image->getClientOriginalExtension();
+                
+                // Validação adicional de tipo e tamanho
+                if (!$image->isValid()) {
+                    throw new \Exception('Arquivo de imagem inválido');
+                }
+                
+                $maxSize = 5 * 1024 * 1024; // 5MB
+                if ($image->getSize() > $maxSize) {
+                    throw new \Exception('Imagem muito grande. Máximo: 5MB');
+                }
+                
+                $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                if (!in_array($image->getMimeType(), $allowedMimes)) {
+                    throw new \Exception('Tipo de arquivo não permitido. Use: JPEG, PNG ou WebP');
+                }
+                
+                $filename = 'checkin_' . $user->id . '_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
                 
                 // Salvar localmente por enquanto (futuro: Cloudflare R2)
                 $imagePath = $image->storeAs('checkins', $filename, 'public');
+                
+                if (!$imagePath) {
+                    throw new \Exception('Falha ao salvar imagem');
+                }
+                
                 $imageUrl = Storage::url($imagePath);
             }
 
-            // Criar check-in
-            $checkin = Checkin::create([
-                'user_challenge_id' => $userChallenge->id,
-                'task_id' => $task->id,
-                'image_path' => $imagePath,
-                'image_url' => $imageUrl,
-                'message' => $request->message,
-                'source' => $request->source,
-                'status' => 'approved', // Auto-approve por enquanto
-                'challenge_day' => $currentDay,
-                'checked_at' => now()
-            ]);
+            // Criar check-in dentro de transação
+            $checkin = DB::transaction(function () use ($userChallenge, $task, $currentDay, $request, $imagePath, $imageUrl) {
+                return Checkin::create([
+                    'user_challenge_id' => $userChallenge->id,
+                    'task_id' => $task->id,
+                    'image_path' => $imagePath,
+                    'image_url' => $imageUrl,
+                    'message' => $request->message,
+                    'source' => $request->source,
+                    'status' => 'approved', // Auto-approve por enquanto
+                    'challenge_day' => $currentDay,
+                    'checked_at' => now()
+                ]);
+            });
 
             // Processar IA se for PRO e solicitado
             if ($user->is_pro && $request->use_ai_analysis && $imageUrl) {
@@ -168,7 +198,10 @@ class CheckinController extends Controller
             }
 
             // Atualizar stats do user challenge
-            // $userChallenge->updateStats();
+            $userChallenge->updateStats();
+            
+            // Invalidar cache relacionado
+            CacheHelper::invalidateCheckinCache($user->id, $userChallenge->challenge_id);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -187,16 +220,55 @@ class CheckinController extends Controller
 
             return redirect()->back()->with('success', 'Check-in realizado com sucesso!');
 
-        } catch (\Exception $e) {
-            // Cleanup da imagem se houver erro
-            if ($imagePath) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Cleanup da imagem se houver erro de validação
+            if ($imagePath && Storage::disk('public')->exists($imagePath)) {
                 Storage::disk('public')->delete($imagePath);
+            }
+            throw $e; // Re-throw para Laravel tratar
+        } catch (\Exception $e) {
+            // Log do erro para debug
+            \Log::error('Erro ao criar check-in', [
+                'user_id' => $user->id,
+                'user_challenge_id' => $userChallenge->id,
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Cleanup da imagem se houver erro
+            if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+                try {
+                    Storage::disk('public')->delete($imagePath);
+                } catch (\Exception $cleanupException) {
+                    \Log::error('Erro ao limpar imagem após falha', [
+                        'image_path' => $imagePath,
+                        'error' => $cleanupException->getMessage()
+                    ]);
+                }
+            }
+
+            // Se check-in foi criado mas houve erro depois, tentar remover
+            if ($checkin) {
+                try {
+                    $checkin->delete();
+                } catch (\Exception $deleteException) {
+                    \Log::error('Erro ao remover check-in após falha', [
+                        'checkin_id' => $checkin->id,
+                        'error' => $deleteException->getMessage()
+                    ]);
+                }
             }
 
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Erro interno do servidor'], 500);
+                return response()->json([
+                    'message' => 'Erro ao realizar check-in: ' . $e->getMessage()
+                ], 500);
             }
-            return back()->withErrors(['message' => 'Erro ao realizar check-in. Tente novamente.']);
+            
+            return back()->withErrors([
+                'message' => 'Erro ao realizar check-in. Por favor, tente novamente. Se o problema persistir, entre em contato com o suporte.'
+            ])->withInput();
         }
     }
 
@@ -240,7 +312,10 @@ class CheckinController extends Controller
             return response()->json(['message' => 'Task não encontrada'], 404);
         }
 
-        // Calcular dia atual do desafio
+        // Atualizar dia atual do desafio antes de calcular
+        $userChallenge->updateCurrentDay();
+        
+        // Calcular dia atual do desafio (já atualizado)
         $currentDay = $this->calculateCurrentDay($userChallenge);
 
         // Verificar se já fez check-in hoje para esta task (com lock para evitar race condition)
@@ -279,6 +354,9 @@ class CheckinController extends Controller
 
             // Atualizar stats do user challenge
             $userChallenge->updateStats();
+            
+            // Invalidar cache relacionado
+            CacheHelper::invalidateCheckinCache($user->id, $userChallenge->challenge_id);
 
             return response()->json([
                 'message' => 'Check-in realizado com sucesso!',
@@ -323,7 +401,11 @@ class CheckinController extends Controller
             }
 
             // Atualizar stats do user challenge
-            $checkin->userChallenge->updateStats();
+            $userChallenge = $checkin->userChallenge;
+            $userChallenge->updateStats();
+            
+            // Invalidar cache relacionado
+            CacheHelper::invalidateCheckinCache($user->id, $userChallenge->challenge_id);
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Check-in removido com sucesso!']);
@@ -401,14 +483,20 @@ class CheckinController extends Controller
 
     /**
      * Calcular dia atual do desafio
+     * Usa o current_day do model que já está atualizado e limitado corretamente
      */
     private function calculateCurrentDay(UserChallenge $userChallenge): int
     {
-        $startDate = $userChallenge->started_at;
-        $today = now();
-        $diffDays = $startDate->diffInDays($today) + 1;
+        // Recarregar para pegar o current_day atualizado
+        $userChallenge->refresh();
         
-        return (int) min($diffDays, $userChallenge->challenge->duration_days);
+        // Se o desafio está completo, retorna o último dia
+        if ($userChallenge->status === 'completed') {
+            return $userChallenge->challenge->duration_days;
+        }
+        
+        // Retorna o current_day que já foi atualizado pelo updateCurrentDay()
+        return max(1, (int) $userChallenge->current_day);
     }
 
     /**

@@ -42,7 +42,7 @@
                   class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50"
                   @click.away="showMenu = false"
                 >
-                  <Link href="/checkins" class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
+                  <Link href="/reports" class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
                     <span class="text-xl mr-2">📊</span> Relatórios
                   </Link>
                   <Link :href="`/u/${user.username}`" class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
@@ -288,6 +288,7 @@ import TaskCard from '@/components/TaskCard.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
 import WhatsAppConnection from '@/components/WhatsAppConnection.vue'
 import { useApi } from '@/composables/useApi'
+import { useShare } from '@/composables/useShare'
 
 // Props do Inertia
 const { props } = usePage()
@@ -314,11 +315,8 @@ const shareCardImageUrl = ref(null)
 // Computed
 const currentDay = computed(() => {
   if (!currentChallenge.value) return 0
-  const startDate = new Date(currentChallenge.value.started_at)
-  const today = new Date()
-  const diffTime = today.getTime() - startDate.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  return Math.max(1, diffDays)
+  // Usa o current_day do backend que já está limitado corretamente
+  return currentChallenge.value.current_day || 1
 })
 
 const daysRemaining = computed(() => {
@@ -328,7 +326,9 @@ const daysRemaining = computed(() => {
 
 const progressPercentage = computed(() => {
   if (!currentChallenge.value) return 0
-  return (currentDay.value / currentChallenge.value.challenge.duration_days) * 100
+  // Limita o progresso a 100% máximo
+  const progress = (currentDay.value / currentChallenge.value.challenge.duration_days) * 100
+  return Math.min(100, Math.max(0, progress))
 })
 
 const completedTasksToday = computed(() => {
@@ -366,6 +366,7 @@ const nextChallenge = () => {
 
 // Methods
 const { post: apiPost, loading: apiLoading } = useApi()
+const { shareImage, isSupported: isShareSupported } = useShare()
 
 const atualizarStats = async () => {
   if (!currentChallenge.value) return
@@ -456,8 +457,18 @@ const generateShareCard = async () => {
   }
 }
 
-const downloadShareCard = () => {
+const downloadShareCard = async () => {
   if (!shareCardImageUrl.value) return
+  
+  // Tentar compartilhamento nativo primeiro (se disponível)
+  if (isShareSupported()) {
+    const success = await shareImage(shareCardImageUrl.value, `DOPA Check - Dia ${currentDay.value}`)
+    if (success) {
+      return // Compartilhamento nativo funcionou
+    }
+  }
+  
+  // Fallback: download tradicional
   const a = document.createElement('a')
   a.href = shareCardImageUrl.value
   a.download = `dopa-check-card-${new Date().toISOString().split('T')[0]}.png`

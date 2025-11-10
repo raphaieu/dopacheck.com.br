@@ -1,0 +1,124 @@
+<template>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <!-- Header -->
+    <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+      <div class="max-w-4xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <Link href="/dopa" class="text-gray-600 hover:text-gray-900 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <span class="text-white font-bold text-lg">🧠</span>
+            </div>
+            <h1 class="text-xl font-bold text-gray-900">Relatórios</h1>
+          </div>
+          <div class="w-6"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <!-- Overall Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-blue-600">{{ overallStats.total_challenges }}</div>
+          <div class="text-xs text-gray-500 mt-1">Total Desafios</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-green-600">{{ overallStats.completed_challenges }}</div>
+          <div class="text-xs text-gray-500 mt-1">Completos</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-purple-600">{{ overallStats.total_checkins }}</div>
+          <div class="text-xs text-gray-500 mt-1">Check-ins</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-orange-600">{{ overallStats.best_streak }}</div>
+          <div class="text-xs text-gray-500 mt-1">Melhor Sequência</div>
+        </div>
+      </div>
+
+      <!-- Challenges List -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-gray-900">Meus Desafios</h2>
+          <button 
+            @click="exportData"
+            class="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Exportar Dados
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div 
+            v-for="userChallenge in userChallenges" 
+            :key="userChallenge.id"
+            class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+            @click="viewChallenge(userChallenge.id)"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h3 class="font-semibold text-gray-900 mb-2">{{ userChallenge.challenge.title }}</h3>
+                <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                  <span>{{ userChallenge.challenge.duration_days }} dias</span>
+                  <span>{{ userChallenge.total_checkins }} check-ins</span>
+                  <span>{{ Math.round(userChallenge.completion_rate) }}% concluído</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span :class="[
+                  'px-3 py-1 rounded-full text-xs font-medium',
+                  userChallenge.status === 'active' ? 'bg-blue-100 text-blue-700' :
+                  userChallenge.status === 'completed' ? 'bg-green-100 text-green-700' :
+                  'bg-gray-100 text-gray-600'
+                ]">
+                  {{ formatStatus(userChallenge.status) }}
+                </span>
+                <ProgressRing 
+                  :progress="userChallenge.progress_percentage" 
+                  :size="50" 
+                  :stroke-width="6" 
+                  color="blue"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { Link, router } from '@inertiajs/vue3'
+import ProgressRing from '@/components/ProgressRing.vue'
+
+const props = defineProps({
+  userChallenges: Array,
+  overallStats: Object,
+})
+
+const viewChallenge = (userChallengeId) => {
+  router.visit(`/reports/challenge/${userChallengeId}`)
+}
+
+const exportData = () => {
+  // TODO: Implement export
+  alert('Funcionalidade de exportação em breve!')
+}
+
+const formatStatus = (status) => {
+  const statusMap = {
+    'active': 'Ativo',
+    'completed': 'Completo',
+    'paused': 'Pausado',
+    'abandoned': 'Abandonado',
+  }
+  return statusMap[status] || status
+}
+</script>
+

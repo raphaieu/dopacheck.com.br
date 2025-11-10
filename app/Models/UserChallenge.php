@@ -168,6 +168,7 @@ class UserChallenge extends Model
 
     /**
      * Update current day based on start date
+     * Marca automaticamente como completo se ultrapassar duration_days
      */
     public function updateCurrentDay(): void
     {
@@ -175,8 +176,15 @@ class UserChallenge extends Model
             return;
         }
 
-        $daysSinceStart = $this->started_at->diffInDays(now()) + 1;
-        $this->current_day = min($daysSinceStart, $this->challenge->duration_days);
+        $startDate = $this->started_at->startOfDay();
+        $today = now()->startOfDay();
+        $daysSinceStart = $startDate->diffInDays($today) + 1;
+        
+        // Limita ao duration_days do desafio
+        $newCurrentDay = min($daysSinceStart, $this->challenge->duration_days);
+        
+        // Garante que seja pelo menos 1
+        $this->current_day = max(1, $newCurrentDay);
 
         // Check if challenge should be completed
         if ($this->current_day >= $this->challenge->duration_days) {
@@ -284,35 +292,48 @@ class UserChallenge extends Model
     }
 
     /**
-     * Calculate current streak
+     * Calculate current streak (otimizado)
+     * Usa query única para buscar todos os check-ins necessários
      */
     private function calculateCurrentStreak(): int
     {
+        $tasksPerDay = (int) $this->challenge->tasks()->required()->count();
+        
+        if ($tasksPerDay === 0) {
+            return 0;
+        }
+
+        // Buscar todos os check-ins desde o início do desafio até hoje
+        // Agrupar por data e contar quantos check-ins por dia
+        $checkinsByDate = $this->checkins()
+            ->whereDate('checked_at', '>=', $this->started_at->startOfDay())
+            ->whereDate('checked_at', '<=', now()->endOfDay())
+            ->selectRaw('DATE(checked_at) as check_date, COUNT(*) as check_count')
+            ->groupBy('check_date')
+            ->orderBy('check_date', 'desc')
+            ->get()
+            ->keyBy('check_date');
+
         $streak = 0;
         $date = today();
-        $tasksPerDay = (int) $this->challenge->tasks()->required()->count();
-        $maxDays = 365; // Limite de segurança para evitar loop infinito
-        $daysChecked = 0;
 
-        while ($date->greaterThanOrEqualTo($this->started_at->toDateString()) && $daysChecked < $maxDays) {
+        // Iterar apenas pelos dias que têm check-ins, começando de hoje
+        while ($date->greaterThanOrEqualTo($this->started_at->toDateString())) {
             $dayNumber = $this->started_at->diffInDays($date) + 1;
             
             if ($dayNumber > $this->current_day) {
                 break;
             }
 
-            $checkinsForDay = $this->checkins()
-                ->whereDate('checked_at', $date)
-                ->count();
+            $dateString = $date->format('Y-m-d');
+            $checkinsForDay = $checkinsByDate->get($dateString)?->check_count ?? 0;
 
             if ($checkinsForDay >= $tasksPerDay) {
                 $streak++;
-                $date = $date->copy()->subDay(); // Usar copy() para não modificar a data original
+                $date = $date->copy()->subDay();
             } else {
                 break;
             }
-            
-            $daysChecked++;
         }
 
         return $streak;

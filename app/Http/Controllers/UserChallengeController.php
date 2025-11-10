@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UserChallenge;
 use App\Models\Checkin;
+use App\Helpers\CacheHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -64,6 +65,9 @@ class UserChallengeController extends Controller
         
         $userChallenge->pause();
         
+        // Invalidar cache relacionado
+        CacheHelper::invalidateUserChallengeCache($userChallenge->id, $userChallenge->user_id, $userChallenge->challenge_id);
+        
         return back()->with('success', 'Desafio pausado. Você pode retomar quando quiser.');
     }
     
@@ -83,6 +87,9 @@ class UserChallengeController extends Controller
         
         $userChallenge->resume();
         
+        // Invalidar cache relacionado
+        CacheHelper::invalidateUserChallengeCache($userChallenge->id, $userChallenge->user_id, $userChallenge->challenge_id);
+        
         return back()->with('success', 'Desafio retomado! Continue sua jornada.');
     }
     
@@ -101,6 +108,9 @@ class UserChallengeController extends Controller
         }
         
         $userChallenge->abandon();
+        
+        // Invalidar cache relacionado
+        CacheHelper::invalidateUserChallengeCache($userChallenge->id, $userChallenge->user_id, $userChallenge->challenge_id);
         
         return back()->with('success', 'Desafio abandonado. Você pode criar um novo quando quiser!');
     }
@@ -219,13 +229,22 @@ class UserChallengeController extends Controller
 
     /**
      * Calcular dia atual do desafio
+     * Usa o current_day do model que já está atualizado e limitado corretamente
      */
     private function calculateCurrentDay($userChallenge): int
     {
-        $startDate = $userChallenge->started_at;
-        $today = now();
-        $diffDays = $startDate->diffInDays($today) + 1;
+        // Atualizar dia atual antes de calcular
+        if ($userChallenge->status === 'active') {
+            $userChallenge->updateCurrentDay();
+            $userChallenge->refresh();
+        }
         
-        return min($diffDays, $userChallenge->challenge->duration_days);
+        // Se o desafio está completo, retorna o último dia
+        if ($userChallenge->status === 'completed') {
+            return $userChallenge->challenge->duration_days;
+        }
+        
+        // Retorna o current_day que já foi atualizado pelo updateCurrentDay()
+        return max(1, (int) $userChallenge->current_day);
     }
 }

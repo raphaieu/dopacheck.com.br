@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Challenge;
 use App\Models\Checkin;
 use App\Models\UserChallenge;
+use App\Helpers\CacheHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -236,6 +237,18 @@ class ChallengeController extends Controller
             'tasks.*.color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
         
+        // Validação customizada: verificar hashtags duplicadas dentro do array
+        $hashtags = array_map(function ($task) {
+            return strtolower($task['hashtag']);
+        }, $validated['tasks']);
+        
+        $duplicates = array_diff_assoc($hashtags, array_unique($hashtags));
+        if (!empty($duplicates)) {
+            return redirect()->back()
+                ->withErrors(['tasks' => 'Hashtags duplicadas não são permitidas: ' . implode(', ', array_unique($duplicates))])
+                ->withInput();
+        }
+        
         // Create challenge
         $challenge = Challenge::create([
             'title' => $validated['title'],
@@ -268,6 +281,10 @@ class ChallengeController extends Controller
             'status' => 'active',
             'started_at' => now(),
         ]);
+        
+        // Invalidar cache relacionado
+        CacheHelper::invalidateUserCache($user->id);
+        CacheHelper::invalidateChallengeCache($challenge->id);
         
         return redirect()->route('challenges.show', $challenge)
             ->with('success', 'Desafio criado com sucesso! Você já está participando.');
@@ -321,6 +338,10 @@ class ChallengeController extends Controller
         // Update challenge participant count
         $challenge->updateParticipantCount();
         
+        // Invalidar cache relacionado
+        CacheHelper::invalidateUserCache($user->id);
+        CacheHelper::invalidateChallengeCache($challenge->id);
+        
         return redirect()->route('dopa.dashboard')
             ->with('success', "Você entrou no desafio '{$challenge->title}'! Boa sorte! 🎯");
     }
@@ -344,6 +365,10 @@ class ChallengeController extends Controller
         
         $userChallenge->abandon();
         $challenge->updateParticipantCount();
+        
+        // Invalidar cache relacionado
+        CacheHelper::invalidateUserCache($user->id);
+        CacheHelper::invalidateChallengeCache($challenge->id);
         
         return redirect()->back()
             ->with('success', 'Você saiu do desafio. Você pode retornar quando quiser!');
