@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
 </script>
 
 <template>
-  <Icon icon="lucide:rocket" class="size-6" aria-hidden="true" />
+  <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+    <span class="text-white font-bold text-xl sm:text-2xl">🧠</span>
+  </div>
 </template>

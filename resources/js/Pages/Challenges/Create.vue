@@ -1,39 +1,7 @@
 <template>
     <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <!-- Header -->
-        <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-            <div class="max-w-4xl mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <Link href="/challenges" class="text-gray-600 hover:text-gray-900 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
-                        </Link>
-
-                        <div class="flex items-center space-x-3">
-                            <div
-                                class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                                <span class="text-white font-bold text-lg">🧠</span>
-                            </div>
-                            <div>
-                                <h1 class="text-xl font-bold text-gray-900">Criar Desafio</h1>
-                                <p class="text-sm text-gray-500">Transforme suas ideias em hábitos</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center space-x-4">
-                        <Link href="/dopa" class="text-gray-600 hover:text-gray-900 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <DopaHeader subtitle="Criar Desafio" max-width="4xl" :show-back-button="true" back-link="/challenges" />
 
         <main class="max-w-4xl mx-auto px-4 py-8">
             <!-- Progress Steps -->
@@ -384,18 +352,15 @@
 
                 <!-- Navigation Buttons -->
                 <div class="flex items-center justify-between">
+                    <!-- Botão Voltar: apenas nos passos 2 e 3 para navegar entre passos -->
                     <button v-if="currentStep > 1" type="button" @click="previousStep"
                         class="cursor-pointer px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
                         Voltar
                     </button>
                     <div v-else></div>
 
-                    <div class="flex space-x-3">
-                        <Link href="/challenges"
-                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                        Cancelar
-                        </Link>
-
+                    <!-- Botão de ação: Continuar ou Criar Desafio -->
+                    <div class="flex justify-end">
                         <button v-if="currentStep < 3" type="button" @click="nextStep" :disabled="!canProceed"
                             class="cursor-pointer px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                             Continuar
@@ -422,7 +387,8 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/vue3'
+import DopaHeader from '@/components/DopaHeader.vue'
 
 // State
 const currentStep = ref(1)

@@ -192,7 +192,7 @@ class UserChallengeController extends Controller
                 'streak_days' => $userChallenge->streak_days,
                 'best_streak' => $userChallenge->best_streak,
                 'completion_rate' => $userChallenge->completion_rate,
-                'days_remaining' => max(0, $userChallenge->challenge->duration_days - $currentDay + 1),
+                'days_remaining' => $userChallenge->days_remaining, // Usa o accessor que considera se hoje está completo
                 'status' => $userChallenge->status,
                 'started_at' => $userChallenge->started_at,
                 'expected_end_date' => $userChallenge->started_at->addDays($userChallenge->challenge->duration_days - 1)

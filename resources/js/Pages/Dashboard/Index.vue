@@ -1,66 +1,10 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
     <!-- Header -->
-    <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-      <div class="max-w-4xl mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <div
-              class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <span class="text-white font-bold text-lg">🧠</span>
-            </div>
-            <div>
-              <h1 class="text-xl font-bold text-gray-900">DOPA Check</h1>
-              <p class="text-sm text-gray-500" v-if="currentChallenge">
-                Dia {{ currentDay }} de {{ currentChallenge.challenge.duration_days }}
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-center space-x-2">
-            <!-- Plan Badge -->
-            <span :class="[
-              'px-3 py-1 rounded-full text-xs font-medium',
-              user.is_pro ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
-            ]">
-              {{ user.is_pro ? '✨ PRO' : '🆓 FREE' }}
-            </span>
-
-            <!-- Profile Dropdown -->
-            <div class="relative" @keydown.esc="showMenu = false">
-              <button
-                @click="showMenu = !showMenu"
-                class="cursor-pointer w-8 h-8 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"
-                aria-label="Abrir menu do perfil"
-              >
-                <img :src="user.profile_photo_url || '/default-avatar.png'" :alt="user.name"
-                  class="w-full h-full object-cover">
-              </button>
-              <transition name="fade" @click.away="showMenu = false">
-                <div
-                  v-if="showMenu"
-                  class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50"
-                  @click.away="showMenu = false"
-                >
-                  <Link href="/reports" class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
-                    <span class="text-xl mr-2">📊</span> Relatórios
-                  </Link>
-                  <Link :href="`/u/${user.username}`" class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
-                    <span class="text-xl mr-2">🔗</span> Meu Perfil
-                  </Link>
-                  <Link href="/challenges" class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
-                    <span class="text-xl mr-2">🎯</span> Desafios
-                  </Link>
-                  <Link href="/profile/settings" class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700">
-                    <span class="text-xl mr-2">⚙️</span> Config
-                  </Link>
-                </div>
-              </transition>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+    <DopaHeader 
+      :subtitle="currentChallenge ? `Dia ${currentDay} de ${currentChallenge.challenge.duration_days}` : null"
+      max-width="4xl"
+    />
 
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
       <!-- Se não há desafios ativos -->
@@ -153,7 +97,7 @@
                   <div class="text-xs text-gray-500">Sequência</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-green-600">{{ Math.round(currentChallenge.completion_rate) }}%
+                  <div class="text-2xl font-bold text-green-600">{{ todayCompletionRate }}%
                   </div>
                   <div class="text-xs text-gray-500">Concluído</div>
                 </div>
@@ -284,6 +228,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import DopaHeader from '@/components/DopaHeader.vue'
 import TaskCard from '@/components/TaskCard.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
 import WhatsAppConnection from '@/components/WhatsAppConnection.vue'
@@ -307,7 +252,6 @@ watch(currentIndex, (idx) => {
 
 // State
 const loading = ref(false)
-const showMenu = ref(false)
 const showShareModal = ref(false)
 const generatingImage = ref(false)
 const shareCardImageUrl = ref(null)
@@ -321,7 +265,21 @@ const currentDay = computed(() => {
 
 const daysRemaining = computed(() => {
   if (!currentChallenge.value) return 0
-  return Math.max(0, currentChallenge.value.challenge.duration_days - currentDay.value + 1)
+  
+  // Se o backend retornou days_remaining, usa ele (já considera se hoje está completo)
+  if (currentChallenge.value.days_remaining !== undefined) {
+    return currentChallenge.value.days_remaining
+  }
+  
+  // Fallback: calcula localmente se o backend não retornou
+  // Se o dia atual está 100% completo (todas tarefas obrigatórias), considera que esse dia já foi "consumido"
+  const todayIsComplete = todayCompletionRate.value === 100 && totalRequiredTasksToday.value > 0
+  
+  // Se o dia atual está completo, não conta ele nos dias restantes
+  const baseRemaining = currentChallenge.value.challenge.duration_days - currentDay.value + 1
+  const adjustedRemaining = todayIsComplete ? baseRemaining - 1 : baseRemaining
+  
+  return Math.max(0, adjustedRemaining)
 })
 
 const progressPercentage = computed(() => {
@@ -337,6 +295,19 @@ const completedTasksToday = computed(() => {
 
 const totalTasksToday = computed(() => {
   return todayTasks.value.length
+})
+
+const completedRequiredTasksToday = computed(() => {
+  return todayTasks.value.filter(task => task.is_required && task.is_completed).length
+})
+
+const totalRequiredTasksToday = computed(() => {
+  return todayTasks.value.filter(task => task.is_required).length
+})
+
+const todayCompletionRate = computed(() => {
+  if (totalRequiredTasksToday.value === 0) return 0
+  return Math.round((completedRequiredTasksToday.value / totalRequiredTasksToday.value) * 100)
 })
 
 const allTasksCompleted = computed(() => {

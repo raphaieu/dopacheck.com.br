@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -98,6 +99,7 @@ class CheckinController extends Controller
         $userChallenge = UserChallenge::where('id', $request->user_challenge_id)
             ->where('user_id', $user->id)
             ->where('status', 'active')
+            ->with('challenge')
             ->first();
 
         if (!$userChallenge) {
@@ -105,6 +107,17 @@ class CheckinController extends Controller
                 return response()->json(['message' => 'Desafio não encontrado ou inativo'], 404);
             }
             return back()->withErrors(['message' => 'Desafio não encontrado ou inativo']);
+        }
+
+        // Verificar se o desafio não está expirado
+        $userChallenge->updateCurrentDay();
+        $userChallenge->refresh();
+        
+        if ($userChallenge->status === 'completed') {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Este desafio já foi concluído e não aceita mais check-ins'], 403);
+            }
+            return back()->withErrors(['message' => 'Este desafio já foi concluído e não aceita mais check-ins']);
         }
 
         // Verificar se a task pertence ao desafio
@@ -119,23 +132,41 @@ class CheckinController extends Controller
             return back()->withErrors(['message' => 'Task não encontrada']);
         }
 
-        // Atualizar dia atual do desafio antes de calcular
-        $userChallenge->updateCurrentDay();
-        
-        // Calcular dia atual do desafio (já atualizado)
+        // Calcular dia atual do desafio (já atualizado no passo anterior)
         $currentDay = $this->calculateCurrentDay($userChallenge);
+        
+        // Verificar se o dia atual não ultrapassa o duration_days
+        if ($currentDay > $userChallenge->challenge->duration_days) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Este desafio já expirou e não aceita mais check-ins'], 403);
+            }
+            return back()->withErrors(['message' => 'Este desafio já expirou e não aceita mais check-ins']);
+        }
 
         // Verificar se já fez check-in hoje para esta task (com lock para evitar race condition)
+        // Verifica apenas a data real (checked_at) para evitar duplicatas
+        // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
         $existingCheckin = Checkin::where('user_challenge_id', $userChallenge->id)
             ->where('task_id', $task->id)
-            ->where('challenge_day', $currentDay)
+            ->whereDate('checked_at', today())
             ->whereNull('deleted_at')
             ->lockForUpdate()
             ->first();
 
         if ($existingCheckin) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Check-in já realizado hoje para esta task'], 409);
+                return response()->json([
+                    'message' => 'Check-in já realizado hoje para esta task',
+                    'checkin' => [
+                        'id' => $existingCheckin->id,
+                        'image_url' => $existingCheckin->image_url,
+                        'message' => $existingCheckin->message,
+                        'source' => $existingCheckin->source,
+                        'checked_at' => $existingCheckin->checked_at,
+                        'ai_analysis' => $existingCheckin->ai_analysis,
+                        'confidence_score' => $existingCheckin->confidence_score
+                    ]
+                ], 409);
             }
             return back()->withErrors(['message' => 'Check-in já realizado hoje para esta task']);
         }
@@ -228,7 +259,7 @@ class CheckinController extends Controller
             throw $e; // Re-throw para Laravel tratar
         } catch (\Exception $e) {
             // Log do erro para debug
-            \Log::error('Erro ao criar check-in', [
+            Log::error('Erro ao criar check-in', [
                 'user_id' => $user->id,
                 'user_challenge_id' => $userChallenge->id,
                 'task_id' => $task->id,
@@ -241,7 +272,7 @@ class CheckinController extends Controller
                 try {
                     Storage::disk('public')->delete($imagePath);
                 } catch (\Exception $cleanupException) {
-                    \Log::error('Erro ao limpar imagem após falha', [
+                    Log::error('Erro ao limpar imagem após falha', [
                         'image_path' => $imagePath,
                         'error' => $cleanupException->getMessage()
                     ]);
@@ -253,7 +284,7 @@ class CheckinController extends Controller
                 try {
                     $checkin->delete();
                 } catch (\Exception $deleteException) {
-                    \Log::error('Erro ao remover check-in após falha', [
+                    Log::error('Erro ao remover check-in após falha', [
                         'checkin_id' => $checkin->id,
                         'error' => $deleteException->getMessage()
                     ]);
@@ -297,10 +328,19 @@ class CheckinController extends Controller
         $userChallenge = UserChallenge::where('id', $request->user_challenge_id)
             ->where('user_id', $user->id)
             ->where('status', 'active')
+            ->with('challenge')
             ->first();
 
         if (!$userChallenge) {
             return response()->json(['message' => 'Desafio não encontrado ou inativo'], 404);
+        }
+
+        // Verificar se o desafio não está expirado
+        $userChallenge->updateCurrentDay();
+        $userChallenge->refresh();
+        
+        if ($userChallenge->status === 'completed') {
+            return response()->json(['message' => 'Este desafio já foi concluído e não aceita mais check-ins'], 403);
         }
 
         // Verificar se a task pertence ao desafio
@@ -312,16 +352,20 @@ class CheckinController extends Controller
             return response()->json(['message' => 'Task não encontrada'], 404);
         }
 
-        // Atualizar dia atual do desafio antes de calcular
-        $userChallenge->updateCurrentDay();
-        
-        // Calcular dia atual do desafio (já atualizado)
+        // Calcular dia atual do desafio (já atualizado no passo anterior)
         $currentDay = $this->calculateCurrentDay($userChallenge);
+        
+        // Verificar se o dia atual não ultrapassa o duration_days
+        if ($currentDay > $userChallenge->challenge->duration_days) {
+            return response()->json(['message' => 'Este desafio já expirou e não aceita mais check-ins'], 403);
+        }
 
         // Verificar se já fez check-in hoje para esta task (com lock para evitar race condition)
+        // Verifica apenas a data real (checked_at) para evitar duplicatas
+        // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
         $existingCheckin = Checkin::where('user_challenge_id', $userChallenge->id)
             ->where('task_id', $task->id)
-            ->where('challenge_day', $currentDay)
+            ->whereDate('checked_at', today())
             ->whereNull('deleted_at')
             ->lockForUpdate()
             ->first();
@@ -352,27 +396,62 @@ class CheckinController extends Controller
                 'checked_at' => now()
             ]);
 
-            // Atualizar stats do user challenge
-            $userChallenge->updateStats();
+            // Recarregar o check-in para garantir que está atualizado
+            $checkin->refresh();
+
+            // Atualizar stats do user challenge (pode lançar exceção)
+            try {
+                $userChallenge->updateStats();
+            } catch (\Exception $statsError) {
+                Log::warning('Erro ao atualizar stats após check-in', [
+                    'user_challenge_id' => $userChallenge->id,
+                    'error' => $statsError->getMessage()
+                ]);
+                // Não falhar o check-in por causa de erro nas stats
+            }
             
-            // Invalidar cache relacionado
+            // Invalidar cache relacionado (já tem tratamento de erros interno)
             CacheHelper::invalidateCheckinCache($user->id, $userChallenge->challenge_id);
 
-            return response()->json([
+            // Serializar checked_at corretamente para JSON
+            $checkedAt = $checkin->checked_at;
+            if ($checkedAt instanceof \Carbon\Carbon) {
+                $checkedAt = $checkedAt->toDateTimeString();
+            } elseif ($checkedAt) {
+                $checkedAt = (string) $checkedAt;
+            } else {
+                $checkedAt = null;
+            }
+
+            // Preparar resposta JSON
+            $responseData = [
                 'message' => 'Check-in realizado com sucesso!',
                 'checkin' => [
-                    'id' => $checkin->id,
-                    'image_url' => null,
-                    'message' => null,
-                    'source' => $checkin->source,
-                    'checked_at' => $checkin->checked_at,
-                    'ai_analysis' => null,
-                    'confidence_score' => null
+                    'id' => (int) $checkin->id,
+                    'image_url' => $checkin->image_url ?? null,
+                    'message' => $checkin->message ?? null,
+                    'source' => $checkin->source ?? 'web',
+                    'checked_at' => $checkedAt,
+                    'ai_analysis' => $checkin->ai_analysis ?? null,
+                    'confidence_score' => $checkin->confidence_score ? (float) $checkin->confidence_score : null
                 ]
-            ], 201);
+            ];
+
+            return response()->json($responseData, 201);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Erro interno do servidor'], 500);
+            Log::error('Erro ao criar quick check-in', [
+                'user_id' => $user->id,
+                'user_challenge_id' => $request->user_challenge_id,
+                'task_id' => $request->task_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'message' => 'Erro interno do servidor',
+                'error' => config('app.debug') ? $e->getMessage() : 'Erro ao realizar check-in'
+            ], 500);
         }
     }
 
@@ -383,29 +462,54 @@ class CheckinController extends Controller
     {
         $user = $request->user();
 
+        // Carregar relacionamentos necessários antes de deletar
+        $checkin->load('userChallenge.challenge');
+
         // Verificar se o check-in pertence ao usuário
-        if ($checkin->userChallenge->user_id !== $user->id) {
+        if (!$checkin->userChallenge || $checkin->userChallenge->user_id !== $user->id) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Check-in não encontrado'], 404);
             }
             return back()->withErrors(['message' => 'Check-in não encontrado']);
         }
 
-        try {
-            // deletando o check-in
-            $checkin->forceDelete();
+        // Salvar dados necessários antes de deletar
+        $userChallenge = $checkin->userChallenge;
+        $challengeId = $userChallenge->challenge_id;
+        $imagePath = $checkin->image_path;
 
-            // Remover imagem se existir
-            if ($checkin->image_path) {
-                Storage::disk('public')->delete($checkin->image_path);
+        try {
+            // Remover imagem se existir (antes de deletar o check-in)
+            if ($imagePath) {
+                try {
+                    Storage::disk('public')->delete($imagePath);
+                } catch (\Exception $imageError) {
+                    Log::warning('Erro ao remover imagem do check-in', [
+                        'checkin_id' => $checkin->id,
+                        'image_path' => $imagePath,
+                        'error' => $imageError->getMessage()
+                    ]);
+                    // Não falhar o delete por causa de erro na imagem
+                }
             }
 
-            // Atualizar stats do user challenge
-            $userChallenge = $checkin->userChallenge;
-            $userChallenge->updateStats();
+            // Deletar o check-in
+            $checkin->forceDelete();
+
+            // Atualizar stats do user challenge (pode lançar exceção)
+            try {
+                $userChallenge->refresh();
+                $userChallenge->updateStats();
+            } catch (\Exception $statsError) {
+                Log::warning('Erro ao atualizar stats após deletar check-in', [
+                    'user_challenge_id' => $userChallenge->id,
+                    'error' => $statsError->getMessage()
+                ]);
+                // Não falhar o delete por causa de erro nas stats
+            }
             
-            // Invalidar cache relacionado
-            CacheHelper::invalidateCheckinCache($user->id, $userChallenge->challenge_id);
+            // Invalidar cache relacionado (já tem tratamento de erros interno)
+            CacheHelper::invalidateCheckinCache($user->id, $challengeId);
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Check-in removido com sucesso!']);
@@ -414,8 +518,18 @@ class CheckinController extends Controller
             return redirect()->back()->with('success', 'Check-in removido com sucesso!');
 
         } catch (\Exception $e) {
+            Log::error('Erro ao deletar check-in', [
+                'checkin_id' => $checkin->id,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Erro interno do servidor'], 500);
+                return response()->json([
+                    'message' => 'Erro interno do servidor',
+                    'error' => config('app.debug') ? $e->getMessage() : 'Erro ao remover check-in'
+                ], 500);
             }
             return back()->withErrors(['message' => 'Erro ao remover check-in. Tente novamente.']);
         }
@@ -441,10 +555,11 @@ class CheckinController extends Controller
         $todayTasks = [];
 
         foreach ($tasks as $task) {
-            // Verificar se já fez check-in hoje
+            // Verificar se já fez check-in hoje (data real)
+            // Busca check-ins de hoje independentemente do challenge_day para garantir que encontre todos
             $todayCheckin = Checkin::where('user_challenge_id', $currentChallenge->id)
                 ->where('task_id', $task->id)
-                ->where('challenge_day', $currentDay)
+                ->whereDate('checked_at', today())
                 ->whereNull('deleted_at')
                 ->first();
 
@@ -598,7 +713,7 @@ class CheckinController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Erro ao gerar card compartilhável: ' . $e->getMessage());
+            Log::error('Erro ao gerar card compartilhável: ' . $e->getMessage());
             return response()->json(['message' => 'Erro ao gerar imagem'], 500);
         }
     }
@@ -632,7 +747,7 @@ class CheckinController extends Controller
             $footer->fill('#22d3ee');
             $canvas->place($footer, '0', (int)($height - $footerHeight));
             
-            \Log::warning('Template de card não encontrado em: ' . $templatePath);
+            Log::warning('Template de card não encontrado em: ' . $templatePath);
         }
 
         // Caminhos das fontes (com fallback)

@@ -207,14 +207,13 @@ const formatNumber = (num) => {
 }
 
 const getCompletionRate = (challenge) => {
-    // Mock completion rate - in real app, this would come from API
-    return Math.floor(Math.random() * 20) + 75 // 75-95% (featured challenges have higher success)
+    // Use completion rate from backend (calculated based on all participants)
+    return challenge.completion_rate ?? 0
 }
 
 const getTrendingScore = (challenge) => {
-    // Mock trending score - in real app, this would come from API
-    const scores = ['🔥', '🚀', '⭐', '💎', '🌟']
-    return scores[Math.floor(Math.random() * scores.length)]
+    // Use trending score from backend (calculated based on recent activity)
+    return challenge.trending_score ?? '🌟'
 }
 </script>
 

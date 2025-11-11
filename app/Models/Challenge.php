@@ -121,7 +121,7 @@ class Challenge extends Model
     public function updateParticipantCount(): void
     {
         $this->participant_count = $this->userChallenges()
-            ->whereIn('status', ['active', 'completed'])
+            ->whereIn('status', ['active', 'completed', 'expired'])
             ->count();
         $this->save();
     }

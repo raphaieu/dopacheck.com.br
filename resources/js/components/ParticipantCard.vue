@@ -23,7 +23,8 @@
 
                 <!-- Progress -->
                 <div class="flex-shrink-0 text-right ml-4">
-                    <div class="text-lg font-bold text-blue-600">{{ Math.round(participant.completion_rate || 0) }}%
+                    <div class="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {{ Math.round(participant.progress_percentage || participant.completion_rate || 0) }}%
                     </div>
                     <div class="text-xs text-gray-500">Progresso</div>
                 </div>

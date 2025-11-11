@@ -12,7 +12,7 @@ import Label from '@/components/ui/label/Label.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 useSeoMetaTags({
-  title: 'Register',
+  title: 'Cadastre-se',
 })
 
 const route = inject('route')
@@ -32,14 +32,17 @@ function submit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col items-center justify-center">
-    <Card class="mx-auto max-w-lg">
-      <CardHeader>
-        <CardTitle class="flex justify-center">
+  <div class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <Card class="mx-auto w-full max-w-lg shadow-xl border-0 transition-all duration-300 hover:shadow-2xl">
+      <CardHeader class="space-y-4 pb-6">
+        <CardTitle class="flex flex-col items-center gap-3">
           <AuthenticationCardLogo />
+          <div class="text-center">
+            <h1 class="text-2xl font-bold text-gray-900">DOPA Check</h1>
+          </div>
         </CardTitle>
-        <CardDescription class="text-center text-2xl">
-          Create your account
+        <CardDescription class="text-center text-lg font-medium text-gray-600">
+          Crie sua conta
         </CardDescription>
       </CardHeader>
 
@@ -47,56 +50,89 @@ function submit() {
         <form @submit.prevent="submit">
           <div class="grid gap-4">
             <div class="grid gap-2">
-              <Label for="name">Name</Label>
-              <Input id="name" v-model="form.name" type="text" required autofocus autocomplete="name" />
+              <Label for="name" class="text-gray-700 font-medium">Nome</Label>
+              <Input 
+                id="name" 
+                v-model="form.name" 
+                type="text" 
+                placeholder="Seu nome completo"
+                class="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                required 
+                autofocus 
+                autocomplete="name" 
+              />
               <InputError :message="form.errors.name" />
             </div>
 
             <div class="grid gap-2">
-              <Label for="email">Email</Label>
-              <Input id="email" v-model="form.email" type="email" required autocomplete="username" />
+              <Label for="email" class="text-gray-700 font-medium">E-mail</Label>
+              <Input 
+                id="email" 
+                v-model="form.email" 
+                type="email" 
+                placeholder="seu@email.com"
+                class="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                required 
+                autocomplete="username" 
+              />
               <InputError :message="form.errors.email" />
             </div>
 
             <div class="grid gap-2">
-              <Label for="password">Password</Label>
+              <Label for="password" class="text-gray-700 font-medium">Senha</Label>
               <Input
-                id="password" v-model="form.password" type="password" required
+                id="password" 
+                v-model="form.password" 
+                type="password" 
+                placeholder="Mínimo 8 caracteres"
+                class="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                required
                 autocomplete="new-password"
               />
               <InputError :message="form.errors.password" />
             </div>
 
             <div class="grid gap-2">
-              <Label for="password_confirmation">Confirm Password</Label>
+              <Label for="password_confirmation" class="text-gray-700 font-medium">Confirmar Senha</Label>
               <Input
-                id="password_confirmation" v-model="form.password_confirmation" type="password"
-                required autocomplete="new-password"
+                id="password_confirmation" 
+                v-model="form.password_confirmation" 
+                type="password" 
+                placeholder="Digite a senha novamente"
+                class="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                required 
+                autocomplete="new-password"
               />
               <InputError :message="form.errors.password_confirmation" />
             </div>
 
             <div v-if="$page.props.jetstream.hasTermsAndPrivacyPolicyFeature">
-              <div class="flex items-center space-x-2">
-                <Checkbox id="terms" v-model:checked="form.terms" name="terms" required />
-                <label for="terms" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  I agree to the
-                  <a target="_blank" :href="route('terms.show')" class="rounded-md text-sm underline">Terms of Service</a>
-                  and
-                  <a target="_blank" :href="route('policy.show')" class="rounded-md text-sm underline">Privacy Policy</a>
+              <div class="flex items-start space-x-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <Checkbox id="terms" v-model="form.terms" name="terms" required class="mt-1" />
+                <label for="terms" class="text-sm text-gray-600 cursor-pointer leading-relaxed">
+                  Eu concordo com os
+                  <a target="_blank" :href="route('terms.show')" class="text-blue-600 hover:text-blue-700 hover:underline underline-offset-4">Termos de Serviço</a>
+                  e a
+                  <a target="_blank" :href="route('policy.show')" class="text-blue-600 hover:text-blue-700 hover:underline underline-offset-4">Política de Privacidade</a>
                 </label>
               </div>
               <InputError :message="form.errors.terms" />
             </div>
 
-            <div class="flex items-center justify-end gap-4">
-              <Link :href="route('login')" class="text-sm underline">
-                Already registered?
-              </Link>
+            <Button 
+              type="submit"
+              class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium mt-2"
+              :class="{ 'opacity-25': form.processing }" 
+              :disabled="form.processing"
+            >
+              {{ form.processing ? 'Criando conta...' : 'Criar Conta' }}
+            </Button>
 
-              <Button :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                Register
-              </Button>
+            <div class="text-center text-sm text-gray-600 mt-4">
+              Já tem uma conta?
+              <Link :href="route('login')" class="font-medium text-blue-600 hover:text-blue-700 hover:underline underline-offset-4">
+                Entrar
+              </Link>
             </div>
           </div>
         </form>

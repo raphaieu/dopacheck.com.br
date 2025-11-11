@@ -1,24 +1,7 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
     <!-- Header -->
-    <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-      <div class="max-w-4xl mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <Link href="/reports" class="text-gray-600 hover:text-gray-900 transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <span class="text-white font-bold text-lg">🧠</span>
-            </div>
-            <h1 class="text-xl font-bold text-gray-900">Relatório Detalhado</h1>
-          </div>
-          <div class="w-6"></div>
-        </div>
-      </div>
-    </header>
+    <DopaHeader subtitle="Relatório Detalhado" max-width="4xl" home-link="/dopa" :show-back-button="true" back-link="/reports" />
 
     <main class="max-w-4xl mx-auto px-4 py-8 space-y-6">
       <!-- Challenge Info -->
@@ -96,6 +79,7 @@
 
 <script setup>
 import { Link } from '@inertiajs/vue3'
+import DopaHeader from '@/components/DopaHeader.vue'
 
 const props = defineProps({
   userChallenge: Object,
@@ -114,7 +98,11 @@ const formatStatus = (status) => {
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
-  return new Date(dateString).toLocaleDateString('pt-BR', { 
+  // Parse a data como YYYY-MM-DD e criar Date no timezone local
+  // Isso evita problemas de timezone ao interpretar a string
+  const [year, month, day] = dateString.split('-').map(Number)
+  const date = new Date(year, month - 1, day) // month é 0-indexed no JS
+  return date.toLocaleDateString('pt-BR', { 
     weekday: 'long',
     year: 'numeric',
     month: 'long',

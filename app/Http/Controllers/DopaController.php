@@ -32,17 +32,50 @@ class DopaController extends Controller
             $userChallenge->updateCurrentDay();
         }
         
-        // Recarregar para pegar desafios que foram marcados como completos
+        // Verificar se há desafios marcados como completos/expirados que ainda deveriam estar ativos
+        // (pode acontecer se foram marcados incorretamente antes da correção)
+        $finalizedButShouldBeActive = $user->userChallenges()
+            ->whereIn('status', ['completed', 'expired'])
+            ->with(['challenge.tasks'])
+            ->get()
+            ->filter(function ($userChallenge) {
+                $startDate = $userChallenge->started_at->copy()->startOfDay();
+                $today = now()->startOfDay();
+                $daysSinceStart = $startDate->diffInDays($today) + 1;
+                // Se ainda não passou do último dia, deveria estar ativo
+                return $daysSinceStart <= $userChallenge->challenge->duration_days;
+            });
+        
+        // Reativar desafios que foram marcados incorretamente como finalizados
+        foreach ($finalizedButShouldBeActive as $userChallenge) {
+            $userChallenge->status = 'active';
+            $userChallenge->completed_at = null;
+            $userChallenge->updateCurrentDay();
+            $userChallenge->save();
+        }
+        
+        // Recarregar para pegar desafios que foram marcados como completos ou reativados
         $activeChallengesEloquent = $user->activeChallenges()->with(['challenge.tasks'])->get();
         
         $activeChallenges = $activeChallengesEloquent->map(function ($userChallenge) {
+            // Atualizar current_day antes de calcular (garante que está sincronizado)
+            if ($userChallenge->status === 'active') {
+                $userChallenge->updateCurrentDay();
+                $userChallenge->refresh();
+            }
+            
             // Calculate current day for this challenge (já limitado pelo updateCurrentDay)
             $currentDay = $this->calculateCurrentDay($userChallenge);
+            
             // Get all tasks for the challenge
             $allTasks = $userChallenge->challenge->tasks()->orderBy('order')->get();
-            // Get today's completed check-ins
+            
+            // Get check-ins for today (actual date must match)
+            // Busca check-ins de hoje independentemente do challenge_day para garantir que encontre todos
+            // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
             $todayCheckins = $userChallenge->checkins()
-                ->where('challenge_day', $currentDay)
+                ->whereDate('checked_at', today())
+                ->whereNull('deleted_at')
                 ->with('task')
                 ->get()
                 ->keyBy('task_id');
@@ -79,6 +112,8 @@ class DopaController extends Controller
                 'streak_days' => $userChallenge->streak_days,
                 'best_streak' => $userChallenge->best_streak,
                 'completion_rate' => $userChallenge->completion_rate,
+                'progress_percentage' => $userChallenge->progress_percentage, // Progresso baseado em dias completos
+                'days_remaining' => $userChallenge->days_remaining, // Usa o accessor que considera se hoje está completo
                 'challenge' => [
                     'id' => $userChallenge->challenge->id,
                     'title' => $userChallenge->challenge->title,
@@ -208,9 +243,11 @@ class DopaController extends Controller
         $tasks = $currentChallenge->challenge->tasks;
         $todayTasks = [];
         foreach ($tasks as $task) {
+            // Busca check-ins de hoje independentemente do challenge_day
+            // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
             $todayCheckin = Checkin::where('user_challenge_id', $currentChallenge->id)
                 ->where('task_id', $task->id)
-                ->where('challenge_day', $currentDay)
+                ->whereDate('checked_at', today())
                 ->whereNull('deleted_at')
                 ->first();
             $todayTasks[] = [

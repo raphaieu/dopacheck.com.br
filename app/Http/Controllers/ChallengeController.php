@@ -11,6 +11,8 @@ use App\Helpers\CacheHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -66,7 +68,7 @@ class ChallengeController extends Controller
         
         $challenges = $query->paginate(6);
         
-        // Get user participation info for each challenge
+        // Get user participation info and completion rate for each challenge
         $user = $request->user();
         if ($user) {
             $userChallengeIds = $user->userChallenges()
@@ -75,9 +77,64 @@ class ChallengeController extends Controller
                 ->pluck('challenge_id')
                 ->toArray();
             
-            // Add user participation info to each challenge
+            // Add user participation info and completion rate to each challenge
             $challenges->getCollection()->transform(function ($challenge) use ($userChallengeIds) {
+                // Calcular participantes reais (active + completed) ANTES de adicionar atributos dinâmicos
+                $totalParticipants = $challenge->userChallenges()
+                    ->whereIn('status', ['active', 'completed', 'expired'])
+                    ->count();
+                
+                // Atualizar participant_count se estiver desatualizado (usando query direta para evitar salvar atributos dinâmicos)
+                if (abs($challenge->participant_count - $totalParticipants) > 0) {
+                    // Usar query direta para atualizar apenas a coluna específica
+                    DB::table('challenges')
+                        ->where('id', $challenge->id)
+                        ->update(['participant_count' => $totalParticipants]);
+                    
+                    // Atualizar o atributo no modelo para refletir a mudança
+                    $challenge->participant_count = $totalParticipants;
+                }
+                
+                // Adicionar atributos dinâmicos DEPOIS da atualização do banco
                 $challenge->user_is_participating = in_array($challenge->id, $userChallengeIds);
+                
+                // Calculate completion rate based on all participants (not filtered)
+                $completedParticipants = $challenge->completedParticipants()->count();
+                $completionRate = $totalParticipants > 0 
+                    ? round(($completedParticipants / $totalParticipants) * 100, 0) 
+                    : 0;
+                
+                // Adicionar como atributo dinâmico para o frontend
+                $challenge->setAttribute('completion_rate', $completionRate);
+                return $challenge;
+            });
+        } else {
+            // For non-authenticated users, still calculate completion rate
+            $challenges->getCollection()->transform(function ($challenge) {
+                // Calcular participantes reais (active + completed) ANTES de adicionar atributos dinâmicos
+                $totalParticipants = $challenge->userChallenges()
+                    ->whereIn('status', ['active', 'completed', 'expired'])
+                    ->count();
+                
+                // Atualizar participant_count se estiver desatualizado (usando query direta para evitar salvar atributos dinâmicos)
+                if (abs($challenge->participant_count - $totalParticipants) > 0) {
+                    // Usar query direta para atualizar apenas a coluna específica
+                    DB::table('challenges')
+                        ->where('id', $challenge->id)
+                        ->update(['participant_count' => $totalParticipants]);
+                    
+                    // Atualizar o atributo no modelo para refletir a mudança
+                    $challenge->participant_count = $totalParticipants;
+                }
+                
+                // Calculate completion rate based on all participants (not filtered)
+                $completedParticipants = $challenge->completedParticipants()->count();
+                $completionRate = $totalParticipants > 0 
+                    ? round(($completedParticipants / $totalParticipants) * 100, 0) 
+                    : 0;
+                
+                // Adicionar como atributo dinâmico para o frontend
+                $challenge->setAttribute('completion_rate', $completionRate);
                 return $challenge;
             });
         }
@@ -88,7 +145,7 @@ class ChallengeController extends Controller
             ->limit(3)
             ->get();
         
-        // Add user participation info to featured challenges
+        // Add user participation info and completion rate to featured challenges
         if ($user) {
             $featuredUserChallengeIds = $user->userChallenges()
                 ->whereIn('challenge_id', $featuredChallenges->pluck('id'))
@@ -97,7 +154,77 @@ class ChallengeController extends Controller
                 ->toArray();
             
             $featuredChallenges->transform(function ($challenge) use ($featuredUserChallengeIds) {
+                // Calcular participantes reais (active + completed) ANTES de adicionar atributos dinâmicos
+                $totalParticipants = $challenge->userChallenges()
+                    ->whereIn('status', ['active', 'completed', 'expired'])
+                    ->count();
+                
+                // Atualizar participant_count se estiver desatualizado (usando query direta para evitar salvar atributos dinâmicos)
+                if (abs($challenge->participant_count - $totalParticipants) > 0) {
+                    // Usar query direta para atualizar apenas a coluna específica
+                    DB::table('challenges')
+                        ->where('id', $challenge->id)
+                        ->update(['participant_count' => $totalParticipants]);
+                    
+                    // Atualizar o atributo no modelo para refletir a mudança
+                    $challenge->participant_count = $totalParticipants;
+                }
+                
+                // Adicionar atributos dinâmicos DEPOIS da atualização do banco
                 $challenge->user_is_participating = in_array($challenge->id, $featuredUserChallengeIds);
+                
+                // Calculate completion rate based on all participants (not filtered)
+                $completedParticipants = $challenge->completedParticipants()->count();
+                $completionRate = $totalParticipants > 0 
+                    ? round(($completedParticipants / $totalParticipants) * 100, 0) 
+                    : 0;
+                
+                // Adicionar como atributo dinâmico para o frontend
+                $challenge->setAttribute('completion_rate', $completionRate);
+                
+                // Calculate trending score based on recent activity
+                $recentParticipants = $challenge->userChallenges()
+                    ->where('started_at', '>=', now()->subDays(7))
+                    ->count();
+                $challenge->trending_score = $recentParticipants > 10 ? '🔥' 
+                    : ($recentParticipants > 5 ? '🚀' 
+                    : ($recentParticipants > 2 ? '⭐' 
+                    : ($challenge->participant_count > 100 ? '💎' : '🌟')));
+                return $challenge;
+            });
+        } else {
+            // For non-authenticated users, still calculate completion rate and trending
+            $featuredChallenges->transform(function ($challenge) {
+                // Calcular participantes reais (active + completed) ANTES de adicionar atributos dinâmicos
+                $totalParticipants = $challenge->userChallenges()
+                    ->whereIn('status', ['active', 'completed', 'expired'])
+                    ->count();
+                
+                // Atualizar participant_count se estiver desatualizado (usando query direta para evitar salvar atributos dinâmicos)
+                if (abs($challenge->participant_count - $totalParticipants) > 0) {
+                    // Usar query direta para atualizar apenas a coluna específica
+                    DB::table('challenges')
+                        ->where('id', $challenge->id)
+                        ->update(['participant_count' => $totalParticipants]);
+                    
+                    // Atualizar o atributo no modelo para refletir a mudança
+                    $challenge->participant_count = $totalParticipants;
+                }
+                
+                $completedParticipants = $challenge->completedParticipants()->count();
+                $completionRate = $totalParticipants > 0 
+                    ? round(($completedParticipants / $totalParticipants) * 100, 0) 
+                    : 0;
+                
+                // Adicionar como atributo dinâmico para o frontend
+                $challenge->setAttribute('completion_rate', $completionRate);
+                $recentParticipants = $challenge->userChallenges()
+                    ->where('started_at', '>=', now()->subDays(7))
+                    ->count();
+                $challenge->trending_score = $recentParticipants > 10 ? '🔥' 
+                    : ($recentParticipants > 5 ? '🚀' 
+                    : ($recentParticipants > 2 ? '⭐' 
+                    : ($challenge->participant_count > 100 ? '💎' : '🌟')));
                 return $challenge;
             });
         }
@@ -149,10 +276,22 @@ class ChallengeController extends Controller
         
         // Get recent participants
         $recentParticipants = $challenge->activeParticipants()
-            ->with('user')
+            ->with(['user', 'challenge.tasks']) // Carregar challenge e tasks para calcular progress_percentage
             ->latest()
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function ($userChallenge) {
+                return [
+                    'id' => $userChallenge->id,
+                    'user' => $userChallenge->user,
+                    'status' => $userChallenge->status,
+                    'current_day' => $userChallenge->current_day,
+                    'started_at' => $userChallenge->started_at,
+                    'streak_days' => $userChallenge->streak_days,
+                    'completion_rate' => $userChallenge->completion_rate,
+                    'progress_percentage' => $userChallenge->progress_percentage, // Progresso baseado em dias completos
+                ];
+            });
         
         return Inertia::render('Challenges/Show', [
             'challenge' => $challenge,
@@ -178,11 +317,42 @@ class ChallengeController extends Controller
         $challenge->load(['creator', 'tasks']);
         
         // Get all participants with pagination
+        // Ordenar por progresso (dias completos) - maior primeiro
         $participants = $challenge->userChallenges()
-            ->with(['user:id,name,username,profile_photo_path,plan,subscription_ends_at'])
-            ->whereIn('status', ['active', 'completed'])
-            ->orderBy('started_at', 'desc')
-            ->paginate(20);
+            ->with([
+                'user:id,name,username,profile_photo_path,plan,subscription_ends_at',
+                'challenge.tasks' // Carregar challenge e tasks para calcular progress_percentage
+            ])
+            ->whereIn('status', ['active', 'completed', 'expired'])
+            ->get()
+            ->map(function ($userChallenge) {
+                return [
+                    'id' => $userChallenge->id,
+                    'user' => $userChallenge->user,
+                    'status' => $userChallenge->status,
+                    'current_day' => $userChallenge->current_day,
+                    'started_at' => $userChallenge->started_at,
+                    'streak_days' => $userChallenge->streak_days,
+                    'completion_rate' => $userChallenge->completion_rate,
+                    'progress_percentage' => $userChallenge->progress_percentage, // Progresso baseado em dias completos
+                ];
+            })
+            ->sortByDesc('progress_percentage')
+            ->values();
+        
+        // Paginar manualmente
+        $perPage = 20;
+        $currentPage = request()->get('page', 1);
+        $items = $participants->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $total = $participants->count();
+        
+        $participants = new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
         
         // Get challenge stats
         $stats = $challenge->getStats();
@@ -321,10 +491,19 @@ class ChallengeController extends Controller
         
         if ($anyParticipation) {
             // Update existing participation to active
+            // Reset challenge progress when re-joining
             $anyParticipation->update([
                 'status' => 'active',
                 'started_at' => now(),
+                'current_day' => 1,
+                'total_checkins' => 0,
+                'streak_days' => 0,
+                'completion_rate' => 0.00,
             ]);
+            
+            // Delete old check-ins when re-joining a challenge
+            // This prevents showing old check-ins from previous participation
+            $anyParticipation->checkins()->forceDelete();
         } else {
             // Create new participation
             UserChallenge::create([

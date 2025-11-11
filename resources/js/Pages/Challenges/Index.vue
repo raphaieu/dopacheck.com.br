@@ -1,43 +1,19 @@
 <template>
     <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <!-- Header -->
-        <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-            <div class="max-w-7xl mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <Link href="/dopa" class="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-                        <div
-                            class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                            <span class="text-white font-bold text-lg">🧠</span>
-                        </div>
-                        <div>
-                            <h1 class="text-xl font-bold text-gray-900">DOPA Check</h1>
-                            <p class="text-sm text-gray-500">Desafios</p>
-                        </div>
-                        </Link>
-                    </div>
-
-                    <div class="flex items-center space-x-4">
-                        <Link href="/challenges/create"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        <span>Criar Desafio</span>
-                        </Link>
-
-                        <Link href="/dopa" class="text-gray-600 hover:text-gray-900 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <DopaHeaderWrapper subtitle="Desafios" max-width="7xl" />
 
         <main class="max-w-7xl mx-auto px-4 pt-8">
+            <!-- Create Challenge Button -->
+            <div class="mb-6 flex justify-end">
+                <Link href="/challenges/create"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Criar Desafio</span>
+                </Link>
+            </div>
             <!-- Hero Section - Featured Challenges -->
             <section v-if="featuredChallenges.length > 0" class="mb-12 hidden">
                 <div class="text-center mb-8">
@@ -228,6 +204,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import ChallengeCard from '@/components/ChallengeCard.vue'
 import FeaturedChallengeCard from '@/components/FeaturedChallengeCard.vue'
 import Pagination from '@/components/Pagination.vue'

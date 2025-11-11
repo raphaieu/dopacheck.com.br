@@ -50,7 +50,7 @@ function copyToClipboard() {
           :class="{ 'opacity-0': index > terminalStep, 'opacity-100': index <= terminalStep }"
           class="transition-opacity duration-300 text-foreground"
         >
-          <span class="text-green-400 dark:text-green-500">$</span> {{ step }}
+          <span class="text-green-400">$</span> {{ step }}
         </div>
       </div>
     </div>

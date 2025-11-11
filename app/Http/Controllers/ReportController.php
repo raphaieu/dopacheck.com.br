@@ -75,8 +75,14 @@ class ReportController extends Controller
         
         $userChallenge->load(['challenge.tasks', 'checkins.task']);
         
+        // Atualizar current_day antes de gerar o relatório
+        $userChallenge->updateCurrentDay();
+        $userChallenge->refresh();
+        
         // Get progress by day
         $progressByDay = [];
+        $startDate = $userChallenge->started_at->copy()->startOfDay();
+        
         for ($day = 1; $day <= $userChallenge->current_day; $day++) {
             $dayCheckins = $userChallenge->checkins()
                 ->where('challenge_day', $day)
@@ -91,9 +97,12 @@ class ReportController extends Controller
                 ];
             });
             
+            // Calcular a data correta do dia (usando startOfDay para garantir consistência)
+            $dayDate = $startDate->copy()->addDays($day - 1);
+            
             $progressByDay[] = [
                 'day' => $day,
-                'date' => $userChallenge->started_at->copy()->addDays($day - 1)->format('Y-m-d'),
+                'date' => $dayDate->format('Y-m-d'),
                 'tasks' => $dayTasks,
                 'completed_count' => $dayTasks->where('completed', true)->count(),
                 'total_count' => $dayTasks->count(),
