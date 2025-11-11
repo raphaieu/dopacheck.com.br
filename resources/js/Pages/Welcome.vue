@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { Link } from '@inertiajs/vue3'
 import FeaturesCard from '@/components/FeaturesCard.vue'
@@ -19,6 +20,15 @@ const props = defineProps({
   },
   canRegister: {
     type: Boolean,
+  },
+  stats: {
+    type: Object,
+    default: () => ({
+      completion_rate: 0,
+      total_checkins: 0,
+      total_users: 0,
+      total_challenges: 0,
+    }),
   },
   seo: {
     type: Object,
@@ -114,12 +124,33 @@ const faqItems = [
   },
 ]
 
-const stats = [
-  { number: '68%', label: 'Taxa de conclusão vs 23% média' },
-  { number: '10.5k', label: 'Check-ins processados' },
-  { number: '2.1k', label: 'Usuários ativos' },
-  { number: '150+', label: 'Desafios criados' },
-]
+// Formatar números para exibição
+const formatNumber = (num) => {
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'k'
+  }
+  return num.toString()
+}
+
+// Estatísticas calculadas a partir dos dados do backend
+const stats = computed(() => [
+  { 
+    number: `${props.stats.completion_rate}%`, 
+    label: 'Taxa de conclusão' 
+  },
+  { 
+    number: formatNumber(props.stats.total_checkins), 
+    label: 'Check-ins processados' 
+  },
+  { 
+    number: formatNumber(props.stats.total_users), 
+    label: 'Usuários ativos' 
+  },
+  { 
+    number: `${props.stats.total_challenges}+`, 
+    label: 'Desafios criados' 
+  },
+])
 
 const testimonials = [
   {
@@ -181,16 +212,16 @@ const testimonials = [
         </p>
 
         <!-- CTA Buttons -->
-        <div class="mt-10 flex items-center justify-center gap-4 flex-row">
+        <div class="mt-10 flex items-center justify-center gap-4 flex-col sm:flex-row">
           <Button
             :as="Link" :href="route('register')" size="lg"
-            class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+            class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
           >
             Começar Gratuitamente
           </Button>
           <Button
             :as="Link" :href="route('challenges.index')" size="lg" variant="outline"
-            class="w-full sm:w-auto"
+            class="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             Ver Desafios
           </Button>
@@ -403,7 +434,7 @@ const testimonials = [
               <Button :as="Link" :href="route('register')" size="lg" variant="secondary">
                 Começar Agora
               </Button>
-              <Button :as="Link" :href="route('challenges.index')" size="lg" variant="outline" class="text-white border-white hover:bg-white hover:text-blue-600">
+              <Button :as="Link" :href="route('challenges.index')" size="lg" variant="outline" class="bg-white/10 text-white border-white hover:bg-white hover:text-blue-600">
                 Ver Desafios
               </Button>
             </div>

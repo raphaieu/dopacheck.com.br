@@ -88,7 +88,35 @@ class UserChallenge extends Model
     }
 
     /**
+     * Check if today is completed (all required tasks done)
+     */
+    public function hasCompletedToday(): bool
+    {
+        $requiredTasks = $this->challenge->tasks()->where('is_required', true)->get();
+        
+        if ($requiredTasks->isEmpty()) {
+            return true; // Se não há tarefas obrigatórias, considera completo
+        }
+        
+        // Verificar check-ins de hoje para todas as tarefas obrigatórias
+        $todayCheckins = $this->checkins()
+            ->whereIn('task_id', $requiredTasks->pluck('id'))
+            ->whereDate('checked_at', today())
+            ->whereNull('deleted_at')
+            ->pluck('task_id')
+            ->toArray();
+        
+        // Verificar se todas as tarefas obrigatórias têm check-in hoje
+        $requiredTaskIds = $requiredTasks->pluck('id')->toArray();
+        $allCompleted = count($todayCheckins) === count($requiredTaskIds) && 
+                       empty(array_diff($requiredTaskIds, $todayCheckins));
+        
+        return $allCompleted;
+    }
+
+    /**
      * Calculate days remaining
+     * Se o dia atual está 100% completo, considera que esse dia já foi "consumido"
      */
     public function getDaysRemainingAttribute(): int
     {
@@ -96,7 +124,14 @@ class UserChallenge extends Model
             return 0;
         }
 
-        return max(0, $this->challenge->duration_days - $this->current_day + 1);
+        $baseRemaining = max(0, $this->challenge->duration_days - $this->current_day + 1);
+        
+        // Se o dia atual está completo, diminui 1 dia dos restantes
+        if ($this->hasCompletedToday()) {
+            return max(0, $baseRemaining - 1);
+        }
+        
+        return $baseRemaining;
     }
 
     /**
@@ -112,20 +147,78 @@ class UserChallenge extends Model
     }
 
     /**
-     * Check if challenge is completed
+     * Check if challenge is completed (with success)
      */
     public function getIsCompletedAttribute(): bool
     {
-        return $this->status === 'completed' || 
-               $this->current_day >= $this->challenge->duration_days;
+        return $this->status === 'completed';
     }
 
     /**
-     * Get progress percentage
+     * Check if challenge is finalized (completed or expired)
+     */
+    public function getIsFinalizedAttribute(): bool
+    {
+        return in_array($this->status, ['completed', 'expired']);
+    }
+
+    /**
+     * Get progress percentage based on completed days (not just current_day)
+     * Calcula quantos dias foram 100% completados (todas tarefas obrigatórias)
      */
     public function getProgressPercentageAttribute(): float
     {
-        return round((float) $this->current_day / (float) $this->challenge->duration_days * 100, 2);
+        $durationDays = $this->challenge->duration_days;
+        $completedDays = $this->getCompletedDaysCount();
+        
+        return round(($completedDays / $durationDays) * 100, 2);
+    }
+
+    /**
+     * Get count of days that were 100% completed (all required tasks done)
+     */
+    public function getCompletedDaysCount(): int
+    {
+        $requiredTasksCount = $this->challenge->tasks()->where('is_required', true)->count();
+        
+        if ($requiredTasksCount === 0) {
+            // Se não há tarefas obrigatórias, considera todos os dias até current_day como completos
+            return min($this->current_day, $this->challenge->duration_days);
+        }
+        
+        $startDate = $this->started_at->copy()->startOfDay();
+        $endDate = $startDate->copy()->addDays($this->challenge->duration_days - 1)->endOfDay();
+        
+        // Buscar todos os check-ins obrigatórios do desafio
+        $allCheckins = $this->checkins()
+            ->whereIn('task_id', $this->challenge->tasks()->where('is_required', true)->pluck('id'))
+            ->whereDate('checked_at', '>=', $startDate)
+            ->whereDate('checked_at', '<=', $endDate)
+            ->whereNull('deleted_at')
+            ->get();
+        
+        // Agrupar check-ins por data
+        $checkinsByDate = $allCheckins->groupBy(function ($checkin) {
+            return $checkin->checked_at->format('Y-m-d');
+        });
+        
+        // Contar quantos dias têm todas as tarefas obrigatórias completas
+        $completedDays = 0;
+        $requiredTaskIds = $this->challenge->tasks()->where('is_required', true)->pluck('id')->toArray();
+        
+        foreach ($checkinsByDate as $date => $checkins) {
+            $checkinTaskIds = $checkins->pluck('task_id')->unique()->toArray();
+            
+            // Verificar se todas as tarefas obrigatórias têm check-in nesta data
+            $allCompleted = count($checkinTaskIds) === count($requiredTaskIds) && 
+                          empty(array_diff($requiredTaskIds, $checkinTaskIds));
+            
+            if ($allCompleted) {
+                $completedDays++;
+            }
+        }
+        
+        return min($completedDays, $this->challenge->duration_days);
     }
 
     /**
@@ -157,9 +250,11 @@ class UserChallenge extends Model
         // Check-ins esperados
         $expected = $requiredTasksCount * $validDays;
 
-        // Check-ins realizados (apenas tarefas obrigatórias)
+        // Check-ins realizados (apenas tarefas obrigatórias e apenas até hoje)
+        // Considera apenas check-ins até a data de hoje para evitar contar check-ins futuros
         $actual = $this->checkins()
             ->whereIn('task_id', $this->challenge->tasks()->where('is_required', true)->pluck('id'))
+            ->whereDate('checked_at', '<=', $today)
             ->count();
 
         $this->completion_rate = $expected > 0 ? round(($actual / $expected) * 100, 2) : 0;
@@ -168,6 +263,7 @@ class UserChallenge extends Model
 
     /**
      * Update current day based on start date
+     * Marca automaticamente como completo se ultrapassar duration_days
      */
     public function updateCurrentDay(): void
     {
@@ -175,24 +271,97 @@ class UserChallenge extends Model
             return;
         }
 
-        $daysSinceStart = $this->started_at->diffInDays(now()) + 1;
-        $this->current_day = min($daysSinceStart, $this->challenge->duration_days);
+        // Usar copy() para não modificar o original e garantir timezone correto
+        $startDate = $this->started_at->copy()->startOfDay();
+        $today = now()->startOfDay();
+        
+        // Calcular diferença em dias (diffInDays retorna o número de dias completos)
+        // Se começou hoje, diffInDays = 0, então current_day = 1
+        // Se começou ontem, diffInDays = 1, então current_day = 2
+        $daysSinceStart = $startDate->diffInDays($today) + 1;
+        
+        // Limita ao duration_days do desafio
+        $newCurrentDay = min($daysSinceStart, $this->challenge->duration_days);
+        
+        // Garante que seja pelo menos 1
+        $this->current_day = max(1, $newCurrentDay);
 
-        // Check if challenge should be completed
-        if ($this->current_day >= $this->challenge->duration_days) {
-            $this->complete();
+        // Check if challenge should be finalized (completed or expired)
+        // O desafio só é finalizado quando JÁ PASSOU do último dia válido
+        // Para um desafio de N dias, o último dia válido é o dia N
+        // Então só finaliza quando daysSinceStart > duration_days
+        // (ou seja, quando já passou do último dia)
+        // O método complete() verifica se completou todos os check-ins obrigatórios
+        // Se sim, marca como 'completed', se não, marca como 'expired'
+        if ($daysSinceStart > $this->challenge->duration_days) {
+            $this->complete(); // Verifica se completou tudo, senão marca como expired
         } else {
             $this->save();
         }
+        
+        // Nota: completion_rate NÃO é atualizado aqui para manter rastreabilidade
+        // Ele é atualizado apenas quando há check-ins (via updateStats)
+        // Isso permite que relatórios calculem o progresso histórico baseado nos check-ins
     }
 
     /**
-     * Mark challenge as completed
+     * Check if user completed all required check-ins for the challenge
+     */
+    public function hasCompletedAllRequiredCheckins(): bool
+    {
+        $requiredTasksCount = $this->challenge->tasks()->where('is_required', true)->count();
+        
+        if ($requiredTasksCount === 0) {
+            return true; // Se não há tarefas obrigatórias, considera completo
+        }
+        
+        // Verificar se completou todos os check-ins obrigatórios para todos os dias
+        $startDate = $this->started_at->copy()->startOfDay();
+        $endDate = $startDate->copy()->addDays($this->challenge->duration_days - 1)->endOfDay();
+        
+        // Contar check-ins obrigatórios realizados
+        $actualCheckins = $this->checkins()
+            ->whereIn('task_id', $this->challenge->tasks()->where('is_required', true)->pluck('id'))
+            ->whereDate('checked_at', '>=', $startDate)
+            ->whereDate('checked_at', '<=', $endDate)
+            ->whereNull('deleted_at')
+            ->count();
+        
+        // Check-ins esperados = tarefas obrigatórias × dias do desafio
+        $expectedCheckins = $requiredTasksCount * $this->challenge->duration_days;
+        
+        return $actualCheckins >= $expectedCheckins;
+    }
+
+    /**
+     * Mark challenge as completed (only if all required check-ins are done)
      */
     public function complete(): void
     {
+        // Verificar se completou todos os check-ins obrigatórios
+        if (!$this->hasCompletedAllRequiredCheckins()) {
+            // Se não completou tudo, marca como expirado ao invés de completo
+            $this->expire();
+            return;
+        }
+        
         $this->status = 'completed';
         $this->completed_at = now();
+        $this->current_day = $this->challenge->duration_days;
+        $this->updateCompletionRate();
+        $this->save();
+
+        // Update challenge participant count
+        $this->challenge->updateParticipantCount();
+    }
+
+    /**
+     * Mark challenge as expired (time ended but not all required check-ins completed)
+     */
+    public function expire(): void
+    {
+        $this->status = 'expired';
+        $this->completed_at = now(); // Mantém completed_at para rastreabilidade
         $this->current_day = $this->challenge->duration_days;
         $this->updateCompletionRate();
         $this->save();
@@ -284,35 +453,50 @@ class UserChallenge extends Model
     }
 
     /**
-     * Calculate current streak
+     * Calculate current streak (otimizado)
+     * Usa query única para buscar todos os check-ins necessários
      */
     private function calculateCurrentStreak(): int
     {
+        $tasksPerDay = (int) $this->challenge->tasks()->required()->count();
+        
+        if ($tasksPerDay === 0) {
+            return 0;
+        }
+
+        // Buscar todos os check-ins desde o início do desafio até hoje
+        // Agrupar por data e contar quantos check-ins por dia
+        // Usar reorder() para remover o orderBy padrão do relacionamento
+        $checkinsByDate = $this->checkins()
+            ->whereDate('checked_at', '>=', $this->started_at->startOfDay())
+            ->whereDate('checked_at', '<=', now()->endOfDay())
+            ->selectRaw('DATE(checked_at) as check_date, COUNT(*) as check_count')
+            ->groupByRaw('DATE(checked_at)')
+            ->reorder() // Remove qualquer orderBy padrão do relacionamento
+            ->orderByRaw('DATE(checked_at) DESC')
+            ->get()
+            ->keyBy('check_date');
+
         $streak = 0;
         $date = today();
-        $tasksPerDay = (int) $this->challenge->tasks()->required()->count();
-        $maxDays = 365; // Limite de segurança para evitar loop infinito
-        $daysChecked = 0;
 
-        while ($date->greaterThanOrEqualTo($this->started_at->toDateString()) && $daysChecked < $maxDays) {
+        // Iterar apenas pelos dias que têm check-ins, começando de hoje
+        while ($date->greaterThanOrEqualTo($this->started_at->toDateString())) {
             $dayNumber = $this->started_at->diffInDays($date) + 1;
             
             if ($dayNumber > $this->current_day) {
                 break;
             }
 
-            $checkinsForDay = $this->checkins()
-                ->whereDate('checked_at', $date)
-                ->count();
+            $dateString = $date->format('Y-m-d');
+            $checkinsForDay = $checkinsByDate->get($dateString)?->check_count ?? 0;
 
             if ($checkinsForDay >= $tasksPerDay) {
                 $streak++;
-                $date = $date->copy()->subDay(); // Usar copy() para não modificar a data original
+                $date = $date->copy()->subDay();
             } else {
                 break;
             }
-            
-            $daysChecked++;
         }
 
         return $streak;
@@ -359,11 +543,27 @@ class UserChallenge extends Model
     }
 
     /**
-     * Scope for completed challenges
+     * Scope for completed challenges (with success)
      */
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
+    }
+
+    /**
+     * Scope for expired challenges
+     */
+    public function scopeExpired($query)
+    {
+        return $query->where('status', 'expired');
+    }
+
+    /**
+     * Scope for finalized challenges (completed or expired)
+     */
+    public function scopeFinalized($query)
+    {
+        return $query->whereIn('status', ['completed', 'expired']);
     }
 
     /**

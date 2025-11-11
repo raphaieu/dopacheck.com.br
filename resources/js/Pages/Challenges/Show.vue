@@ -1,39 +1,7 @@
 <template>
     <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <!-- Header -->
-        <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-            <div class="max-w-7xl mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <Link href="/challenges" class="text-gray-600 hover:text-gray-900 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
-                        </Link>
-
-                        <div class="flex items-center space-x-3">
-                            <div
-                                class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                                <span class="text-white font-bold text-lg">🧠</span>
-                            </div>
-                            <div>
-                                <h1 class="text-xl font-bold text-gray-900">{{ challenge.title }}</h1>
-                                <p class="text-sm text-gray-500">Detalhes do Desafio</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center space-x-4">
-                        <Link href="/dopa" class="text-gray-600 hover:text-gray-900 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <DopaHeaderWrapper :subtitle="challenge.title" max-width="7xl" :show-back-button="true" back-link="/challenges" />
 
         <main class="max-w-6xl mx-auto px-4 py-8">
             <!-- Challenge Hero -->
@@ -238,8 +206,8 @@
                                         <div class="text-xs text-green-600">Dia Atual</div>
                                     </div>
                                     <div>
-                                        <div class="text-lg font-bold text-green-600">{{
-                                            Math.round(userChallenge.completion_rate || 0) }}%</div>
+                                        <div class="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{{
+                                            Math.round(userChallenge.progress_percentage || userChallenge.completion_rate || 0) }}%</div>
                                         <div class="text-xs text-green-600">Progresso</div>
                                     </div>
                                 </div>
@@ -319,6 +287,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import TaskPreview from '@/components/TaskPreview.vue'
 import ParticipantCard from '@/components/ParticipantCard.vue'
 import { useChallenges } from '@/composables/useChallenges'

@@ -218,9 +218,14 @@
   
   // Computed
   const streakDays = computed(() => {
-    // Calcular streak baseado no histórico de check-ins
-    // Por agora, usar um valor mock
-    return props.isCompleted ? Math.floor(Math.random() * 5) + 1 : 0
+    // Usar streak_days do userChallenge (calculado no backend)
+    // O streak é do desafio inteiro, não da task específica
+    // Futuramente pode ser calculado por task específica
+    if (!props.isCompleted) {
+      return 0
+    }
+    // Retorna o streak do desafio se a task está completa hoje
+    return props.userChallenge?.streak_days ?? 0
   })
   
   // Methods

@@ -8,4 +8,5 @@ Schedule::daily()
     ->onOneServer()
     ->group(fn () => [
         Schedule::command('sitemap:generate'),
+        Schedule::command('dopa:check-expired-challenges'),
     ]);

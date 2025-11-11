@@ -18,7 +18,7 @@ defineProps({
 <template>
   <Button
     :disabled="disabled"
-    class="bg-background text-foreground hover:bg-secondary disabled:opacity-50 dark:hover:bg-primary/80 dark:bg-primary dark:text-primary-foreground"
+    class="bg-background text-foreground hover:bg-secondary disabled:opacity-50"
     as="a" :href="route('oauth.redirect', { provider: provider.slug })"
   >
     <Icon :icon="provider.icon" class="mr-2 h-4 w-4" />

@@ -26,14 +26,56 @@ class DopaController extends Controller
         
         // Get all active challenges for the user
         $activeChallengesEloquent = $user->activeChallenges()->with(['challenge.tasks'])->get();
+        
+        // Atualizar dias e verificar se devem ser completados
+        foreach ($activeChallengesEloquent as $userChallenge) {
+            $userChallenge->updateCurrentDay();
+        }
+        
+        // Verificar se há desafios marcados como completos/expirados que ainda deveriam estar ativos
+        // (pode acontecer se foram marcados incorretamente antes da correção)
+        $finalizedButShouldBeActive = $user->userChallenges()
+            ->whereIn('status', ['completed', 'expired'])
+            ->with(['challenge.tasks'])
+            ->get()
+            ->filter(function ($userChallenge) {
+                $startDate = $userChallenge->started_at->copy()->startOfDay();
+                $today = now()->startOfDay();
+                $daysSinceStart = $startDate->diffInDays($today) + 1;
+                // Se ainda não passou do último dia, deveria estar ativo
+                return $daysSinceStart <= $userChallenge->challenge->duration_days;
+            });
+        
+        // Reativar desafios que foram marcados incorretamente como finalizados
+        foreach ($finalizedButShouldBeActive as $userChallenge) {
+            $userChallenge->status = 'active';
+            $userChallenge->completed_at = null;
+            $userChallenge->updateCurrentDay();
+            $userChallenge->save();
+        }
+        
+        // Recarregar para pegar desafios que foram marcados como completos ou reativados
+        $activeChallengesEloquent = $user->activeChallenges()->with(['challenge.tasks'])->get();
+        
         $activeChallenges = $activeChallengesEloquent->map(function ($userChallenge) {
-            // Calculate current day for this challenge
+            // Atualizar current_day antes de calcular (garante que está sincronizado)
+            if ($userChallenge->status === 'active') {
+                $userChallenge->updateCurrentDay();
+                $userChallenge->refresh();
+            }
+            
+            // Calculate current day for this challenge (já limitado pelo updateCurrentDay)
             $currentDay = $this->calculateCurrentDay($userChallenge);
+            
             // Get all tasks for the challenge
             $allTasks = $userChallenge->challenge->tasks()->orderBy('order')->get();
-            // Get today's completed check-ins
+            
+            // Get check-ins for today (actual date must match)
+            // Busca check-ins de hoje independentemente do challenge_day para garantir que encontre todos
+            // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
             $todayCheckins = $userChallenge->checkins()
-                ->where('challenge_day', $currentDay)
+                ->whereDate('checked_at', today())
+                ->whereNull('deleted_at')
                 ->with('task')
                 ->get()
                 ->keyBy('task_id');
@@ -70,6 +112,8 @@ class DopaController extends Controller
                 'streak_days' => $userChallenge->streak_days,
                 'best_streak' => $userChallenge->best_streak,
                 'completion_rate' => $userChallenge->completion_rate,
+                'progress_percentage' => $userChallenge->progress_percentage, // Progresso baseado em dias completos
+                'days_remaining' => $userChallenge->days_remaining, // Usa o accessor que considera se hoje está completo
                 'challenge' => [
                     'id' => $userChallenge->challenge->id,
                     'title' => $userChallenge->challenge->title,
@@ -123,6 +167,31 @@ class DopaController extends Controller
             ->limit(5)
             ->get();
         
+        // Get completed challenges (últimos 5)
+        $completedChallenges = $user->userChallenges()
+            ->where('status', 'completed')
+            ->with(['challenge.tasks'])
+            ->latest('completed_at')
+            ->limit(5)
+            ->get()
+            ->map(function ($userChallenge) {
+                return [
+                    'id' => $userChallenge->id,
+                    'status' => $userChallenge->status,
+                    'completed_at' => $userChallenge->completed_at,
+                    'completion_rate' => $userChallenge->completion_rate,
+                    'total_checkins' => $userChallenge->total_checkins,
+                    'streak_days' => $userChallenge->streak_days,
+                    'challenge' => [
+                        'id' => $userChallenge->challenge->id,
+                        'title' => $userChallenge->challenge->title,
+                        'description' => $userChallenge->challenge->description,
+                        'duration_days' => $userChallenge->challenge->duration_days,
+                        'category' => $userChallenge->challenge->category,
+                    ]
+                ];
+            });
+        
         // Check if user can create more challenges
         $canCreateChallenge = $user->canCreateChallenge();
         
@@ -143,6 +212,7 @@ class DopaController extends Controller
             'userStats' => $userStats,
             'recommendedChallenges' => $recommendedChallenges,
             'recentCheckins' => $recentCheckins,
+            'completedChallenges' => $completedChallenges,
             'canCreateChallenge' => $canCreateChallenge,
             'auth' => [
                 'user' => $userArray,
@@ -173,9 +243,11 @@ class DopaController extends Controller
         $tasks = $currentChallenge->challenge->tasks;
         $todayTasks = [];
         foreach ($tasks as $task) {
+            // Busca check-ins de hoje independentemente do challenge_day
+            // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
             $todayCheckin = Checkin::where('user_challenge_id', $currentChallenge->id)
                 ->where('task_id', $task->id)
-                ->where('challenge_day', $currentDay)
+                ->whereDate('checked_at', today())
                 ->whereNull('deleted_at')
                 ->first();
             $todayTasks[] = [
@@ -281,9 +353,20 @@ class DopaController extends Controller
 
     /**
      * Calcular dia atual do desafio
+     * Garante que não ultrapasse duration_days e considera pausas
      */
     private function calculateCurrentDay(UserChallenge $userChallenge, $onlyDate = false): int
     {
+        // Se o desafio já está completo, retorna o último dia
+        if ($userChallenge->status === 'completed') {
+            return $userChallenge->challenge->duration_days;
+        }
+        
+        // Se está pausado, retorna o dia atual salvo
+        if ($userChallenge->status === 'paused') {
+            return min($userChallenge->current_day, $userChallenge->challenge->duration_days);
+        }
+        
         $startDate = $userChallenge->started_at;
         $today = now();
         
@@ -294,6 +377,10 @@ class DopaController extends Controller
 
         $diffDays = $startDate->diffInDays($today) + 1;
         
-        return (int) min($diffDays, $userChallenge->challenge->duration_days);
+        // Limita ao duration_days do desafio
+        $currentDay = min($diffDays, $userChallenge->challenge->duration_days);
+        
+        // Garante que seja pelo menos 1
+        return max(1, (int) $currentDay);
     }
 }

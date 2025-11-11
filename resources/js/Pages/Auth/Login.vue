@@ -27,8 +27,8 @@ const activeTab = useLocalStorage('login-active-tab', 'password')
 
 // Form state
 const passwordForm = useForm({
-  email: 'test@example.com',
-  password: 'password',
+  email: '',
+  password: '',
   remember: false,
 })
 
@@ -86,22 +86,25 @@ onMounted(() => {
 
 // SEO
 useSeoMetaTags({
-  title: 'Log in',
+  title: 'Entrar',
 })
 </script>
 
 <template>
   <Sonner position="top-center" />
 
-  <div class="flex min-h-screen flex-col items-center justify-center bg-linear-to-b from-background/50 to-background">
-    <Card class="mx-auto w-[420px] shadow-lg transition-all duration-300 hover:shadow-xl">
+  <div class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <Card class="mx-auto w-full max-w-[420px] shadow-xl border-0 transition-all duration-300 hover:shadow-2xl">
       <!-- Header -->
-      <CardHeader>
-        <CardTitle class="flex justify-center">
+      <CardHeader class="space-y-4 pb-6">
+        <CardTitle class="flex flex-col items-center gap-3">
           <AuthenticationCardLogo />
+          <div class="text-center">
+            <h1 class="text-2xl font-bold text-gray-900">DOPA Check</h1>
+          </div>
         </CardTitle>
-        <CardDescription class="text-center text-2xl font-light">
-          Welcome Back
+        <CardDescription class="text-center text-lg font-medium text-gray-600">
+          Bem-vindo de volta!
         </CardDescription>
       </CardHeader>
 
@@ -113,12 +116,12 @@ useSeoMetaTags({
 
         <!-- Login Tabs -->
         <Tabs v-model="activeTab" class="w-full">
-          <TabsList class="grid w-full grid-cols-2 rounded-lg p-1">
-            <TabsTrigger value="password">
-              Password
+          <TabsList class="grid w-full grid-cols-2 rounded-lg p-1 bg-gray-100">
+            <TabsTrigger value="password" class="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+              Senha
             </TabsTrigger>
-            <TabsTrigger value="login-link">
-              Login Link
+            <TabsTrigger value="login-link" class="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+              Link Mágico
             </TabsTrigger>
           </TabsList>
 
@@ -129,15 +132,16 @@ useSeoMetaTags({
                 <div class="grid gap-4">
                   <!-- Email -->
                   <div class="grid gap-2">
-                    <Label for="email">Email</Label>
+                    <Label for="email" class="text-gray-700 font-medium">E-mail</Label>
                     <Input
                       id="email"
                       v-model="passwordForm.email"
                       type="email"
-                      placeholder="name@example.com"
+                      placeholder="seu@email.com"
                       required
                       autofocus
                       autocomplete="username"
+                      class="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                     <InputError :message="passwordForm.errors.email" />
                   </div>
@@ -145,13 +149,13 @@ useSeoMetaTags({
                   <!-- Password -->
                   <div class="grid gap-2">
                     <div class="flex items-center justify-between">
-                      <Label for="password">Password</Label>
+                      <Label for="password" class="text-gray-700 font-medium">Senha</Label>
                       <Link
                         v-if="canResetPassword"
                         :href="route('password.request')"
-                        class="text-sm text-muted-foreground hover:text-primary hover:underline underline-offset-4"
+                        class="text-sm text-blue-600 hover:text-blue-700 hover:underline underline-offset-4"
                       >
-                        Forgot password?
+                        Esqueceu a senha?
                       </Link>
                     </div>
                     <Input
@@ -160,6 +164,7 @@ useSeoMetaTags({
                       type="password"
                       required
                       autocomplete="current-password"
+                      class="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                     <InputError :message="passwordForm.errors.password" />
                   </div>
@@ -171,18 +176,18 @@ useSeoMetaTags({
                       v-model:checked="passwordForm.remember"
                       name="remember"
                     />
-                    <label for="remember" class="text-sm text-muted-foreground">
-                      Remember me
+                    <label for="remember" class="text-sm text-gray-600 cursor-pointer">
+                      Lembrar-me
                     </label>
                   </div>
 
                   <Button
                     type="submit"
-                    class="w-full"
+                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
                     :class="{ 'opacity-75': passwordForm.processing }"
                     :disabled="isProcessing"
                   >
-                    {{ passwordForm.processing ? 'Signing in...' : 'Sign in' }}
+                    {{ passwordForm.processing ? 'Entrando...' : 'Entrar' }}
                   </Button>
                 </div>
               </form>
@@ -190,30 +195,31 @@ useSeoMetaTags({
 
             <!-- Login Link -->
             <TabsContent value="login-link" class="space-y-4">
-              <div class="text-sm text-muted-foreground">
-                We'll send you a login link for password-free sign in.
+              <div class="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                📧 Enviaremos um link mágico para seu e-mail para entrar sem senha.
               </div>
               <form @submit.prevent="handleLoginLink">
                 <div class="grid gap-4">
                   <div class="grid gap-2">
-                    <Label for="login-link-email">Email</Label>
+                    <Label for="login-link-email" class="text-gray-700 font-medium">E-mail</Label>
                     <Input
                       id="login-link-email"
                       v-model="loginLinkForm.email"
                       type="email"
                       required
-                      placeholder="name@example.com"
+                      placeholder="seu@email.com"
+                      class="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                     <InputError :message="loginLinkForm.errors.email" />
                   </div>
 
                   <Button
                     type="submit"
-                    class="w-full"
+                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
                     :class="{ 'opacity-75': loginLinkForm.processing }"
                     :disabled="isProcessing"
                   >
-                    {{ loginLinkForm.processing ? 'Sending...' : 'Send Login Link' }}
+                    {{ loginLinkForm.processing ? 'Enviando...' : 'Enviar Link Mágico' }}
                   </Button>
                 </div>
               </form>
@@ -225,11 +231,11 @@ useSeoMetaTags({
         <div v-if="hasOauthProviders" class="mt-6">
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
-              <span class="w-full border-t" />
+              <span class="w-full border-t border-gray-200" />
             </div>
             <div class="relative flex justify-center text-xs uppercase">
-              <span class="bg-background px-2 text-muted-foreground">
-                Or continue with
+              <span class="bg-white px-2 text-gray-500">
+                Ou continue com
               </span>
             </div>
           </div>
@@ -245,13 +251,13 @@ useSeoMetaTags({
         </div>
 
         <!-- Sign Up Link -->
-        <div class="mt-6 text-center text-sm text-muted-foreground">
-          Don't have an account?
+        <div class="mt-6 text-center text-sm text-gray-600">
+          Não tem uma conta?
           <Link
             :href="route('register')"
-            class="font-medium text-primary hover:underline underline-offset-4"
+            class="font-medium text-blue-600 hover:text-blue-700 hover:underline underline-offset-4"
           >
-            Sign up
+            Cadastre-se
           </Link>
         </div>
       </CardContent>

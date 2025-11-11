@@ -209,8 +209,8 @@ const formatNumber = (num) => {
 }
 
 const getCompletionRate = (challenge) => {
-    // Mock completion rate - in real app, this would come from API
-    return Math.floor(Math.random() * 40) + 60 // 60-100%
+    // Use completion rate from backend (calculated based on all participants)
+    return challenge.completion_rate ?? 0
 }
 
 const formatDate = (dateString) => {

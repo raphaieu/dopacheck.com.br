@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Helpers\CacheHelper;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -143,6 +144,9 @@ class ProfileController extends Controller
         }
         
         $user->save();
+        
+        // Invalidar cache relacionado
+        CacheHelper::invalidateUserCache($user->id);
         
         return redirect()->back()->with('success', 'Configurações atualizadas com sucesso!');
     }
