@@ -157,10 +157,15 @@
 import { ref, reactive } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import DopaHeader from '@/components/DopaHeader.vue'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 const props = defineProps({
   user: Object,
   whatsappSession: Object,
+})
+
+useSeoMetaTags({
+  title: 'Configurações',
 })
 
 const form = useForm({

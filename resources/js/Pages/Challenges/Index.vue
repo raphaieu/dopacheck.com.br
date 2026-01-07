@@ -209,6 +209,7 @@ import ChallengeCard from '@/components/ChallengeCard.vue'
 import FeaturedChallengeCard from '@/components/FeaturedChallengeCard.vue'
 import Pagination from '@/components/Pagination.vue'
 import { useChallenges } from '@/composables/useChallenges'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 // Props
 const props = defineProps({
@@ -235,6 +236,10 @@ const props = defineProps({
 })
 
 const user = computed(() => props.auth.user)
+
+useSeoMetaTags({
+    title: 'Desafios',
+})
   
 // Composables
 const { loading, joinChallenge } = useChallenges()

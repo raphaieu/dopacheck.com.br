@@ -4,27 +4,27 @@ import AppLayout from '@/layouts/AppLayout.vue'
 
 const stats = [
   {
-    value: 'Larasonic Documentation',
-    description: 'Check out our comprehensive documentation',
-    link: 'https://docs.larasonic.com/introduction',
+    value: 'Documentação do Projeto',
+    description: 'Entenda o produto e como rodar localmente',
+    link: 'https://github.com/raphaieu/dopacheck.com.br#como-funciona',
     icon: 'lucide:book-open',
   },
   {
-    value: 'GitHub Repository',
-    description: 'Star us on GitHub',
-    link: 'https://github.com/shipfastlabs/larasonic-vue',
+    value: 'Repositório no GitHub',
+    description: 'Acompanhe o desenvolvimento e contribua',
+    link: 'https://github.com/raphaieu/dopacheck.com.br',
     icon: 'lucide:github',
   },
   {
     value: 'Roadmap',
-    description: 'See what\'s coming next',
-    link: 'https://github.com/shipfastlabs/larasonic-vue/discussions/categories/roadmap',
+    description: 'Veja o que vem por aí',
+    link: 'https://github.com/raphaieu/dopacheck.com.br/issues',
     icon: 'lucide:map',
   },
   {
-    value: 'Join Us',
-    description: 'Be part of our growing community',
-    link: 'https://github.com/shipfastlabs/larasonic-vue/discussions',
+    value: 'Comunidade',
+    description: 'Participe e acompanhe novidades',
+    link: 'https://t.me/reservatoriodedopamina',
     icon: 'lucide:users',
   },
 ]

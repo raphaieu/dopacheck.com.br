@@ -20,10 +20,10 @@ const mode = useColorMode({
 
 const navigationConfig = [
   {
-    label: 'Platform',
+    label: 'Plataforma',
     items: [
       { name: 'Dashboard', icon: 'lucide:layout-dashboard', route: 'dashboard' },
-      { name: 'Settings', icon: 'lucide:settings', route: 'profile.show' },
+      { name: 'Configurações', icon: 'lucide:settings', route: 'profile.show' },
       { name: 'Chat', icon: 'lucide:message-circle', route: 'chat.index' },
     ],
   },
@@ -31,7 +31,7 @@ const navigationConfig = [
     label: 'API',
     items: [
       { name: 'API Tokens', icon: 'lucide:key', route: 'api-tokens.index' },
-      { name: 'API Documentation', icon: 'lucide:book-heart', route: 'scribe', external: true },
+      { name: 'Documentação da API', icon: 'lucide:book-heart', route: 'scribe', external: true },
     ],
   },
   {
@@ -39,15 +39,15 @@ const navigationConfig = [
     class: 'mt-auto',
     items: [
       {
-        name: 'Support',
+        name: 'Suporte',
         icon: 'lucide:life-buoy',
-        href: 'https://github.com/shipfastlabs/larasonic-vue/issues',
+        href: 'https://github.com/raphaieu/dopacheck.com.br/issues',
         external: true,
       },
       {
-        name: 'Documentation',
+        name: 'Documentação',
         icon: 'lucide:book-marked',
-        href: 'https://docs.larasonic.com',
+        href: 'https://github.com/raphaieu/dopacheck.com.br#como-funciona',
         external: true,
       },
     ],
@@ -93,7 +93,7 @@ function renderLink(item) {
         <SidebarMenuItem v-if="index === navigationConfig.length - 1">
           <SidebarMenuButton @click="mode = isDarkMode ? 'light' : 'dark'">
             <Icon :icon="isDarkMode ? 'lucide:moon' : 'lucide:sun'" />
-            {{ isDarkMode ? 'Dark' : 'Light' }} Mode
+            Modo {{ isDarkMode ? 'escuro' : 'claro' }}
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

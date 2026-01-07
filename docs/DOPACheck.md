@@ -1,7 +1,7 @@
 # 🧠 DOPA Check - Resumo Executivo
 
 ## 🎯 **O Que É**
-O **DOPA Check** é uma plataforma de tracking de hábitos que integra WhatsApp + Web para eliminar a fricção no acompanhamento de rotinas saudáveis. O usuário envia uma foto + hashtag via WhatsApp e recebe confirmação automática, com dashboard visual de progresso.
+O **DOPA Check** é uma plataforma **web (mobile-first)** de tracking de hábitos e desafios, com check-ins rápidos (com ou sem imagem) e um dashboard visual de progresso. A integração com WhatsApp (EvolutionAPI) existe como **linha de roadmap**, mas não é o foco do MVP atual.
 
 ## 🔥 **Problema que Resolve**
 - **Fragmentação de apps** (Strava, Notion, planilhas separadas)
@@ -11,19 +11,18 @@ O **DOPA Check** é uma plataforma de tracking de hábitos que integra WhatsApp 
 
 ## ⚡ **Solução Core**
 ```
-Foto + #hashtag no WhatsApp = Check-in automático + Dashboard atualizado
+Check-in rápido no web app = Progresso atualizado + Dashboard visual
 ```
 
 ## 🎮 **Como Funciona (30 segundos)**
-1. **Login social** → Escolhe desafio (21 dias leitura, 30 dias treino)
-2. **Recebe número do bot** → Salva no WhatsApp
-3. **Envia foto + #leitura** → Bot confirma ✅
-4. **Dashboard atualiza** → Progresso visual + streak
-5. **Compartilha conquista** → Link público + imagem auto-gerada
+1. **Login** → Escolhe/entra em um desafio (ex.: 21 dias leitura)
+2. **Faz check-in** (com ou sem imagem) pelo web app
+3. **Dashboard atualiza** → Progresso visual + streak
+4. **Compartilha conquista** → link público + card gerado
 
 ## 💰 **Modelo de Negócio**
 - **Freemium**: 1 desafio, check-in manual, 90 dias de storage
-- **PRO (R$ 19/mês)**: IA analisa fotos + múltiplos desafios + storage ilimitado
+- **PRO (preço a definir)**: múltiplos desafios + recursos avançados (pagamento via Stripe/Cashier)
 
 ## 🚀 **Diferencial**
 - **Zero apps extras** - usa WhatsApp que já tem
@@ -37,9 +36,9 @@ Foto + #hashtag no WhatsApp = Check-in automático + Dashboard atualizado
 - **Métricas**: Taxa de conclusão 68% vs. 23% média de apps tradicionais
 
 ## 🛠️ **Stack (FullStack Solo)**
-- **Backend**: Laravel 11 + MySQL + Redis (Horizon)
+- **Backend**: Laravel 12 + MySQL + Redis (Horizon)
 - **Frontend**: Vue 3 + Tailwind + ShadCN
-- **Integração**: EvolutionAPI (WhatsApp) + OpenAI Vision (PRO)
+- **Integrações**: Google OAuth (Socialite), Stripe (Cashier) e WhatsApp (EvolutionAPI, futuro)
 - **Deploy**: VPS + Cloudflare R2 (storage)
 
 ## 🎯 **Objetivo Profissional**
@@ -51,10 +50,8 @@ Demonstrar capacidade **FullStack completa**:
 - ✅ **Open-source** para comunidade
 
 ## 📈 **Timeline**
-- **4 semanas**: MVP funcional
-- **6 semanas**: Versão PRO com IA
-- **8 semanas**: 100+ usuários ativos
+— (em revisão)
 
 ---
 
-**TL;DR**: *WhatsApp + hábitos + IA = tracking sem fricção. Projeto solo para showcase técnico + solução real.*
+**TL;DR**: *Web app de hábitos com foco em UX e consistência; WhatsApp/IA ficam para depois do core e da monetização.*

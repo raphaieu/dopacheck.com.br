@@ -24,10 +24,10 @@ defineProps({
 </script>
 
 <template>
-  <AppLayout title="Subscriptions">
+  <AppLayout title="Assinaturas">
     <template #header>
       <h2 class="text-xl font-semibold leading-tight">
-        Subscriptions
+        Assinaturas
       </h2>
     </template>
 

@@ -1,5 +1,7 @@
 # DOPA Check - Integração WhatsApp + IA
 
+> **⚠️ Importante (Jan/2026)**: este documento descreve um **plano futuro**. O MVP atual está focado no **core web** e na entrega de **Google OAuth + Stripe PRO**; WhatsApp/IA ficam para depois.
+
 ## Visão Geral
 Este documento descreve o fluxo completo de processamento de mensagens recebidas via WhatsApp, utilizando IA para análise de texto e imagem, enriquecimento de dados e interação inteligente com o usuário.
 

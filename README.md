@@ -4,12 +4,11 @@
 
 **Transforme seu smartphone em um tracker de hábitos inteligente**
 
-*O primeiro sistema que unifica WhatsApp + Web para tracking de hábitos sem fricção*
+*Plataforma web (mobile-first) para tracking de hábitos e desafios — com integração WhatsApp planejada para depois do core web*
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?logo=vue.js)](https://vuejs.org)
-[![WhatsApp](https://img.shields.io/badge/WhatsApp-Bot-25D366?logo=whatsapp)](https://whatsapp.com)
 
 [🚀 Demo Live](https://dopacheck.com.br) • [📖 Documentação](#como-funciona) • [🛠️ Instalação](#instalação) • [🎯 Roadmap](#roadmap)
 
@@ -19,16 +18,15 @@
 
 ## 🧩 O Problema que Resolve
 
-> **"Tentei vários apps (Strava, Notion, planilhas), mas nenhum centralizava meu progresso real de hábitos de forma simples. O DOPA Check nasceu para resolver isso: uma foto via WhatsApp e pronto!"**
+> **"Tentei vários apps (Strava, Notion, planilhas), mas nenhum centralizava meu progresso real de hábitos de forma simples. O DOPA Check nasceu para resolver isso com check-ins rápidos e um dashboard que dá vontade de voltar."**
 
 **DOPA Check** nasceu da comunidade [Reservatório de Dopamina](https://t.me/reservatoriodedopamina), onde desafios como *"21 dias de leitura"* e *"30 dias sem açúcar"* são comuns, mas o acompanhamento era fragmentado entre múltiplos apps.
 
 ### 💡 A Solução
-- ✅ **Zero apps extras** - Use seu WhatsApp + navegador
+- ✅ **Zero fricção** - Check-ins rápidos pelo navegador (com ou sem imagem)
 - ✅ **Check-in visual** - Uma foto vale mais que mil planilhas
 - ✅ **Dashboard centralizado** - Veja tudo em um lugar
 - ✅ **Compartilhamento automático** - Cards gerados para stories
-- ✅ **IA inteligente** - Analisa suas fotos automaticamente (PRO)
 - ✅ **Desafios comunitários** - Participe com outras pessoas
 
 ---
@@ -46,11 +44,13 @@
 - **🎨 Interface polida** seguindo design system
 
 ### 🚧 **Em Desenvolvimento**
-- **🤖 Bot WhatsApp** (integração EvolutionAPI pronta)
+- **🔐 Login Social (Google)** (infra pronta; UI/fluxo em ajuste)
+- **💳 Assinatura PRO mensal (Stripe + Cashier)** (infra pronta; falta fechar plano e sincronização)
 - **🖼️ Geração de cards** para compartilhamento
 - **👤 Páginas de perfil** e configurações
 - **📈 Relatórios detalhados** com métricas
 - **🎨 Compartilhamento nativo** mobile
+- **🤖 Integração WhatsApp (EvolutionAPI)** (adiada; fora do escopo do MVP atual)
 
 ---
 
@@ -64,7 +64,7 @@ graph TD
     B --> C[🎯 Escolhe/Cria Desafio]
     C --> D[📋 Define Tasks Diárias]
     D --> E[🏠 Dashboard com Tasks]
-    E --> F[📸 Check-in Web ou WhatsApp]
+    E --> F[📸 Check-in Web (com ou sem imagem)]
     F --> G[🎉 Progresso Atualizado!]
     G --> H[🎨 Compartilha Card Gerado]
 ```
@@ -76,7 +76,7 @@ graph TD
 - **Tasks do dia** com status e check-ins
 - **Estatísticas rápidas** (sequência, dias restantes)
 - **Estado de celebração** quando completa o dia
-- **Conexão WhatsApp** (pronto para integração)
+- **Conexão WhatsApp** (planejada; pode existir UI/estrutura no código, mas não é o foco do MVP atual)
 
 #### **2. Sistema de Desafios**
 - **Catálogo completo** com filtros e categorias
@@ -104,8 +104,8 @@ graph TD
 
 ### 🤖 **DOPA Check PRO** (Em breve)
 - 🚀 **Desafios ilimitados** simultâneos
-- 🤖 **Bot WhatsApp** com IA automática
-- 🧠 **Análise IA** de imagens e dados
+- 💳 **Assinatura PRO** via Stripe (Cashier)
+- 🧠 **Recursos PRO** (IA/WhatsApp) entram após a base de pagamentos estar sólida
 - 📊 **Relatórios avançados** com insights
 - 💾 **Storage permanente** de todas as imagens
 - 🎨 **Templates personalizados** de compartilhamento
@@ -123,7 +123,7 @@ graph TD
 - Composer 2.0+
 - Bun ou npm
 
-### 🚀 Setup Rápido
+### 🚀 Setup Rápido (Local, sem Docker)
 
 ```bash
 # 1. Clone o repositório
@@ -135,7 +135,7 @@ composer install
 bun install
 
 # 3. Configure ambiente
-cp .env.example .env
+cp env.example.dopacheck .env
 php artisan key:generate
 
 # 4. Configure banco de dados (.env)
@@ -157,21 +157,46 @@ php artisan migrate --seed
 # 7. Build assets
 bun run build
 
-# 8. Inicie servidores
-php artisan serve          # Backend (port 8000)
-php artisan horizon:start  # Queue worker
+# 8. Inicie servidores (dev)
+# Opção A (recomendado): tudo junto (serve + queue + logs + vite)
+composer run dev
+#
+# Opção B (manual):
+# php artisan serve        # Backend (http://localhost:8000)
+# bun run dev              # Vite (http://localhost:5173)
+# php artisan horizon      # Queue worker
 ```
+
+### 🐳 Setup com Docker (recomendado para ambiente consistente)
+
+```bash
+# 1. Subir core web (app + mysql + redis + horizon)
+docker compose up -d
+
+# 2. Rodar migrations/seed dentro do container
+docker compose exec app php artisan migrate --seed
+
+# 3. Acessar
+# App: http://localhost:8000
+# phpMyAdmin (opcional): docker compose --profile tools up -d  -> http://localhost:8082
+```
+
+## 🧭 Rotas principais (Web)
+
+- **Dashboard principal (pós-login)**: `/dopa`
+- **Compatibilidade**: `/dashboard` existe apenas por legado e **redireciona para `/dopa`**
+- **Desafios**: `/challenges`
+- **Perfil público**: `/u/{username}`
+- **Páginas legais**: Termos de Uso e Política de Privacidade (Jetstream) — `route('terms.show')` e `route('policy.show')`
 
 ### ⚙️ Configuração WhatsApp (Opcional)
 
 ```env
-# EvolutionAPI para WhatsApp Bot
-EVOLUTION_BASE_URL=https://sua-evolution-api.com
-EVOLUTION_API_KEY=sua_api_key
-
 # Número do bot (formato: 5511999998888)
 WHATSAPP_BOT_NUMBER=5511999998888
 ```
+
+> Nota: existe um `docker-compose.whatsapp.yml` (EvolutionAPI + Postgres) para testes/experimentos. O webhook do DOPA fica em `POST /webhook/whatsapp` e hoje **apenas bufferiza eventos** (a criação automática de check-ins ainda não está fechada no MVP).
 
 ---
 
@@ -216,9 +241,9 @@ Senha: password
 - **State**: Composables pattern
 
 ### **Integrações**
-- **WhatsApp**: EvolutionAPI (webhook pronto)
-- **IA**: OpenAI Vision API (PRO)
-- **Payments**: Stripe (futuro)
+- **OAuth**: Socialite (Google)
+- **Payments**: Stripe (Cashier) — em andamento
+- **WhatsApp**: EvolutionAPI — adiado (infra/estrutura existe, mas sem fluxo end-to-end no MVP)
 - **Analytics**: Implementação própria
 
 ---
@@ -250,7 +275,8 @@ Senha: password
 
 ### 🛠️ **Áreas que Precisam de Ajuda**
 - 🎨 **UI/UX**: Melhorias na interface mobile
-- 🤖 **Integração WhatsApp**: Testes do webhook
+- 🔐 **Login Social (Google)**: ajustes de UX e regras de vínculo de conta
+- 💳 **Pagamentos (Stripe + Cashier)**: fluxo de upgrade/portal e sincronização de status
 - 📊 **Analytics**: Dashboard de métricas
 - 🧪 **Testing**: Testes automatizados
 - 📖 **Documentação**: Exemplos e tutoriais
@@ -277,13 +303,12 @@ Senha: password
 [![Twitter](https://img.shields.io/badge/Twitter-@raphaieu-1DA1F2?logo=twitter)](https://twitter.com/raphaieu)
 
 **📧 Email**: [rapha@raphael-martins.com](mailto:rapha@raphael-martins.com)  
-**💬 WhatsApp**: [(11) 94886-3848](https://wa.me/5511948863848)  
 **🌐 Portfolio**: [raphai.eu](https://raphai.eu)
 
 </div>
 
 ### 💼 **Desenvolvimento FullStack**
-Disponível para projetos de **MVP**, **arquitetura de sistemas**, **integração de IA** e **aplicações WhatsApp**.
+Disponível para projetos de **MVP**, **arquitetura de sistemas** e **integração de IA**.
 
 ---
 
@@ -299,8 +324,8 @@ Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) par
 
 **⭐ Se este projeto te inspirou, deixe uma estrela!**
 
-*Desenvolvido com ❤️ em Salvador, BA 🇧🇷*
+*Desenvolvido em Salvador, BA 🇧🇷*
 
-**#FullStack #Laravel #Vue #WhatsApp #OpenSource #HabitTracker**
+**#FullStack #Laravel #Vue #OpenSource #HabitTracker**
 
 </div>

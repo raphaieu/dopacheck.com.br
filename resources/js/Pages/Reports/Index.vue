@@ -80,10 +80,15 @@
 import { Link, router } from '@inertiajs/vue3'
 import DopaHeader from '@/components/DopaHeader.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 const props = defineProps({
   userChallenges: Array,
   overallStats: Object,
+})
+
+useSeoMetaTags({
+  title: 'Relatórios',
 })
 
 const viewChallenge = (userChallengeId) => {

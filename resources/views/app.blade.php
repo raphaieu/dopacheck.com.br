@@ -20,17 +20,17 @@
     {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "Larasonic",
-        "url": "https://larasonic.com/",
-        "image": "https://larasonic.com/images/og.webp",
-        "description": "A modern Laravel SaaS starter kit for the VILT stack. Clone the repo, start building scalable and maintainable applications quickly.",
-        "applicationCategory": "DeveloperTool",
+        "name": "DOPA Check",
+        "url": "{{ rtrim(config('app.url', 'https://dopacheck.com.br'), '/') }}/",
+        "image": "{{ rtrim(config('app.url', 'https://dopacheck.com.br'), '/') }}/images/og.webp",
+        "description": "DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.",
+        "applicationCategory": "LifestyleApplication",
         "operatingSystem": "All",
         "offers": {
             "@type": "Offer",
             "price": "0",
-            "priceCurrency": "USD",
-            "category": "Free"
+            "priceCurrency": "BRL",
+            "category": "Freemium"
         }
     }
     </script>

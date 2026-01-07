@@ -1,7 +1,7 @@
 # 📋 Próximas Tarefas - DOPA Check
 
-**Última atualização**: 2025-01-XX  
-**Status do Projeto**: Beta Funcional - Core Web Completo
+**Última atualização**: 07/01/2026  
+**Status do Projeto**: Beta Funcional - Core Web (sem WhatsApp no MVP atual)
 
 ---
 
@@ -39,13 +39,40 @@
 
 ---
 
-## 🚀 Sprint 2 - Finalização Web (Em Andamento)
+## 🚀 Roadmap curto (MVP “sem WhatsApp por enquanto”)
 
-### ✅ Concluído
-- [x] Geração de cards para compartilhamento
-- [x] Correção de bugs críticos (current_day, progresso, stats)
+### ✅ Concluído (Core Web)
+- [x] Core Web funcional (desafios, tasks, check-ins web)
+- [x] MySQL + Redis (Horizon) no docker-compose “core web”
+- [x] Termos e Política em pt-BR (marca DOPA Check)
 
-### 📝 Pendente
+### 📝 Agora (antes de WhatsApp)
+
+#### 1. **Sincronizar docs/README com estado real**
+- **Descrição**: Atualizar setup, DB oficial, ports/URLs e roadmap
+- **Prioridade**: 🔴 Alta
+
+#### 2. **Login Social (Google) end-to-end**
+- **Descrição**: Expor botão “Entrar com Google” e fechar regras de conta existente por e-mail
+- **Arquivos-chave**: `config/oauth.php`, `config/services.php`, `resources/js/Pages/Auth/*`, `app/Http/Controllers/User/OauthController.php`
+- **Prioridade**: 🔴 Alta
+
+#### 3. **Assinatura PRO mensal (Stripe + Cashier)**
+- **Descrição**: Definir plano PRO e finalizar fluxo de upgrade + portal
+- **Arquivos-chave**: `config/cashier.php`, `config/subscriptions.php`, `SubscriptionController`, webhook Stripe (quando ativar)
+- **Prioridade**: 🔴 Alta
+
+#### 4. **Higiene/consistência geral**
+- **Descrição**: Remover divergências (nomes Larasonic vs DOPA, docs antigas, etc.)
+- **Prioridade**: 🟡 Média
+
+### 🕒 Depois (fora do escopo do MVP atual)
+
+#### **Integração WhatsApp (EvolutionAPI)**
+- **Status**: adiado para depois de Google + Stripe
+- **Notas**:
+  - `docker-compose.whatsapp.yml` existe para testes (EvolutionAPI + Postgres)
+  - Webhook do DOPA fica em `POST /webhook/whatsapp` (hoje bufferiza eventos)
 
 #### 5. **Página de Perfil Público (`/u/username`)**
 - **Descrição**: Criar página pública de perfil do usuário
@@ -114,96 +141,9 @@
 
 ---
 
-## 📱 Sprint 3 - Integração WhatsApp (Próximo)
+## 💎 PRO / Monetização
 
-### 10. **Webhook EvolutionAPI Funcional**
-- **Descrição**: Implementar webhook para receber mensagens do WhatsApp
-- **Funcionalidades**:
-  - Receber mensagens via POST `/webhook/whatsapp`
-  - Validar assinatura/autenticação
-  - Processar diferentes tipos de mensagem (texto, imagem, áudio)
-- **Arquivos**: 
-  - `app/Http/Controllers/WhatsAppController.php` (método `webhook()` já existe)
-  - `app/Jobs/ProcessWhatsappBufferJob.php` (já existe)
-- **Prioridade**: 🔴 Alta
-- **Estimativa**: 4-6 horas
-
-#### 11. **Parser de Mensagens com Hashtags**
-- **Descrição**: Extrair hashtags e conteúdo das mensagens
-- **Funcionalidades**:
-  - Identificar hashtags (#leitura, #treino, etc)
-  - Extrair texto da mensagem
-  - Detectar imagens anexadas
-  - Validar formato de mensagem
-- **Arquivos**: 
-  - `app/Services/WhatsappBufferService.php` (já existe)
-  - `app/Services/WhatsappMessageParser.php` (criar)
-- **Prioridade**: 🔴 Alta
-- **Estimativa**: 3-4 horas
-
-#### 12. **Check-ins Automáticos via Foto + #hashtag**
-- **Descrição**: Criar check-in automaticamente quando receber foto + hashtag
-- **Funcionalidades**:
-  - Identificar task pela hashtag
-  - Baixar imagem do WhatsApp
-  - Criar check-in automaticamente
-  - Validar se usuário tem desafio ativo
-- **Arquivos**: 
-  - `app/Jobs/ProcessWhatsappBufferJob.php` (atualizar)
-  - `app/Services/WhatsappCheckinService.php` (criar)
-- **Prioridade**: 🔴 Alta
-- **Estimativa**: 4-5 horas
-
-#### 13. **Bot Responses Personalizadas**
-- **Descrição**: Enviar respostas automáticas ao usuário
-- **Funcionalidades**:
-  - Confirmação de check-in criado
-  - Mensagens de erro (hashtag não encontrada, desafio inativo, etc)
-  - Status do desafio (progresso, dias restantes)
-  - Comandos especiais (/status, /help, etc)
-- **Arquivos**: 
-  - `app/Services/WhatsappBotResponseService.php` (criar)
-  - `app/Jobs/SendWhatsappMessageJob.php` (criar)
-- **Prioridade**: 🟡 Média
-- **Estimativa**: 3-4 horas
-
-#### 14. **QR Code para Conexão Fácil**
-- **Descrição**: Gerar QR Code para conectar WhatsApp facilmente
-- **Funcionalidades**:
-  - Gerar QR Code com link wa.me
-  - Exibir QR Code na página de conexão
-  - Instruções de uso
-- **Arquivos**: 
-  - `app/Http/Controllers/WhatsAppController.php` (atualizar)
-  - `resources/js/Pages/WhatsApp/Connect.vue` (atualizar)
-- **Prioridade**: 🟢 Baixa
-- **Estimativa**: 2-3 horas
-
-#### 15. **Testes com Usuários Reais**
-- **Descrição**: Testar integração WhatsApp com usuários reais
-- **Funcionalidades**:
-  - Recrutar beta testers
-  - Coletar feedback
-  - Ajustar baseado em feedback
-- **Prioridade**: 🟡 Média
-- **Estimativa**: Variável
-
----
-
-## 💎 Sprint 4 - Features PRO (4-6 Semanas)
-
-### 16. **Sistema de Pagamentos Stripe**
-- **Descrição**: Integrar Stripe para assinaturas PRO
-- **Funcionalidades**:
-  - Checkout Stripe
-  - Gerenciar assinaturas
-  - Webhook de pagamentos
-  - Upgrade/downgrade de plano
-- **Arquivos**: 
-  - `app/Http/Controllers/SubscriptionController.php` (já existe, atualizar)
-  - `app/Models/User.php` (já tem Billable trait)
-- **Prioridade**: 🔴 Alta (para monetização)
-- **Estimativa**: 8-10 horas
+- **Stripe + Cashier**: o esqueleto existe, mas ainda não está fechado como feature “entregue” (plano, price_id, webhook e bridge de status).
 
 #### 17. **IA Analysis com OpenAI Vision**
 - **Descrição**: Analisar imagens de check-ins com IA
@@ -377,6 +317,5 @@
 
 ---
 
-**Última atualização**: 2025-01-XX  
-**Próxima revisão**: Após conclusão das tarefas de alta prioridade
+**Próxima revisão**: após concluir Google login + Stripe PRO
 

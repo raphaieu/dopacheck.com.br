@@ -43,7 +43,9 @@ final class WelcomeController extends Controller
             'canRegister' => Route::has('register'),
             'stats' => $stats,
             'seo' => [
-                'title' => 'Home',
+                'title' => 'Início',
+                'description' => 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.',
+                'keywords' => 'DOPA Check, hábitos, tracker de hábitos, desafios, check-in, rotina, produtividade, bem-estar, metas, streak, comunidade, WhatsApp, dashboard',
             ],
         ]);
     }

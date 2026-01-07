@@ -2,6 +2,15 @@
 
 ## 🎯 **Resumo da Implementação**
 
+> **Nota (Jan/2026)**: este documento é um **snapshot histórico** da Sprint 2 (UI/UX). A UI pode conter telas/indicadores de WhatsApp, mas a **integração end-to-end está adiada**. O foco do MVP é o **core web** + (próximo) **Google OAuth** e **Stripe PRO**.
+>
+> **Fonte de verdade (atual):**
+> - Setup/DB/Ports: `README.md`, `docs/DOCKER_SETUP.md`, `env.example.dopacheck`, `docker-compose.yml`
+> - Rotas oficiais: `routes/web.php`
+> - Roadmap/estado do produto: `docs/DOCUMENTACAO_COMPLETA.md`
+>
+> **Como manter este documento:** trate como histórico. Evite atualizar “status de feature” aqui; atualize o roadmap nos docs acima.
+
 Implementação completa da interface Vue.js moderna e responsiva para o **DOPA Check**, com dashboard principal, componentes interativos e sistema de check-ins via upload de imagem e AJAX.
 
 **Status**: ✅ **Sprint 2 COMPLETA** - Interface funcional implementada
@@ -18,7 +27,7 @@ Implementação completa da interface Vue.js moderna e responsiva para o **DOPA 
 - ✅ **Progresso visual** com anel de progresso e barra mobile
 - ✅ **Tasks do dia** com status de conclusão
 - ✅ **Stats rápidas** (sequência, % concluído, dias restantes)
-- ✅ **Integração WhatsApp** com status de conexão
+- ✅ **UI de WhatsApp (opcional)**: status/CTA de conexão (sem fluxo end-to-end no MVP)
 - ✅ **Ações rápidas** (relatórios, perfil, config)
 - ✅ **Auto-refresh** das tasks a cada minuto
 - ✅ **Estado de loading** com overlay
@@ -42,13 +51,13 @@ bg-gradient-to-r from-blue-600 to-purple-600          // Accent gradient
 
 #### **Features Implementadas:**
 - ✅ **Visual de status** (pendente/concluído) com cores dinâmicas
-- ✅ **Hashtags** formatadas para WhatsApp (#leitura)
+- ✅ **Hashtags** formatadas para exibição (#leitura)
 - ✅ **Check-in web** com modal de upload
 - ✅ **Check-in rápido** sem imagem (AJAX)
 - ✅ **Info do check-in** (horário, fonte, imagem)
-- ✅ **Análise IA** (usuários PRO)
+- ✅ **Campos/UX para PRO** (ex.: badge de “IA”) — feature PRO ainda em evolução
 - ✅ **Remoção de check-in** com confirmação
-- ✅ **Dicas WhatsApp** quando conectado
+- ✅ **Dicas WhatsApp** (quando existir conexão; opcional/futuro)
 - ✅ **Indicador de streak** quando > 1 dia
 
 #### **Interações AJAX:**
@@ -94,7 +103,7 @@ interface ProgressRingProps {
 - ✅ **Preview de imagem** com remoção
 - ✅ **Validação** (tipo, tamanho máx 5MB)
 - ✅ **FormData upload** com progress
-- ✅ **Análise IA** opcional (PRO users)
+- ✅ **Gancho/placeholder para PRO** (ex.: “IA”) — feature ainda em evolução
 - ✅ **Mensagem opcional** com textarea
 - ✅ **Estados visuais** (uploading, error, success)
 
@@ -472,8 +481,8 @@ if ($checkin->userChallenge->user_id !== $user->id) {
 2. ✅ **Task concluída** - Info do check-in
 3. ✅ **Upload em progresso** - Loading visual
 4. ✅ **Upload com erro** - Retry options
-5. ✅ **Análise IA** (PRO) - Badge e confidence
-6. ✅ **Check-in via WhatsApp** - Source indicator
+5. ✅ **PRO (futuro)** - Badge/indicador para IA quando disponível
+6. ✅ **Fonte do check-in** - Indicador (web/whatsapp) quando aplicável
 
 ---
 
@@ -483,7 +492,7 @@ if ($checkin->userChallenge->user_id !== $user->id) {
 ```javascript
 // Click-through rates
 - Check-in rápido vs Upload
-- WhatsApp connect rate
+// (Opcional/futuro) WhatsApp connect rate
 - Challenge join rate
 
 // Engagement metrics  
@@ -507,7 +516,7 @@ if ($checkin->userChallenge->user_id !== $user->id) {
 - ✅ **Componentes reutilizáveis** (5 principais)
 - ✅ **Sistema de check-ins** completo (web + AJAX)
 - ✅ **Upload de imagens** com drag & drop
-- ✅ **Integração WhatsApp** (interface pronta)
+- ✅ **UI de WhatsApp** (interface pronta; integração end-to-end adiada)
 - ✅ **APIs otimizadas** para performance
 - ✅ **Composables** para lógica compartilhada
 - ✅ **Design system** consistente
@@ -527,7 +536,12 @@ if ($checkin->userChallenge->user_id !== $user->id) {
 
 ---
 
-## 🚀 **Próximas Etapas (Sprint 3)**
+## 🚀 Roadmap (atual)
+
+Consulte o roadmap consolidado em `docs/DOCUMENTACAO_COMPLETA.md` (MVP sem WhatsApp por enquanto: **Google OAuth + Stripe PRO** primeiro).
+
+<details>
+<summary><strong>Planejamento original pós-Sprint 2 (histórico)</strong></summary>
 
 ### **1. Integração WhatsApp (PRIORIDADE):**
 - 📱 **Webhook EvolutionAPI** funcional
@@ -556,6 +570,8 @@ if ($checkin->userChallenge->user_id !== $user->id) {
 - 📱 **PWA** (Service Worker)
 - 🌐 **Internationalization** (i18n)
 - 📈 **Analytics** detalhados
+
+</details>
 
 ---
 

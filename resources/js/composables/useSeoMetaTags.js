@@ -1,29 +1,33 @@
 import { useSeoMeta } from '@unhead/vue'
 
+const siteUrl = typeof window !== 'undefined'
+  ? window.location.origin
+  : 'https://dopacheck.com.br'
+
 // Default SEO meta tags
 const defaultSeoMeta = {
-  title: 'Home',
-  titleTemplate: '%s | Larasonic Modern Laravel SaaS Starter Kit',
-  description: 'Larasonic is a modern Laravel boilerplate for the VILT stack (Vue, Inertia, Laravel, TailwindCSS). Clone and start building scalable, maintainable, and production-ready applications quickly.',
-  keywords: 'Larasonic, Laravel boilerplate, Laravel VILT, Vue, Inertia, TailwindCSS, Laravel Octane, Docker, FilamentPHP, OpenAI integration, Laravel Cashier, Laravel Sanctum',
+  title: 'DOPA Check',
+  titleTemplate: '%s | DOPA Check',
+  description: 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.',
+  keywords: 'DOPA Check, hábitos, tracker de hábitos, desafios, check-in, rotina, produtividade, bem-estar, metas, streak, comunidade, dashboard, mobile-first, WhatsApp',
   robots: 'index, follow',
-  themeColor: '#000000',
+  themeColor: '#0EA5E9',
 
   // Open Graph
-  ogTitle: '%s | Larasonic Modern Laravel SaaS Starter Kit',
-  ogDescription: 'Larasonic is a modern Laravel SaaS starter kit for the VILT stack. Clone the repo, start building scalable and maintainable applications quickly.',
-  ogUrl: 'https://larasonic.com',
+  ogTitle: '%s | DOPA Check',
+  ogDescription: 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins e acompanhe seu progresso em um dashboard simples e mobile-first.',
+  ogUrl: siteUrl,
   ogType: 'website',
-  ogImage: 'https://larasonic.com/images/og.webp',
-  ogSiteName: 'Larasonic',
-  ogLocale: 'en_US',
+  ogImage: `${siteUrl}/images/og.webp`,
+  ogSiteName: 'DOPA Check',
+  ogLocale: 'pt_BR',
 
   // Twitter
-  twitterTitle: '%s | Larasonic Modern Laravel SaaS Starter Kit',
-  twitterDescription: 'Larasonic is a modern Laravel SaaS starter kit for the VILT stack. Clone the repo, start building scalable and maintainable applications quickly.',
+  twitterTitle: '%s | DOPA Check',
+  twitterDescription: 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins e acompanhe seu progresso em um dashboard simples e mobile-first.',
   twitterCard: 'summary_large_image',
-  twitterImage: 'https://larasonic.com/images/og.webp',
-  twitterSite: '@pushpak1300',
+  twitterImage: `${siteUrl}/images/og.webp`,
+  twitterSite: '@raphaieu',
 }
 
 /**

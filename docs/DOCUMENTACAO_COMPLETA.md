@@ -3,10 +3,16 @@
 ## 🎯 **Status Atual - Beta Funcional**
 
 **Versão**: 1.0-beta  
-**Última Atualização**: 07/07/2025  
-**Status**: ✅ **Core Web Funcional** + 🚧 **WhatsApp Integration em Dev**
+**Última Atualização**: 07/01/2026  
+**Status**: ✅ **Core Web Funcional** (WhatsApp adiado no MVP atual) + 🚧 **Google OAuth / Stripe PRO em andamento**
 
 ---
+
+## 🆕 Atualizações recentes (Jan/2026)
+
+- **Home pós-login**: o destino padrão após autenticação é **`/dopa`** (config do Fortify). A rota **`/dashboard`** existe apenas por compatibilidade e **redireciona para `/dopa`**.
+- **Páginas legais**: **Termos de Uso** e **Política de Privacidade** revisados em **pt-BR** e alinhados à marca **DOPA Check**.
+- **SEO/Brand**: defaults globais de SEO (título, description, keywords, Open Graph e Twitter) padronizados para **DOPA Check** e `og.webp` em `public/images/og.webp`.
 
 ## 🏗️ **Arquitetura da Aplicação**
 
@@ -157,9 +163,10 @@ DELETE /checkins/{id}        # Remover check-in
 ```php
 GET  /whatsapp/connect       # Página de conexão
 POST /whatsapp/connect       # Criar sessão
-POST /whatsapp/disconnect    # Desconectar
-GET  /api/whatsapp-status    # Status da conexão (AJAX)
-POST /api/webhook            # Webhook EvolutionAPI
+GET  /whatsapp/status        # Status da conexão
+DELETE /whatsapp/disconnect  # Desconectar
+GET  /api/whatsapp-status    # Status (AJAX)
+POST /webhook/whatsapp       # Webhook EvolutionAPI
 ```
 
 ---
@@ -240,7 +247,7 @@ Cache::remember("user_plan_{$userId}", 3600, function() use ($userId) {
 
 ### **Webhook Structure (Pronto)**
 ```php
-POST /api/webhook
+POST /webhook/whatsapp
 {
   "data": {
     "key": {
@@ -530,21 +537,14 @@ RateLimiter::for('upload', function (Request $request) {
 - [ ] Compartilhamento nativo mobile
 - [ ] PWA (Service Worker)
 
-### 🎯 **SPRINT 3 - Integração WhatsApp (PRÓXIMO)**
-- [ ] Webhook EvolutionAPI funcional
-- [ ] Parser de mensagens com hashtags
-- [ ] Check-ins automáticos via foto + #hashtag
-- [ ] Bot responses personalizadas
-- [ ] QR Code para conexão fácil
-- [ ] Testes com usuários reais
+### 🎯 **PRÓXIMO (MVP sem WhatsApp por enquanto)**
+- [ ] **Login Social (Google)** end-to-end
+- [ ] **Assinatura PRO mensal (Stripe + Cashier)** end-to-end
+- [ ] Higiene/consistência de docs (DB/URLs/roadmap)
 
-### 💎 **SPRINT 4 - Features PRO (4-6 SEMANAS)**
-- [ ] Sistema de pagamentos Stripe
-- [ ] IA Analysis com OpenAI Vision
-- [ ] Upgrade flow completo
-- [ ] Analytics avançados
-- [ ] Integração Strava/Nike (APIs)
-- [ ] Notificações push
+### 🕒 **FUTURO (após Google + Stripe)**
+- [ ] Integração WhatsApp (EvolutionAPI): do webhook/buffer até check-in automático
+- [ ] IA Analysis (OpenAI Vision) como feature PRO
 
 ### 🌟 **FUTURO - Expansão (2-3 MESES)**
 - [ ] App mobile nativo (React Native)
@@ -568,14 +568,12 @@ RateLimiter::for('upload', function (Request $request) {
 
 // Conversão
 - Free to PRO conversion > 15%
-- WhatsApp connection rate > 80%
 - Share card usage > 40%
 - Challenge completion rate > 65%
 
 // Performance
 - Page load < 2s
 - API response < 300ms
-- WhatsApp bot response < 3s
 - Image upload < 10s
 ```
 
@@ -662,27 +660,21 @@ DB_PASSWORD=
 REDIS_HOST=127.0.0.1
 REDIS_PASSWORD=null
 REDIS_PORT=6379
-CACHE_DRIVER=redis
 QUEUE_CONNECTION=redis
 SESSION_DRIVER=redis
 
-# WhatsApp Bot
-WHATSAPP_BOT_NUMBER=5511999998888
-EVOLUTION_BASE_URL=https://evolution-api.com
-EVOLUTION_API_KEY=your_api_key
+# OAuth (Google)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI="${APP_URL}/auth/callback/google"
 
-# Storage (futuro)
-CLOUDFLARE_R2_ACCESS_KEY_ID=
-CLOUDFLARE_R2_SECRET_ACCESS_KEY=
-CLOUDFLARE_R2_BUCKET=dopacheck-images
-
-# AI (PRO features)
-OPENAI_API_KEY=sk-your_openai_key
-
-# Payments (futuro)
-STRIPE_KEY=pk_your_stripe_key
-STRIPE_SECRET=sk_your_stripe_secret
+# Stripe (Cashier)
+STRIPE_KEY=
+STRIPE_SECRET=
+STRIPE_WEBHOOK_SECRET=
 ```
+
+> WhatsApp (opcional/futuro): `WHATSAPP_BOT_NUMBER` é usado pelo app para gerar link wa.me. As variáveis `EVOLUTION_*` são usadas principalmente no `docker-compose.whatsapp.yml` (EvolutionAPI).
 
 ### **Redis Configuration**
 ```php
@@ -763,19 +755,10 @@ STRIPE_SECRET=sk_your_stripe_secret
 4. 🚧 **Desenvolver relatórios básicos** com métricas
 5. 🚧 **Testar compartilhamento nativo** mobile
 
-### **Próxima Semana (Sprint 3)**
-1. 🎯 **Configurar webhook WhatsApp** (EvolutionAPI)
-2. 🎯 **Implementar parser de mensagens** com hashtags
-3. 🎯 **Criar check-ins automáticos** via bot
-4. 🎯 **Desenvolver respostas inteligentes** do bot
-5. 🎯 **Testar fluxo completo** WhatsApp → Web
-
-### **Mês que Vem (Sprint 4)**
-1. 🚀 **Integrar sistema de pagamentos** (Stripe)
-2. 🚀 **Implementar IA Analysis** (OpenAI Vision)
-3. 🚀 **Criar upgrade flow** Free → PRO
-4. 🚀 **Desenvolver analytics avançados**
-5. 🚀 **Lançar versão PRO** para beta testers
+### **Próximas semanas**
+1. 🎯 **Login Social (Google)** (UI + regras de conta existente)
+2. 💳 **Stripe + Cashier** (plano PRO mensal + webhook + bridge de status)
+3. 🧹 **Higiene de docs e consistência** (DB/URLs/nomes)
 
 ---
 
@@ -878,8 +861,8 @@ O **DOPA Check** representa uma solução inovadora para tracking de hábitos, c
 - ✅ **Arquitetura escalável** com jobs assíncronos
 
 ### **🚀 Próximos Marcos**
-- 🎯 **Integração WhatsApp** em 2 semanas
-- 💎 **Versão PRO** em 4-6 semanas
+- 💎 **Versão PRO (Stripe)**: após fechar plano, checkout e sincronização
+- 🎯 **WhatsApp**: após estabilizar Google + Stripe
 - 📱 **100+ usuários ativos** em 2 meses
 - 💰 **ROI positivo** em 3 meses
 
@@ -892,6 +875,5 @@ O **DOPA Check** representa uma solução inovadora para tracking de hábitos, c
 ---
 
 **📋 Documentação Técnica Completa - DOPA Check v1.0-beta**  
-*Atualizada em: 07/07/2025*  
-*Status: Core Web Funcional + WhatsApp em Desenvolvimento*  
-*Próximo milestone: Sprint 3 - Integração WhatsApp Completa*
+*Atualizada em: 07/01/2026*  
+*Status: Core Web Funcional (WhatsApp adiado no MVP)*

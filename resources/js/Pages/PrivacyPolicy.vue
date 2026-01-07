@@ -7,7 +7,7 @@ defineProps({
 })
 
 useSeoMetaTags({
-  title: 'Privacy Policy',
+  title: 'Política de Privacidade',
 })
 </script>
 

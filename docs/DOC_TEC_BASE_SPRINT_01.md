@@ -2,9 +2,18 @@
 
 ## 🎯 **Resumo da Implementação**
 
-Implementação completa da estrutura de banco de dados, models e controllers para o **DOPA Check** - Sistema de tracking de hábitos via WhatsApp + Web.
+> **Nota (Jan/2026)**: este documento é um **snapshot histórico** da Sprint 1. Ele descreve a base (DB/models/controllers) e contém trechos sobre WhatsApp que **não são o foco do MVP atual**.
+>
+> **Fonte de verdade (atual):**
+> - Setup/DB/Ports: `README.md`, `docs/DOCKER_SETUP.md`, `env.example.dopacheck`, `docker-compose.yml`
+> - Rotas oficiais (incluindo `/health`, `/dopa` e webhooks): `routes/web.php`
+> - Roadmap/estado do produto: `docs/DOCUMENTACAO_COMPLETA.md`
+>
+> **Como manter este documento:** trate como histórico. Só atualize quando houver mudança estrutural da Sprint 1; para “estado atual do produto”, atualize os docs acima.
 
-**Status**: ✅ **Sprint 1 COMPLETA** - Base funcional implementada
+Implementação completa da estrutura de banco de dados, models e controllers para o **DOPA Check**.
+
+**Status**: ✅ **Sprint 1 COMPLETA** - Base funcional implementada (Core Web)
 
 ---
 
@@ -536,13 +545,12 @@ Challenge::public()->featured()->popular(10)
 ### **Sistema de Check-ins:**
 - Um check-in por task por dia (constraint)
 - Soft delete para TTL de imagens (free users)
-- Status de aprovação com IA (PRO)
+- Campo/estrutura para validações/IA (PRO) — feature PRO ainda em evolução
 - Origem rastreada (web/whatsapp)
 
 ### **Sistema WhatsApp:**
-- Uma sessão por usuário
-- Números únicos e bot atribuído
-- Controle de atividade e métricas
+- Estrutura inicial (model/rotas) para conexão/estado
+- Integração end-to-end (webhook → check-in automático) ficou para depois do MVP
 
 ---
 
@@ -570,6 +578,11 @@ Challenge::public()->featured()->popular(10)
 
 ## 🚀 **Próximas Etapas (Sprint 2)**
 
+> **Atenção (Jan/2026)**: a seção abaixo é o planejamento original e pode divergir do roadmap atual. Para o estado real do produto, veja `docs/DOCUMENTACAO_COMPLETA.md` (MVP sem WhatsApp por enquanto: **Google OAuth + Stripe PRO** primeiro).
+
+<details>
+<summary><strong>Planejamento original (histórico)</strong></summary>
+
 ### **1. Frontend/Interface (PRIORIDADE):**
 - 🎯 **Dashboard Vue** com tasks do dia
 - 🎯 **Componentes de check-in** com upload
@@ -587,9 +600,11 @@ Challenge::public()->featured()->popular(10)
 - 🤖 **Jobs IA** para análise de imagens (PRO)
 - 📧 **Notificações** e lembretes
 - 📊 **Analytics** e relatórios detalhados
-- 💳 **Sistema de pagamentos** Stripe
+- 💳 **Sistema de pagamentos** (Stripe/Cashier) — roadmap (não entregue na Sprint 1)
 
 ---
+
+</details>
 
 ## 🎯 **Arquivos de Configuração**
 

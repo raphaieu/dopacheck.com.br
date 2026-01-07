@@ -11,6 +11,6 @@ final class DashboardController extends Controller
 {
     public function __invoke(): Response
     {
-        return Inertia::render('Dashboard');
+        return redirect()->route('dopa.dashboard');
     }
 }

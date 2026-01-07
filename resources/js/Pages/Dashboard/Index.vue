@@ -234,12 +234,17 @@ import ProgressRing from '@/components/ProgressRing.vue'
 import WhatsAppConnection from '@/components/WhatsAppConnection.vue'
 import { useApi } from '@/composables/useApi'
 import { useShare } from '@/composables/useShare'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 // Props do Inertia
 const { props } = usePage()
 const user = computed(() => props.auth.user)
 const activeChallenges = ref(props.activeChallenges || []) // array de desafios ativos
 const currentIndex = ref(0)
+
+useSeoMetaTags({
+  title: 'Dashboard',
+})
 
 // Atualiza o desafio e tasks do dia conforme o índice
 const currentChallenge = computed(() => activeChallenges.value[currentIndex.value] || null)

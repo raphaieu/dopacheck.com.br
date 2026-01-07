@@ -1,4 +1,4 @@
-# 🐳 DOPA Check - Docker Setup
+# 🐳 DOPA Check - Docker Setup (Core Web)
 
 ## 📋 Pré-requisitos
 
@@ -16,8 +16,8 @@ cd dopacheck.com.br
 
 ### 2. Configure as variáveis de ambiente
 ```bash
-# Copie o arquivo de exemplo
-cp .env.example .env
+# Copie o arquivo de exemplo (DOPA Check)
+cp env.example.dopacheck .env
 
 # Edite o arquivo .env com suas configurações
 nano .env
@@ -29,140 +29,126 @@ nano .env
 
 ### Desenvolvimento
 
-#### Opção 1: Octane com Watch (Recomendado)
+#### Opção 1: Docker Compose (Core Web)
 ```bash
-# Usa o mesmo servidor da produção com hot reload
-docker-compose up -d
+# Sobe o core do produto (Web) com MySQL + Redis + Horizon
+docker compose up -d
 
 # Ver logs em tempo real
-docker-compose logs -f app
+docker compose logs -f app
 
 # Parar todos os serviços
-docker-compose down
+docker compose down
 ```
 
-#### Opção 2: Composer Dev (Larasonic padrão)
-```bash
-# Inclui Vite, queues, logs simultâneos
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-
-# Ver logs em tempo real
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
-
-# Parar todos os serviços
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
-```
-
-#### Opção 3: Produção Local
+#### Opção 2: Produção Local
 ```bash
 # Usa configuração de produção (sem override)
-docker-compose -f docker-compose.yml up -d
+docker compose -f docker-compose.yml up -d
 
 # Ver logs
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### Produção
 ```bash
 # Build das imagens
-docker-compose build
+docker compose build
 
 # Subir em background
-docker-compose up -d
+docker compose up -d
 
 # Verificar status
-docker-compose ps
+docker compose ps
 ```
 
-### Com ferramentas adicionais (pgAdmin)
+### Com ferramentas adicionais (phpMyAdmin)
 ```bash
-# Subir incluindo pgAdmin
-docker-compose --profile tools up -d
+# Subir incluindo phpMyAdmin
+docker compose --profile tools up -d
 ```
 
 ## 🌐 Acessos
 
 - **Aplicação Laravel**: http://localhost:8000
-- **Evolution API**: http://localhost:8080
-- **Vite Dev Server**: http://localhost:5173 (apenas com composer dev)
-- **pgAdmin**: http://localhost:8082 (se usar --profile tools)
-- **PostgreSQL**: localhost:5432
+- **phpMyAdmin**: http://localhost:8082 (se usar --profile tools)
+- **MySQL**: localhost:3306
 - **Redis**: localhost:6379
 
 ## 🔄 Comparação dos Modos de Desenvolvimento
 
 | Modo | Comando | Vantagens | Desvantagens | Uso Recomendado |
 |------|---------|-----------|--------------|-----------------|
-| **Octane Watch** | `php artisan octane:start --watch` | Mesmo servidor da produção, rápido, hot reload | Pode ser complexo para debug | Desenvolvimento geral |
-| **Composer Dev** | `composer run dev` | Vite + queues + logs simultâneos, Larasonic padrão | Mais recursos, overkill | Frontend pesado |
-| **Produção Local** | `php artisan octane:start` | Ambiente idêntico à produção | Sem hot reload | Testes finais |
+| **Docker (Core Web)** | `docker compose up -d` | Ambiente consistente com MySQL + Redis + Horizon | Mais pesado que rodar local | Desenvolvimento geral |
+| **Docker + tools** | `docker compose --profile tools up -d` | Inclui phpMyAdmin | Mais serviços | Debug/inspeção |
+| **Produção Local** | `docker compose -f docker-compose.yml up -d` | Idêntico ao deploy | Sem hot reload | Testes finais |
 
 ## 🔧 Comandos Úteis
 
 ### Laravel
 ```bash
 # Executar migrations
-docker-compose exec app php artisan migrate
+docker compose exec app php artisan migrate
 
 # Executar seeders
-docker-compose exec app php artisan db:seed
+docker compose exec app php artisan db:seed
 
 # Gerar chave da aplicação
-docker-compose exec app php artisan key:generate
+docker compose exec app php artisan key:generate
 
 # Limpar cache
-docker-compose exec app php artisan cache:clear
-docker-compose exec app php artisan config:clear
-docker-compose exec app php artisan route:clear
-docker-compose exec app php artisan view:clear
+docker compose exec app php artisan cache:clear
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan route:clear
+docker compose exec app php artisan view:clear
 
 # Ver logs do Laravel
-docker-compose exec app php artisan pail
+docker compose exec app php artisan pail
 ```
 
 ### Horizon (Queue)
 ```bash
 # Ver status do Horizon
-docker-compose exec horizon php artisan horizon:status
+docker compose exec horizon php artisan horizon:status
 
 # Pausar Horizon
-docker-compose exec horizon php artisan horizon:pause
+docker compose exec horizon php artisan horizon:pause
 
 # Continuar Horizon
-docker-compose exec horizon php artisan horizon:continue
+docker compose exec horizon php artisan horizon:continue
 
 # Terminar Horizon
-docker-compose exec horizon php artisan horizon:terminate
+docker compose exec horizon php artisan horizon:terminate
 ```
 
-### Evolution API
+### Evolution API (WhatsApp) — opcional / fora do MVP atual
 ```bash
-# Ver logs da Evolution API
-docker-compose logs evolution-api
+# A integração WhatsApp foi isolada em um compose separado (Sprint WhatsApp).
+# Suba assim (recomendado: subir o core web primeiro para criar a network dopacheck-net):
+docker compose up -d
+docker compose -f docker-compose.whatsapp.yml up -d
 
-# Verificar health check
-curl http://localhost:8080/health
+# Ver logs:
+docker compose -f docker-compose.whatsapp.yml logs -f evolution-api
 ```
+
+Notas:
+- O EvolutionAPI expõe por padrão `http://localhost:8080`.
+- O webhook do DOPA está em `POST /webhook/whatsapp` (ver `routes/web.php`). Hoje esse endpoint **bufferiza eventos** e agenda processamento; o fluxo completo (check-in automático) ainda não é o foco do MVP.
 
 ### Banco de Dados
 ```bash
-# Acessar PostgreSQL
-docker-compose exec postgres psql -U dopacheck_user -d dopacheck
-
-# Backup do banco
-docker-compose exec postgres pg_dump -U dopacheck_user dopacheck > backup.sql
-
-# Restaurar backup
-docker-compose exec -T postgres psql -U dopacheck_user -d dopacheck < backup.sql
+# Acessar MySQL
+docker compose exec mysql mysql -u${DB_USERNAME:-dopacheck_user} -p${DB_PASSWORD:-dopacheck_pass} ${DB_DATABASE:-dopacheck}
 ```
 
 ### Redis
 ```bash
 # Acessar Redis CLI
-docker-compose exec redis redis-cli
+docker compose exec redis redis-cli
 
 # Monitorar Redis
-docker-compose exec redis redis-cli monitor
+docker compose exec redis redis-cli monitor
 ```
 
 ## 🔍 Troubleshooting
@@ -188,29 +174,32 @@ docker-compose exec redis redis-cli monitor
 3. **Volumes não criados**
    ```bash
    # Remover volumes e recriar
-   docker-compose down -v
-   docker-compose up -d
+   docker compose down -v
+   docker compose up -d
    ```
 
 4. **Health checks falhando**
    ```bash
-   # Verificar logs dos serviços
-   docker-compose logs postgres
-   docker-compose logs redis
-   docker-compose logs evolution-api
+   # Verificar logs do core web (docker-compose.yml)
+   docker compose logs mysql
+   docker compose logs redis
+   docker compose logs app
+   docker compose logs horizon
+
+   # Se estiver usando WhatsApp (docker-compose.whatsapp.yml)
+   docker compose -f docker-compose.whatsapp.yml logs evolution-postgres
+   docker compose -f docker-compose.whatsapp.yml logs evolution-api
    ```
 
 ### Logs detalhados
 ```bash
 # Ver logs de todos os serviços
-docker-compose logs
+docker compose logs
 
 # Ver logs de um serviço específico
-docker-compose logs app
-docker-compose logs postgres
-docker-compose logs redis
-docker-compose logs evolution-api
-docker-compose logs horizon
+docker compose logs app
+docker compose logs redis
+docker compose logs horizon
 ```
 
 ## 📊 Monitoramento
@@ -218,9 +207,8 @@ docker-compose logs horizon
 ### Health Checks
 Todos os serviços possuem health checks configurados:
 - **App**: Verifica se a aplicação está respondendo em `/health`
-- **PostgreSQL**: Verifica se o banco está pronto
+- **MySQL**: Verifica se o banco está pronto
 - **Redis**: Verifica se o Redis está respondendo
-- **Evolution API**: Verifica se a API está saudável
 - **Horizon**: Verifica se o queue worker está funcionando
 
 ### Métricas
@@ -229,14 +217,14 @@ Todos os serviços possuem health checks configurados:
 docker stats
 
 # Ver informações dos containers
-docker-compose ps
+docker compose ps
 ```
 
 ## 🔒 Segurança
 
 ### Variáveis sensíveis
 - Altere todas as senhas padrão no `.env`
-- Use senhas fortes para `DB_PASSWORD` e `EVOLUTION_API_KEY`
+- Use senhas fortes para `DB_PASSWORD` (MySQL) e `EVOLUTION_API_KEY` (WhatsApp)
 - Configure `REDIS_PASSWORD` em produção
 
 ### Firewall
@@ -264,15 +252,15 @@ APP_URL=https://dopacheck.com.br
 
 ### 3. Backup automático
 ```bash
-# Configurar backup do PostgreSQL
+# Configurar backup do MySQL
 # Configurar backup do Redis
 # Configurar backup dos volumes
 ```
 
 ## 📝 Notas Importantes
 
-- O Evolution API precisa ser configurado com um número de WhatsApp
-- Configure webhooks no Evolution API para receber mensagens
+- O Evolution API (WhatsApp) é opcional e está em `docker-compose.whatsapp.yml`
+- Configure webhooks no Evolution API para receber mensagens quando chegar na Sprint WhatsApp
 - O Horizon processa as filas do Laravel
-- pgAdmin é opcional e só é carregado com `--profile tools`
+- phpMyAdmin é opcional e só é carregado com `--profile tools`
 - Todos os dados são persistidos em volumes Docker 

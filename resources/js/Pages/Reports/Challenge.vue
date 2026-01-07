@@ -78,12 +78,18 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import DopaHeader from '@/components/DopaHeader.vue'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 const props = defineProps({
   userChallenge: Object,
   progressByDay: Array,
+})
+
+useSeoMetaTags({
+  title: computed(() => props.userChallenge?.challenge?.title ? `Relatório — ${props.userChallenge.challenge.title}` : 'Relatório Detalhado'),
 })
 
 const formatStatus = (status) => {

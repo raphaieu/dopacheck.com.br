@@ -2,6 +2,8 @@
 
 ## 🎯 **Especificações Técnicas Definidas**
 
+> **Nota (Jan/2026)**: este documento mistura decisões já implementadas com itens de roadmap. O estado atual do produto prioriza **MySQL + Redis**, **Google OAuth** e **Stripe PRO** antes de WhatsApp/IA.
+
 ### 🔐 **Autenticação e Autorização**
 - **Provider**: Laravel Socialite (GitHub, Google + extensível para outras redes)
 - **Base**: Laravel Fortify + Jetstream já configurados
@@ -263,34 +265,33 @@ $request->validate([
 4. ✅ **TTL Jobs**: Cleanup de imagens (Free)
 5. ✅ **Perfil Público**: `/u/username` compartilhável
 
-#### **Sprint 3 (Semana 4): WhatsApp Bot**
-1. ✅ **Webhook**: Receber mensagens EvolutionAPI
-2. ✅ **Parser**: Identificar hashtags + imagens
-3. ✅ **Auto Checkin**: Processar via WhatsApp
-4. ✅ **Bot Responses**: Confirmações automáticas
-5. ✅ **Conectar Web**: Integração perfil ↔ bot
+#### **Sprint 3 (Semana 4): WhatsApp Bot (Próximo)**
+1. ⏳ **Webhook**: Receber mensagens EvolutionAPI
+2. ⏳ **Parser**: Identificar hashtags + imagens
+3. ⏳ **Auto Check-in**: Processar via WhatsApp
+4. ⏳ **Bot Responses**: Confirmações automáticas
+5. ⏳ **Conectar Web**: Integração perfil ↔ bot
 
-#### **Sprint 4 (Semana 5-6): Polish & PRO**
-1. ✅ **Share Images**: Geração automática de cards
-2. ✅ **IA Analysis**: OpenAI Vision para PRO
-3. ✅ **Subscription**: Stripe + upgrade flow
-4. ✅ **Analytics**: Dashboard de insights
-5. ✅ **Testing**: Testes com usuários reais
+#### **Sprint 4 (Semana 5-6): Polish & PRO (Planejado)**
+1. ⏳ **Share Images**: Geração automática de cards
+2. ⏳ **IA Analysis**: OpenAI Vision para PRO
+3. ⏳ **Subscription**: Stripe + upgrade flow
+4. ⏳ **Analytics**: Dashboard de insights
+5. ⏳ **Testing**: Testes com usuários reais
 
 ### 📱 **API Endpoints**
 
 #### **Autenticação**
 ```
-GET  /auth/github/redirect
-GET  /auth/github/callback
-GET  /auth/google/redirect  
-GET  /auth/google/callback
+GET  /auth/redirect/{provider}   # ex: /auth/redirect/google
+GET  /auth/callback/{provider}   # ex: /auth/callback/google
 POST /logout
 ```
 
 #### **Web App**
 ```
-GET  /dashboard
+GET  /dopa                      # dashboard principal (pós-login)
+GET  /dashboard                 # legado/compatibilidade: redireciona para /dopa
 GET  /challenges
 POST /challenges
 GET  /challenges/{id}/join
@@ -300,9 +301,11 @@ GET  /u/{username}
 
 #### **WhatsApp Webhook**
 ```
-POST /api/webhook/whatsapp
-GET  /api/user/whatsapp/connect
-POST /api/user/whatsapp/disconnect
+POST /webhook/whatsapp          # webhook EvolutionAPI
+GET  /whatsapp/connect          # tela de conexão
+POST /whatsapp/connect          # salvar/conectar
+GET  /whatsapp/status           # status da conexão
+DELETE /whatsapp/disconnect     # desconectar
 ```
 
 #### **Compartilhamento**

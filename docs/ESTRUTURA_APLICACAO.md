@@ -76,7 +76,7 @@ dopacheck.com.br/
 ## 🗄️ **Banco de Dados**
 ```
 ├── 📁 database/
-│   ├── 📄 database.sqlite (0.0B, 0 linhas)
+│   ├── 📄 database.sqlite (0.0B, 0 linhas)  # artefato/legado (o banco oficial é MySQL)
 │   ├── 📄 .gitignore (10B, 2 linhas)
 │   ├── 📁 factories/ (Factories para testes)
 │   ├── 📁 migrations/ (Migrações do banco)
@@ -139,7 +139,7 @@ Esta é uma aplicação **Laravel** moderna com as seguintes características:
 
 ### 🛠️ **Stack Tecnológico**
 - **Backend**: Laravel com PHP
-- **Frontend**: Inertia.js com React/Vue
+- **Frontend**: Inertia.js + Vue 3
 - **Autenticação**: Laravel Fortify + Jetstream
 - **Painel Admin**: Filament
 - **Pagamentos**: Laravel Cashier
@@ -150,7 +150,7 @@ Esta é uma aplicação **Laravel** moderna com as seguintes características:
 - **Build Tools**: Vite + Bun
 - **Qualidade de Código**: PHPStan + Pint + ESLint
 - **Testes**: PHPUnit
-- **Banco**: SQLite (desenvolvimento)
+- **Banco**: MySQL (padrão) + Redis (cache/fila/sessão)
 
 ### 🎯 **Funcionalidades Identificadas**
 - Sistema de autenticação robusto

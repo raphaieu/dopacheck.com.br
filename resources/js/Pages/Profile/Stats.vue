@@ -88,12 +88,17 @@
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import DopaHeader from '@/components/DopaHeader.vue'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 const props = defineProps({
   stats: Object,
   challengesBreakdown: Object,
   monthlyCheckins: Object,
   tasksPerformance: Array,
+})
+
+useSeoMetaTags({
+  title: 'Estatísticas',
 })
 
 const maxMonthlyCheckins = computed(() => {

@@ -291,6 +291,7 @@ import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import TaskPreview from '@/components/TaskPreview.vue'
 import ParticipantCard from '@/components/ParticipantCard.vue'
 import { useChallenges } from '@/composables/useChallenges'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 // Props
 const props = defineProps({
@@ -328,6 +329,10 @@ const joining = ref(false)
 
 // Computed
 const isParticipating = computed(() => !!props.userChallenge)
+
+useSeoMetaTags({
+    title: computed(() => props.challenge?.title ? props.challenge.title : 'Desafio'),
+})
 
 // Methods
 const handleJoinChallenge = async () => {

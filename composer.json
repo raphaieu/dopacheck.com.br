@@ -70,11 +70,10 @@
       "@php artisan ide-helper:meta"
     ],
     "post-root-package-install": [
-      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+      "@php -r \"file_exists('.env') || copy('env.example.dopacheck', '.env');\""
     ],
     "post-create-project-cmd": [
       "@php artisan key:generate --ansi",
-      "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
       "@php artisan migrate --graceful --ansi"
     ],
     "dev": [
@@ -83,7 +82,6 @@
     ],
     "setup": [
       "@php artisan key:generate",
-      "touch database/database.sqlite",
       "php artisan migrate:fresh --seed --force --ansi",
       "bun install",
       "bun run build",

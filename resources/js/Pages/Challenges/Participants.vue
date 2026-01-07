@@ -184,6 +184,8 @@
 import { Link, router } from '@inertiajs/vue3'
 import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import Pagination from '@/components/Pagination.vue'
+import { computed } from 'vue'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 // Props
 const props = defineProps({
@@ -199,6 +201,10 @@ const props = defineProps({
         type: Object,
         required: true
     }
+})
+
+useSeoMetaTags({
+    title: computed(() => props.challenge?.title ? `Participantes — ${props.challenge.title}` : 'Participantes'),
 })
 
 // Helper methods

@@ -7,7 +7,7 @@ defineProps({
 })
 
 useSeoMetaTags({
-  title: 'Terms of Service',
+  title: 'Termos de Uso',
 })
 </script>
 

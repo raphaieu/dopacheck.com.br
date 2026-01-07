@@ -10,7 +10,7 @@ return [
     'title' => null,
 
     // A short description of your API. Will be included in the docs webpage, Postman collection and OpenAPI spec.
-    'description' => 'This is the API docs example for the Larasonic app.',
+    'description' => 'Documentação da API do DOPA Check.',
 
     // The base URL displayed in the docs. If this is empty, Scribe will use the value of config('app.url') at generation time.
     // If you're using `laravel` type, you can set this to a dynamic string, like '{{ config("app.tenant_url") }}' to get a dynamic base URL.
@@ -121,15 +121,14 @@ return [
         'placeholder' => '{YOUR_AUTH_KEY}',
 
         // Any extra authentication-related info for your users. Markdown and HTML are supported.
-        'extra_info' => 'You can retrieve your token by visiting your dashboard and clicking <b>API token</b> in User menu.',
+        'extra_info' => 'Você pode obter seu token acessando seu dashboard e clicando em <b>API Tokens</b> no menu do usuário.',
     ],
 
     // Text to place in the "Introduction" section, right after the `description`. Markdown and HTML are supported.
     'intro_text' => <<<'INTRO'
-This documentation aims to provide all the information you need to work with our API.
+Esta documentação tem como objetivo fornecer todas as informações necessárias para integrar com a API do DOPA Check.
 
-<aside>As you scroll, you'll see code examples for working with the API in different programming languages in the dark area to the right (or as part of the content on mobile).
-You can switch the language used with the tabs at the top right (or from the nav menu at the top left on mobile).</aside>
+<aside>Ao rolar a página, você verá exemplos de código em diferentes linguagens. Você pode alternar a linguagem pelos botões no topo (ou pelo menu em dispositivos móveis).</aside>
 INTRO
     ,
 
@@ -189,7 +188,7 @@ INTRO
     // Available tokens are `{date:<format>}` and `{git:<format>}`.
     // The format you pass to `date` will be passed to PHP's `date()` function.
     // The format you pass to `git` can be either "short" or "long".
-    'last_updated' => 'Last updated: {date:F j, Y}',
+    'last_updated' => 'Atualizado em: {date:d/m/Y}',
 
     'examples' => [
         // Set this to any number (eg. 1234) to generate the same example values for parameters on each run,

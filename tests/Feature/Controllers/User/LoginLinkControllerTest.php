@@ -98,7 +98,7 @@ describe('can login with the link', function (): void {
 
         $response = get($url);
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(config('fortify.home'));
 
         assertAuthenticatedAs($user);
     });

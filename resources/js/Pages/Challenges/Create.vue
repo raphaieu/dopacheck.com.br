@@ -389,11 +389,16 @@
 import { ref, computed, reactive } from 'vue'
 import { router } from '@inertiajs/vue3'
 import DopaHeader from '@/components/DopaHeader.vue'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 // State
 const currentStep = ref(1)
 const submitting = ref(false)
 const errors = reactive({})
+
+useSeoMetaTags({
+    title: 'Criar Desafio',
+})
 
 // Form data
 const form = reactive({
