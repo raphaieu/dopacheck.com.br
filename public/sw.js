@@ -1,7 +1,7 @@
 // Service Worker para DOPA Check
-const CACHE_NAME = 'dopacheck-v2'
-const STATIC_CACHE_NAME = 'dopacheck-static-v2'
-const DYNAMIC_CACHE_NAME = 'dopacheck-dynamic-v2'
+const CACHE_NAME = 'dopacheck-v3'
+const STATIC_CACHE_NAME = 'dopacheck-static-v3'
+const DYNAMIC_CACHE_NAME = 'dopacheck-dynamic-v3'
 
 // Assets para cache estático
 const STATIC_ASSETS = [
@@ -69,6 +69,16 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Ignorar esquemas não suportados pelo Cache API (ex.: chrome-extension://)
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    return
+  }
+
+  // Ignorar requisições fora do nosso origin (extensões, CDNs, etc)
+  if (url.origin !== self.location.origin) {
+    return
+  }
+
   // Ignorar requisições de API (sempre buscar do servidor)
   if (url.pathname.startsWith('/api/')) {
     return
@@ -76,6 +86,23 @@ self.addEventListener('fetch', (event) => {
 
   // Ignorar requisições de webhook
   if (url.pathname.startsWith('/webhook/')) {
+    return
+  }
+
+  // Não cachear HTML/navegações (evita servir página com CSRF antigo e causar 419)
+  const accept = request.headers.get('accept') || ''
+  const isNavigation = request.mode === 'navigate' || accept.includes('text/html')
+  if (isNavigation) {
+    return
+  }
+
+  // Cache dinâmico APENAS para assets estáticos comuns
+  const isStaticAsset =
+    url.pathname.startsWith('/build/') ||
+    url.pathname.startsWith('/images/') ||
+    /\.(?:js|css|png|jpg|jpeg|webp|svg|ico|woff2?|ttf|eot|json|webmanifest)$/.test(url.pathname)
+
+  if (!isStaticAsset) {
     return
   }
 
@@ -88,7 +115,9 @@ self.addEventListener('fetch', (event) => {
         // Cachear apenas respostas válidas
         if (response.status === 200) {
           caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache)
+            cache.put(request, responseToCache).catch((err) => {
+              console.warn('[Service Worker] Failed to put in cache:', request.url, err)
+            })
           })
         }
 
@@ -99,11 +128,6 @@ self.addEventListener('fetch', (event) => {
         return caches.match(request).then((cachedResponse) => {
           if (cachedResponse) {
             return cachedResponse
-          }
-
-          // Se for navegação, retornar página offline
-          if (request.mode === 'navigate') {
-            return caches.match('/')
           }
         })
       })
