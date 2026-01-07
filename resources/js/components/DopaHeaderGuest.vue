@@ -20,10 +20,10 @@
         <div class="flex items-center space-x-2 sm:space-x-4">
           <!-- Desktop: Login/Register Buttons -->
           <div class="hidden sm:flex space-x-2">
-            <Button variant="outline" :as="Link" href="/login" prefetch="mount">
+            <Button variant="outline" :as="Link" :href="loginHref" prefetch="mount">
               Entrar
             </Button>
-            <Button variant="outline" :as="Link" href="/register" prefetch="mount">
+            <Button variant="outline" :as="Link" :href="registerHref" prefetch="mount">
               Cadastrar
             </Button>
           </div>
@@ -47,7 +47,7 @@
           <Button
             variant="outline" 
             :as="Link" 
-            href="/login" 
+            :href="loginHref" 
             class="flex-1" 
             prefetch="mount"
             @click="toggleMenu"
@@ -57,7 +57,7 @@
           <Button
             variant="outline" 
             :as="Link" 
-            href="/register" 
+            :href="registerHref" 
             class="flex-1" 
             prefetch="mount"
             @click="toggleMenu"
@@ -71,8 +71,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 import { Icon } from '@iconify/vue'
 import Button from '@/components/ui/button/Button.vue'
 
@@ -100,6 +100,11 @@ const props = defineProps({
 })
 
 const isMenuOpen = ref(false)
+const page = usePage()
+const isLoggedIn = computed(() => !!page.props.auth?.user)
+
+const loginHref = computed(() => (isLoggedIn.value ? '/dopa' : '/login'))
+const registerHref = computed(() => (isLoggedIn.value ? '/dopa' : '/register'))
 
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value

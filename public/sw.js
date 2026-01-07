@@ -1,29 +1,41 @@
 // Service Worker para DOPA Check
-const CACHE_NAME = 'dopacheck-v1'
-const STATIC_CACHE_NAME = 'dopacheck-static-v1'
-const DYNAMIC_CACHE_NAME = 'dopacheck-dynamic-v1'
+const CACHE_NAME = 'dopacheck-v2'
+const STATIC_CACHE_NAME = 'dopacheck-static-v2'
+const DYNAMIC_CACHE_NAME = 'dopacheck-dynamic-v2'
 
 // Assets para cache estático
 const STATIC_ASSETS = [
   '/',
-  '/dopa',
-  '/challenges',
-  '/manifest.json',
+  '/site.webmanifest',
   '/android-chrome-192x192.png',
   '/android-chrome-512x512.png',
+  '/apple-touch-icon.png',
+  '/favicon-32x32.png',
+  '/favicon-16x16.png',
+  '/favicon.ico',
 ]
 
 // Instalação do Service Worker
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installing...')
-  event.waitUntil(
-    caches.open(STATIC_CACHE_NAME)
-      .then((cache) => {
-        console.log('[Service Worker] Caching static assets')
-        return cache.addAll(STATIC_ASSETS)
+  event.waitUntil((async () => {
+    const cache = await caches.open(STATIC_CACHE_NAME)
+    console.log('[Service Worker] Caching static assets')
+
+    // cache.addAll falha se 1 item falhar (404/500/redirect/etc). Aqui a gente
+    // tenta individualmente e segue em frente quando algum asset não puder ser cacheado.
+    await Promise.allSettled(
+      STATIC_ASSETS.map(async (url) => {
+        try {
+          await cache.add(url)
+        } catch (err) {
+          console.warn('[Service Worker] Failed to cache:', url, err)
+        }
       })
-      .then(() => self.skipWaiting())
-  )
+    )
+
+    await self.skipWaiting()
+  })())
 })
 
 // Ativação do Service Worker

@@ -253,6 +253,23 @@ if (app()->environment('local', 'staging')) {
 }
 
 // ========================================
+// PWA MANIFEST (compatibilidade)
+// ========================================
+Route::get('/manifest.json', function () {
+    $path = public_path('site.webmanifest');
+    if (! file_exists($path)) {
+        return response()->json(['message' => 'Manifest não encontrado'], 404);
+    }
+
+    // Muitos browsers aceitam application/manifest+json. Mantemos a extensão .webmanifest no disco,
+    // mas servimos com o content-type correto aqui.
+    return response()->file($path, [
+        'Content-Type' => 'application/manifest+json; charset=utf-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+});
+
+// ========================================
 // 404 PERSONALIZADA
 // ========================================
 Route::fallback(function () {

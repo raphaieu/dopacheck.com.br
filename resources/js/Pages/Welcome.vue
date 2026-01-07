@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 import FeaturesCard from '@/components/FeaturesCard.vue'
 import PricingCard from '@/components/PricingCard.vue'
 import Terminal from '@/components/Terminal.vue'
@@ -37,6 +37,10 @@ const props = defineProps({
 })
 
 useSeoMetaTags(props.seo)
+
+const page = usePage()
+const isLoggedIn = computed(() => !!page.props.auth?.user)
+const registerHref = computed(() => (isLoggedIn.value ? '/dopa' : route('register')))
 
 const features = [
   {
@@ -214,7 +218,7 @@ const testimonials = [
         <!-- CTA Buttons -->
         <div class="mt-10 flex items-center justify-center gap-4 flex-col sm:flex-row">
           <Button
-            :as="Link" :href="route('register')" size="lg"
+            :as="Link" :href="registerHref" size="lg"
             class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
           >
             Começar Gratuitamente
@@ -362,7 +366,7 @@ const testimonials = [
               </li>
             </ul>
             
-            <Button :as="Link" :href="route('register')" class="w-full">
+            <Button :as="Link" :href="registerHref" class="w-full">
               Começar Grátis
             </Button>
           </div>
@@ -390,7 +394,7 @@ const testimonials = [
               </li>
             </ul>
             
-            <Button :as="Link" :href="route('register')" variant="secondary" class="w-full">
+            <Button :as="Link" :href="registerHref" variant="secondary" class="w-full">
               Começar PRO
             </Button>
           </div>
@@ -431,7 +435,7 @@ const testimonials = [
               Junte-se a milhares de pessoas que já transformaram suas rotinas com o DOPA Check.
             </p>
             <div class="mt-8 flex justify-center gap-4">
-              <Button :as="Link" :href="route('register')" size="lg" variant="secondary">
+              <Button :as="Link" :href="registerHref" size="lg" variant="secondary">
                 Começar Agora
               </Button>
               <Button :as="Link" :href="route('challenges.index')" size="lg" variant="outline" class="bg-white/10 text-white border-white hover:bg-white hover:text-blue-600">
