@@ -17,7 +17,10 @@ use App\Actions\Fortify\UpdateUserPassword;
 use Illuminate\Support\Facades\RateLimiter;
 use App\Actions\User\ActiveOauthProviderAction;
 use App\Actions\Fortify\UpdateUserProfileInformation;
-use Illuminate\Http\RedirectResponse;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
+use App\Http\Responses\Fortify\LoginResponse;
+use App\Http\Responses\Fortify\RegisterResponse;
 
 final class FortifyServiceProvider extends ServiceProvider
 {
@@ -26,7 +29,10 @@ final class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Compatível com versões antigas do Fortify (sem Fortify::loginResponseUsing()).
+        // Substituímos as respostas padrão por versões que evitam redirect "intended" para /api/*.
+        $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
+        $this->app->singleton(RegisterResponseContract::class, RegisterResponse::class);
     }
 
     /**
@@ -48,7 +54,6 @@ final class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('two-factor', fn (Request $request) => Limit::perMinute(5)->by($request->session()->get('login.id')));
 
         $this->configureLoginView();
-        $this->configureAuthResponses();
     }
 
     private function configureLoginView(): void
@@ -58,29 +63,5 @@ final class FortifyServiceProvider extends ServiceProvider
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
         ]));
-    }
-
-    private function configureAuthResponses(): void
-    {
-        Fortify::loginResponseUsing(fn (Request $request) => $this->safeIntendedRedirect());
-        Fortify::registerResponseUsing(fn (Request $request) => $this->safeIntendedRedirect());
-    }
-
-    private function safeIntendedRedirect(): RedirectResponse
-    {
-        $fallback = (string) config('fortify.home', '/dopa');
-        $intended = session('url.intended');
-
-        if (is_string($intended) && $intended !== '') {
-            $path = parse_url($intended, PHP_URL_PATH) ?: '';
-
-            // Se o intended for um endpoint JSON (/api/*), ignore.
-            if (str_starts_with($path, '/api/')) {
-                session()->forget('url.intended');
-                return redirect()->to($fallback);
-            }
-        }
-
-        return redirect()->intended($fallback);
     }
 }
