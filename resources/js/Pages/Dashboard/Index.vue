@@ -458,8 +458,13 @@ onMounted(() => {
   // Auto-refresh tasks a cada minuto (caso tenha check-ins pelo WhatsApp)
   setInterval(() => {
     if (currentChallenge.value) {
-      fetch(`/api/today-tasks?challenge_id=${currentChallenge.value.id}`)
-        .then(response => response.json())
+      csrfFetch(`/api/today-tasks?challenge_id=${currentChallenge.value.id}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
+        .then(response => response.ok ? response.json() : null)
         .then(data => {
           if (data.tasks) {
             todayTasks.value = data.tasks

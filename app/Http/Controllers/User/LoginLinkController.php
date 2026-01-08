@@ -77,6 +77,14 @@ final class LoginLinkController extends Controller
         $magicLink->update(['used_at' => now()]);
         Auth::login($magicLink->user, true);
 
-        return redirect()->intended(config('fortify.home'));
+        $fallback = (string) config('fortify.home', '/dopa');
+        $intended = session('url.intended');
+        $path = is_string($intended) ? (parse_url($intended, PHP_URL_PATH) ?: '') : '';
+        if ($path !== '' && str_starts_with($path, '/api/')) {
+            session()->forget('url.intended');
+            return redirect()->to($fallback);
+        }
+
+        return redirect()->intended($fallback);
     }
 }

@@ -52,7 +52,15 @@ final class OauthController extends Controller
         if (Auth::guest()) {
             Auth::login($user, true);
 
-            return Redirect::intended(config('fortify.home'));
+            $fallback = (string) config('fortify.home', '/dopa');
+            $intended = session('url.intended');
+            $path = is_string($intended) ? (parse_url($intended, PHP_URL_PATH) ?: '') : '';
+            if ($path !== '' && str_starts_with($path, '/api/')) {
+                session()->forget('url.intended');
+                return Redirect::to($fallback);
+            }
+
+            return Redirect::intended($fallback);
         }
 
         return Redirect::intended(route('profile.show'))->with('success', "Your {$provider} account has been linked.");
