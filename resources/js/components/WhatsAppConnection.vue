@@ -161,6 +161,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
+import { csrfHeaders } from '@/utils/csrf.js'
 
 const props = defineProps({
   user: {
@@ -225,9 +226,10 @@ const handleConnect = async () => {
       const response = await fetch('/whatsapp/connect', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-          'Accept': 'application/json'
+          ...csrfHeaders({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          })
         },
         body: JSON.stringify({ phone_number: phone.value })
       })
@@ -262,9 +264,10 @@ const handleSubmitPhone = async () => {
     const response = await fetch('/whatsapp/connect', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        'Accept': 'application/json'
+        ...csrfHeaders({
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        })
       },
       body: JSON.stringify({ phone_number: phone.value })
     })
@@ -294,9 +297,10 @@ const handleDisconnect = async () => {
     const response = await fetch('/whatsapp/disconnect', {
       method: 'DELETE',
       headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        'Accept': 'application/json'
+        ...csrfHeaders({
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        })
       }
     })
     await fetchStatus()

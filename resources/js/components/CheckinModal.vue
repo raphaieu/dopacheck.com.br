@@ -182,6 +182,7 @@
   <script setup>
   import { reactive, ref, computed } from 'vue'
   import { usePage } from '@inertiajs/vue3'
+  import { csrfHeaders } from '@/utils/csrf.js'
   
   // Props
   const props = defineProps({
@@ -318,8 +319,9 @@
         method: 'POST',
         body: formData,
         headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-          'Accept': 'application/json'
+          ...csrfHeaders({
+            'Accept': 'application/json'
+          })
         }
       })
       

@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { csrfHeaders } from '@/utils/csrf.js'
 
 export function useCheckins() {
   const submitting = ref(false)
@@ -10,8 +11,9 @@ export function useCheckins() {
       const response = await fetch('/api/quick-checkin', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          ...csrfHeaders({
+            'Content-Type': 'application/json',
+          }),
         },
         body: JSON.stringify({
           task_id: taskId,
@@ -46,7 +48,7 @@ export function useCheckins() {
       const response = await fetch(`/checkins/${checkinId}`, {
         method: 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          ...csrfHeaders(),
         }
       })
       
@@ -73,7 +75,7 @@ export function useCheckins() {
         method: 'POST',
         body: formData,
         headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          ...csrfHeaders(),
         }
       })
       

@@ -41,6 +41,17 @@ Route::get('/health', function () {
 Route::get('/', [WelcomeController::class, 'home'])->name('home');
 
 // ========================================
+// CSRF / XSRF COOKIE REFRESH (SPA/Inertia)
+// ========================================
+// O Laravel atualiza o cookie XSRF-TOKEN em requests "read" (GET/HEAD).
+// Esse endpoint é usado pelo frontend após login/logout para sincronizar o token
+// sem precisar de reload completo.
+Route::get('/csrf-cookie', function () {
+    return response()->noContent()
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+})->name('csrf-cookie');
+
+// ========================================
 // PUBLIC DOPA CHECK ROUTES
 // ========================================
 

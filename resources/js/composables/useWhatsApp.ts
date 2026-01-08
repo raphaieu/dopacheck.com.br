@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { csrfHeaders } from '@/utils/csrf.js'
 
 export function useWhatsApp() {
   const connecting = ref(false)
@@ -11,8 +12,9 @@ export function useWhatsApp() {
       const response = await fetch('/whatsapp/connect', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          ...csrfHeaders({
+            'Content-Type': 'application/json',
+          })
         }
       })
       
@@ -38,8 +40,9 @@ export function useWhatsApp() {
       const response = await fetch('/whatsapp/disconnect', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          ...csrfHeaders({
+            'Content-Type': 'application/json',
+          })
         }
       })
       
