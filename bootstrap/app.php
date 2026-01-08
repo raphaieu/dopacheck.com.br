@@ -16,6 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // IMPORTANTE:
+        // Se o cookie XSRF-TOKEN for criptografado, o valor muda a cada response (IV aleatório),
+        // o frontend não consegue reutilizar o token e você vê 419 (TokenMismatch) de forma intermitente.
+        // O padrão do Laravel é NÃO criptografar o XSRF-TOKEN.
+        $middleware->encryptCookies(except: [
+            'XSRF-TOKEN',
+        ]);
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
