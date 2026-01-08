@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { csrfHeaders } from '@/utils/csrf.js'
+import { csrfFetch } from '@/utils/csrf.js'
 
 export function useWhatsApp() {
   const connecting = ref(false)
@@ -9,12 +9,10 @@ export function useWhatsApp() {
     connecting.value = true
     
     try {
-      const response = await fetch('/whatsapp/connect', {
+      const response = await csrfFetch('/whatsapp/connect', {
         method: 'POST',
         headers: {
-          ...csrfHeaders({
-            'Content-Type': 'application/json',
-          })
+          'Content-Type': 'application/json',
         }
       })
       
@@ -37,12 +35,10 @@ export function useWhatsApp() {
     disconnecting.value = true
     
     try {
-      const response = await fetch('/whatsapp/disconnect', {
+      const response = await csrfFetch('/whatsapp/disconnect', {
         method: 'POST',
         headers: {
-          ...csrfHeaders({
-            'Content-Type': 'application/json',
-          })
+          'Content-Type': 'application/json',
         }
       })
       

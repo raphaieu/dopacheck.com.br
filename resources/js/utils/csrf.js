@@ -49,9 +49,40 @@ export function csrfHeaders(extra = {}) {
 
   return {
     'X-Requested-With': 'XMLHttpRequest',
+    // Laravel aceita ambos. `X-XSRF-TOKEN` é o padrão (cookie XSRF-TOKEN).
+    // Mantemos `X-CSRF-TOKEN` por compatibilidade com código legado.
+    'X-XSRF-TOKEN': token,
     'X-CSRF-TOKEN': token,
     ...extra,
   }
+}
+
+export async function csrfFetch(url, options = {}, { retryOn419 = true } = {}) {
+  const mergedHeaders = csrfHeaders(options.headers || {})
+
+  const response = await fetch(url, {
+    ...options,
+    credentials: 'same-origin',
+    headers: mergedHeaders,
+    cache: options.cache ?? 'no-store',
+  })
+
+  if (retryOn419 && response.status === 419) {
+    // Token desatualizado (muito comum após login via Inertia sem reload)
+    try {
+      await refreshXsrfCookie()
+    } catch {
+      // ignore
+    }
+    return fetch(url, {
+      ...options,
+      credentials: 'same-origin',
+      headers: csrfHeaders(options.headers || {}),
+      cache: options.cache ?? 'no-store',
+    })
+  }
+
+  return response
 }
 
 

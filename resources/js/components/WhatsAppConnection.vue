@@ -161,7 +161,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
-import { csrfHeaders } from '@/utils/csrf.js'
+import { csrfFetch } from '@/utils/csrf.js'
 
 const props = defineProps({
   user: {
@@ -223,13 +223,11 @@ const handleConnect = async () => {
   if (phone.value.match(/^\d{10,15}$/)) {
     connecting.value = true
     try {
-      const response = await fetch('/whatsapp/connect', {
+      const response = await csrfFetch('/whatsapp/connect', {
         method: 'POST',
         headers: {
-          ...csrfHeaders({
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          })
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({ phone_number: phone.value })
       })
@@ -261,13 +259,11 @@ const handleSubmitPhone = async () => {
   }
   connecting.value = true
   try {
-    const response = await fetch('/whatsapp/connect', {
+    const response = await csrfFetch('/whatsapp/connect', {
       method: 'POST',
       headers: {
-        ...csrfHeaders({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        })
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({ phone_number: phone.value })
     })
@@ -294,13 +290,11 @@ const handleDisconnect = async () => {
   if (!confirm('Tem certeza que deseja desconectar o WhatsApp?')) return
   disconnecting.value = true
   try {
-    const response = await fetch('/whatsapp/disconnect', {
+    const response = await csrfFetch('/whatsapp/disconnect', {
       method: 'DELETE',
       headers: {
-        ...csrfHeaders({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        })
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
     })
     await fetchStatus()

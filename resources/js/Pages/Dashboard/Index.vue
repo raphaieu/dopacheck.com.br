@@ -235,7 +235,7 @@ import WhatsAppConnection from '@/components/WhatsAppConnection.vue'
 import { useApi } from '@/composables/useApi'
 import { useShare } from '@/composables/useShare'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
-import { csrfHeaders } from '@/utils/csrf.js'
+import { csrfFetch } from '@/utils/csrf.js'
 
 // Props do Inertia
 const { props } = usePage()
@@ -415,13 +415,11 @@ const generateShareCard = async () => {
         completed: task.is_completed
       }))
     }
-    const response = await fetch('/api/share-card', {
+    const response = await csrfFetch('/api/share-card', {
       method: 'POST',
       headers: {
-        ...csrfHeaders({
-          'Content-Type': 'application/json',
-          'Accept': 'image/png'
-        })
+        'Content-Type': 'application/json',
+        'Accept': 'image/png'
       },
       body: JSON.stringify(payload)
     })

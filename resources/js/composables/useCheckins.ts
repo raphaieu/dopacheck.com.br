@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { csrfHeaders } from '@/utils/csrf.js'
+import { csrfFetch } from '@/utils/csrf.js'
 
 export function useCheckins() {
   const submitting = ref(false)
@@ -8,12 +8,10 @@ export function useCheckins() {
     submitting.value = true
     
     try {
-      const response = await fetch('/api/quick-checkin', {
+      const response = await csrfFetch('/api/quick-checkin', {
         method: 'POST',
         headers: {
-          ...csrfHeaders({
-            'Content-Type': 'application/json',
-          }),
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           task_id: taskId,
@@ -45,10 +43,10 @@ export function useCheckins() {
     submitting.value = true
     
     try {
-      const response = await fetch(`/checkins/${checkinId}`, {
+      const response = await csrfFetch(`/checkins/${checkinId}`, {
         method: 'DELETE',
         headers: {
-          ...csrfHeaders(),
+          // headers de CSRF adicionados pelo helper
         }
       })
       
@@ -71,11 +69,11 @@ export function useCheckins() {
     submitting.value = true
     
     try {
-      const response = await fetch('/checkins', {
+      const response = await csrfFetch('/checkins', {
         method: 'POST',
         body: formData,
         headers: {
-          ...csrfHeaders(),
+          // headers de CSRF adicionados pelo helper
         }
       })
       

@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { csrfHeaders } from '@/utils/csrf.js'
+import { csrfFetch } from '@/utils/csrf.js'
 
 export function useApi() {
   const loading = ref(false)
@@ -10,17 +10,12 @@ export function useApi() {
     error.value = null
     
     try {
-      const defaultHeaders = csrfHeaders({
-        'Content-Type': 'application/json',
-      })
-      
-      const response = await fetch(url, {
+      const response = await csrfFetch(url, {
         ...options,
-        credentials: 'same-origin',
         headers: {
-          ...defaultHeaders,
-          ...options.headers
-        }
+          'Content-Type': 'application/json',
+          ...(options.headers || {}),
+        },
       })
       
       if (!response.ok) {

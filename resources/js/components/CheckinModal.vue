@@ -182,7 +182,7 @@
   <script setup>
   import { reactive, ref, computed } from 'vue'
   import { usePage } from '@inertiajs/vue3'
-  import { csrfHeaders } from '@/utils/csrf.js'
+  import { csrfFetch } from '@/utils/csrf.js'
   
   // Props
   const props = defineProps({
@@ -315,13 +315,11 @@
         }
       }
       
-      const response = await fetch('/checkins', {
+      const response = await csrfFetch('/checkins', {
         method: 'POST',
         body: formData,
         headers: {
-          ...csrfHeaders({
-            'Accept': 'application/json'
-          })
+          'Accept': 'application/json'
         }
       })
       

@@ -180,7 +180,7 @@
   <script setup>
   import { computed, ref } from 'vue'
   import { router, usePage } from '@inertiajs/vue3'
-  import { csrfHeaders } from '@/utils/csrf.js'
+  import { csrfFetch } from '@/utils/csrf.js'
   import CheckinModal from '@/components/CheckinModal.vue'
   import ImageModal from '@/components/ImageModal.vue'
   
@@ -236,13 +236,11 @@
     submitting.value = true
     
     try {
-      const response = await fetch('/api/quick-checkin', {
+      const response = await csrfFetch('/api/quick-checkin', {
         method: 'POST',
         headers: {
-          ...csrfHeaders({
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          })
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           task_id: props.task.id,
@@ -279,12 +277,10 @@
     submitting.value = true
     
     try {
-      const response = await fetch(`/checkins/${props.checkin.id}`, {
+      const response = await csrfFetch(`/checkins/${props.checkin.id}`, {
         method: 'DELETE',
         headers: {
-          ...csrfHeaders({
-            'Accept': 'application/json'
-          })
+          'Accept': 'application/json'
         }
       })
       
