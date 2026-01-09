@@ -1,8 +1,9 @@
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3'
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import InputError from '@/components/InputError.vue'
 import AuthenticationCardLogo from '@/components/LogoRedirect.vue'
+import SocialLoginButton from '@/components/SocialLoginButton.vue'
 
 import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +11,10 @@ import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
+
+const props = defineProps({
+  availableOauthProviders: Object,
+})
 
 useSeoMetaTags({
   title: 'Cadastre-se',
@@ -23,6 +28,10 @@ const form = useForm({
   password_confirmation: '',
   terms: false,
 })
+
+const hasOauthProviders = computed(() =>
+  Object.keys(props.availableOauthProviders || {}).length > 0,
+)
 
 function submit() {
   form.post(route('register'), {
@@ -136,6 +145,29 @@ function submit() {
             </div>
           </div>
         </form>
+
+        <!-- OAuth Section -->
+        <div v-if="hasOauthProviders" class="mt-6">
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+              <span class="w-full border-t border-gray-200" />
+            </div>
+            <div class="relative flex justify-center text-xs uppercase">
+              <span class="bg-white px-2 text-gray-500">
+                Ou continue com
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-6 grid gap-2">
+            <SocialLoginButton
+              v-for="provider in availableOauthProviders"
+              :key="provider.slug"
+              :provider="provider"
+              :disabled="form.processing"
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   </div>

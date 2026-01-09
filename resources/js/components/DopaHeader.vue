@@ -62,35 +62,40 @@
                   class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700 transition-colors"
                   @click="showMenu = false"
                 >
-                  <span class="text-xl mr-2">📊</span> Relatórios
+                  <Icon icon="lucide:bar-chart-3" class="mr-2 size-5 text-blue-600" />
+                  Relatórios
                 </Link>
                 <Link 
-                  :href="`/u/${user?.username}`" 
+                  :href="profileHref" 
                   class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700 transition-colors"
                   @click="showMenu = false"
                 >
-                  <span class="text-xl mr-2">🔗</span> Meu Perfil
+                  <Icon icon="lucide:user" class="mr-2 size-5 text-purple-600" />
+                  Meu Perfil
                 </Link>
                 <Link 
                   href="/challenges" 
                   class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700 transition-colors"
                   @click="showMenu = false"
                 >
-                  <span class="text-xl mr-2">🎯</span> Desafios
+                  <Icon icon="lucide:target" class="mr-2 size-5 text-indigo-600" />
+                  Desafios
                 </Link>
                 <Link 
                   href="/profile/settings" 
                   class="flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700 transition-colors"
                   @click="showMenu = false"
                 >
-                  <span class="text-xl mr-2">⚙️</span> Config
+                  <Icon icon="lucide:settings" class="mr-2 size-5 text-gray-700" />
+                  Config
                 </Link>
                 <div class="border-t border-gray-100 my-1"></div>
                 <button
                   @click="handleLogout"
                   class="w-full flex items-center px-4 py-3 hover:bg-gray-50 text-gray-700 transition-colors text-left"
                 >
-                  <span class="text-xl mr-2">🚪</span> Sair
+                  <Icon icon="lucide:log-out" class="mr-2 size-5 text-gray-700" />
+                  Sair
                 </button>
               </div>
             </transition>
@@ -104,6 +109,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
+import { Icon } from '@iconify/vue'
 
 const props = defineProps({
   subtitle: {
@@ -132,6 +138,12 @@ const page = usePage()
 const user = computed(() => page.props.auth?.user)
 const showMenu = ref(false)
 const dropdownRef = ref(null)
+
+const profileHref = computed(() => {
+  if (!user.value) return '/profile/settings'
+  const key = user.value.username || user.value.id
+  return `/u/${key}`
+})
 
 const maxWidthClass = computed(() => {
   const classes = {

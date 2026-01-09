@@ -22,6 +22,6 @@ defineProps({
     as="a" :href="route('oauth.redirect', { provider: provider.slug })"
   >
     <Icon :icon="provider.icon" class="mr-2 h-4 w-4" />
-    Sign In With {{ useChangeCase(provider.slug, 'sentenceCase') }}
+    Entrar com {{ useChangeCase(provider.slug, 'sentenceCase') }}
   </Button>
 </template>

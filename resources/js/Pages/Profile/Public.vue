@@ -15,6 +15,20 @@
           <div class="flex-1 text-center sm:text-left">
             <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ profileUser.name }}</h2>
             <p class="text-gray-600 mb-4">@{{ profileUser.username || profileUser.id }}</p>
+            <div v-if="isOwnProfile" class="flex flex-col sm:flex-row gap-2 justify-center sm:justify-start mb-4">
+              <Link
+                href="/subscriptions/create"
+                class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-colors text-center"
+              >
+                Assinaturas / Faturas
+              </Link>
+              <Link
+                href="/profile/settings"
+                class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center"
+              >
+                Configurações
+              </Link>
+            </div>
             <div class="flex flex-wrap gap-4 justify-center sm:justify-start">
               <div class="text-center">
                 <div class="text-2xl font-bold text-blue-600">{{ stats.total_challenges }}</div>
@@ -119,8 +133,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
 
@@ -130,6 +144,12 @@ const props = defineProps({
   currentChallenge: Object,
   recentCheckins: Array,
   stats: Object,
+})
+
+const page = usePage()
+const authUser = computed(() => page.props.auth?.user || null)
+const isOwnProfile = computed(() => {
+  return !!authUser.value && String(authUser.value.id) === String(props.profileUser?.id)
 })
 
 const selectedImage = ref(null)

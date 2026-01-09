@@ -22,6 +22,7 @@ use App\Http\Controllers\UserChallengeController;
 use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StripeWebhookController;
 
 // ========================================
 // HEALTH CHECK
@@ -217,13 +218,19 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 // ========================================
 // WEBHOOK ROUTES (sem autenticação)
 // ========================================
+
+// Stripe webhook (Cashier) - endpoint padrão do Cashier (/stripe/webhook).
+// Mantemos aqui para compatibilidade com a documentação do Cashier e com configurações
+// de webhook já apontadas para esse caminho.
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
+
 Route::prefix('webhook')->name('webhook.')->group(function () {
     
     // WhatsApp webhook (EvolutionAPI) - para Sprint 3
     Route::post('/whatsapp', [WhatsAppController::class, 'webhook'])->name('whatsapp');
     
-    // Stripe webhook (futuro)
-    // Route::post('/stripe', [SubscriptionController::class, 'webhook'])->name('stripe');
+    // Stripe webhook (Cashier)
+    Route::post('/stripe', [StripeWebhookController::class, 'handleWebhook'])->name('stripe');
     
 });
 

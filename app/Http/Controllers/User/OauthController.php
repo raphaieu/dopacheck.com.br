@@ -40,13 +40,15 @@ final class OauthController extends Controller
             $authenticatedUser = Auth::user();
             $user = $this->handleOauthCallbackAction->handle($provider, $socialiteUser, $authenticatedUser);
         } catch (InvalidStateException) {
-            return Redirect::intended(Auth::check() ? route('profile.show') : route('login'))->with('error', __('The request timed out. Please try again.'));
+            return Redirect::intended(Auth::check() ? route('profile.show') : route('login'))
+                ->with('error', 'A requisição expirou. Por favor, tente novamente.');
         } catch (OAuthAccountLinkingException $oauthAccountLinkingException) {
             return Redirect::intended(Auth::check() ? route('profile.show') : route('login'))->with('error', $oauthAccountLinkingException->getMessage());
         } catch (Throwable $throwable) {
             report($throwable);
 
-            return Redirect::intended(Auth::check() ? route('profile.show') : route('login'))->with('error', __('An error occurred during authentication. Please try again.'));
+            return Redirect::intended(Auth::check() ? route('profile.show') : route('login'))
+                ->with('error', 'Ocorreu um erro durante a autenticação. Por favor, tente novamente.');
         }
 
         if (Auth::guest()) {
@@ -63,7 +65,7 @@ final class OauthController extends Controller
             return Redirect::intended($fallback);
         }
 
-        return Redirect::intended(route('profile.show'))->with('success', "Your {$provider} account has been linked.");
+        return Redirect::intended(route('profile.show'))->with('success', "Sua conta {$provider} foi vinculada com sucesso.");
     }
 
     public function destroy(string $provider): RedirectResponse
@@ -73,7 +75,7 @@ final class OauthController extends Controller
         $user = Auth::user();
 
         $user?->oauthConnections()->where('provider', $provider)->delete();
-        session()->flash('success', "Your {$provider} account has been unlinked.");
+        session()->flash('success', "Sua conta {$provider} foi desvinculada com sucesso.");
 
         return Redirect::route('profile.show');
     }

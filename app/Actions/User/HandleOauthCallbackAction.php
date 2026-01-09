@@ -82,10 +82,21 @@ final readonly class HandleOauthCallbackAction
 
     private function handleExistingUser(User $user, string $provider, SocialiteUser $socialiteUser): User
     {
-        throw_unless(
-            $user->oauthConnections()->where('provider', $provider)->exists(),
-            OAuthAccountLinkingException::existingConnection()
-        );
+        // Se já existe uma conexão desse provider para esse usuário, apenas atualizamos os dados.
+        if ($user->oauthConnections()->where('provider', $provider)->exists()) {
+            $this->updateUserProfile($user, $socialiteUser, $provider);
+            return $user;
+        }
+
+        // Caso contrário, permitimos login por email existente e vinculamos a conta do provider,
+        // desde que ela não esteja vinculada a OUTRO usuário (proteção contra account takeover).
+        $isProviderAccountAlreadyLinked = DB::table('oauth_connections')
+            ->where('provider', $provider)
+            ->where('provider_id', $socialiteUser->getId())
+            ->where('user_id', '!=', $user->id)
+            ->exists();
+
+        throw_if($isProviderAccountAlreadyLinked, OAuthAccountLinkingException::existingConnection());
 
         $this->updateUserProfile($user, $socialiteUser, $provider);
 

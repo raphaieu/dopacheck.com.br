@@ -18,6 +18,9 @@
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="seu_usuario"
               />
+              <p v-if="form.errors.username" class="text-xs text-red-600 mt-1">
+                {{ form.errors.username }}
+              </p>
               <p class="text-xs text-gray-500 mt-1">Usado na URL do seu perfil público: /u/seu_usuario</p>
             </div>
 
@@ -29,6 +32,9 @@
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="(11) 99999-8888"
               />
+              <p v-if="form.errors.phone" class="text-xs text-red-600 mt-1">
+                {{ form.errors.phone }}
+              </p>
             </div>
           </div>
         </div>
@@ -124,7 +130,7 @@
             </div>
             <Link 
               v-if="!props.user?.is_pro"
-              href="/subscriptions"
+              href="/subscriptions/create"
               class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-colors"
             >
               Upgrade para PRO
@@ -188,7 +194,15 @@ const submitting = ref(false)
 
 const submit = () => {
   submitting.value = true
-  form.patch('/profile/settings', {
+  form
+    .transform((data) => ({
+      ...data,
+      // Evita falhar validação quando o usuário deixa username/phone vazio:
+      // backend aceita null (nullable), mas '' cai na regex e bloqueia o save.
+      username: (data.username || '').trim() || null,
+      phone: (data.phone || '').trim() || null,
+    }))
+    .patch('/profile/settings', {
     onFinish: () => {
       submitting.value = false
     }

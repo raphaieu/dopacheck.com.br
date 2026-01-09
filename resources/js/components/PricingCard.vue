@@ -1,9 +1,10 @@
 <script setup>
 import { CheckIcon } from 'lucide-vue-next'
+import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardFooter } from '@/components/ui/card'
 
-defineProps({
+const props = defineProps({
   features: {
     type: Array,
     required: false,
@@ -30,7 +31,7 @@ defineProps({
   },
   billingPeriod: {
     type: String,
-    default: 'Billed Monthly',
+    default: 'Cobrança mensal',
   },
   buttonText: {
     type: String,
@@ -49,50 +50,65 @@ defineProps({
     default: '',
   },
 })
+
+const formattedPrice = computed(() => {
+  const value = Number(props.price)
+  if (Number.isNaN(value)) return String(props.price)
+
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value)
+})
 </script>
 
 <template>
-  <Card class="w-full" :class="className">
-    <div class="grid w-full items-start gap-10 rounded-lg border p-8 md:grid-cols-[1fr_200px]">
-      <div class="grid gap-4 sm:gap-6">
-        <slot name="header">
-          <h3 class="text-lg sm:text-xl font-bold md:text-2xl">
-            {{ plan }}
-          </h3>
-          <p class="text-xs sm:text-sm text-muted-foreground">
-            {{ description }}
-          </p>
-        </slot>
-        <slot name="features">
-          <ul class="grid gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground sm:grid-cols-2">
-            <li v-for="feature in features" :key="feature" class="flex items-center">
-              <CheckIcon class="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              {{ feature }}
-            </li>
-          </ul>
-        </slot>
-      </div>
-      <div class="flex flex-col gap-3 sm:gap-4 text-center justify-around max-w-full h-full mt-4 md:mt-0">
-        <slot name="pricing">
-          <div>
-            <h4 class="text-4xl sm:text-4xl md:text-6xl lg:text-7xl font-bold">
-              ${{ price }}
-            </h4>
-            <p class="text-xs sm:text-sm font-medium text-muted-foreground">
-              {{ billingPeriod }}
+  <Card class="w-full bg-white rounded-2xl shadow-sm border border-gray-100" :class="className">
+    <div class="p-6 sm:p-7">
+      <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div class="space-y-3">
+          <slot name="header">
+            <h3 class="text-xl sm:text-2xl font-bold text-gray-900">
+              {{ plan }}
+            </h3>
+            <p class="text-sm text-gray-600">
+              {{ description }}
             </p>
-          </div>
-        </slot>
-        <slot name="action">
-          <Button
-            as="a"
-            :variant="buttonVariant"
-            :href="buttonHref"
-            class="w-full text-xs sm:text-sm"
-          >
-            {{ buttonText }}
-          </Button>
-        </slot>
+          </slot>
+
+          <slot name="features">
+            <ul class="grid gap-2 text-sm text-gray-600 sm:grid-cols-2">
+              <li v-for="feature in features" :key="feature" class="flex items-start gap-2">
+                <CheckIcon class="mt-0.5 h-4 w-4 text-purple-600" />
+                <span>{{ feature }}</span>
+              </li>
+            </ul>
+          </slot>
+        </div>
+
+        <div class="flex flex-col items-stretch md:items-end gap-3 md:min-w-[220px]">
+          <slot name="pricing">
+            <div class="text-left md:text-right">
+              <h4 class="text-4xl sm:text-5xl font-black tracking-tight text-gray-900">
+                {{ formattedPrice }}
+              </h4>
+              <p class="text-sm font-medium text-gray-600">
+                {{ billingPeriod }}
+              </p>
+            </div>
+          </slot>
+
+          <slot name="action">
+            <Button
+              as="a"
+              :variant="buttonVariant"
+              :href="buttonHref"
+              class="w-full md:w-[220px] bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+            >
+              {{ buttonText }}
+            </Button>
+          </slot>
+        </div>
       </div>
     </div>
 

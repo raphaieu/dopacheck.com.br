@@ -54,6 +54,7 @@ final class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('two-factor', fn (Request $request) => Limit::perMinute(5)->by($request->session()->get('login.id')));
 
         $this->configureLoginView();
+        $this->configureRegisterView();
     }
 
     private function configureLoginView(): void
@@ -62,6 +63,13 @@ final class FortifyServiceProvider extends ServiceProvider
             'availableOauthProviders' => (new ActiveOauthProviderAction())->handle(),
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
+        ]));
+    }
+
+    private function configureRegisterView(): void
+    {
+        Fortify::registerView(fn () => Inertia::render('Auth/Register', [
+            'availableOauthProviders' => (new ActiveOauthProviderAction())->handle(),
         ]));
     }
 }

@@ -7,6 +7,30 @@
     />
 
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <!-- CTA de Upgrade (FREE -> PRO) -->
+      <div
+        v-if="user && !user.is_pro"
+        class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-sm font-medium">
+            ✨ PRO
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mt-3">
+            Desbloqueie limites maiores e recursos PRO
+          </h3>
+          <p class="text-gray-600 text-sm mt-1">
+            Faça upgrade em poucos cliques com checkout seguro da Stripe.
+          </p>
+        </div>
+        <Link
+          href="/subscriptions/create"
+          class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-colors text-center"
+        >
+          Virar PRO
+        </Link>
+      </div>
+
       <!-- Se não há desafios ativos -->
       <div v-if="activeChallenges.length === 0" class="text-center py-12">
         <div

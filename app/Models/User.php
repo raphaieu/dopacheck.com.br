@@ -8,7 +8,9 @@ use Laravel\Sanctum\HasApiTokens;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Cashier\Billable;
 use Laravel\Jetstream\HasProfilePhoto;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -75,6 +77,31 @@ class User extends Authenticatable implements MustVerifyEmail
             'subscription_ends_at' => 'datetime',
             'preferences' => 'array',
         ];
+    }
+
+    /**
+     * Corrige URLs absolutas (ex: avatar do Google) salvas em profile_photo_path.
+     * O Jetstream assume "path do storage" e prefixa via Storage::url(), o que quebra
+     * quando o valor já é uma URL completa.
+     */
+    protected function profilePhotoUrl(): Attribute
+    {
+        return Attribute::get(function (): string {
+            $path = $this->profile_photo_path;
+
+            if (is_string($path) && $path !== '' && (str_starts_with($path, 'http://') || str_starts_with($path, 'https://'))) {
+                return $path;
+            }
+
+            if (! $path) {
+                return $this->defaultProfilePhotoUrl();
+            }
+
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+            $disk = Storage::disk($this->profilePhotoDisk());
+
+            return $disk->url($path);
+        });
     }
 
     // ========================================
