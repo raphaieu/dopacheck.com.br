@@ -1,10 +1,7 @@
 <script setup>
-import { computed } from 'vue'
-import { Icon } from '@iconify/vue'
+import { computed, ref } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import FeaturesCard from '@/components/FeaturesCard.vue'
-import PricingCard from '@/components/PricingCard.vue'
-import Terminal from '@/components/Terminal.vue'
 import Accordion from '@/components/ui/accordion/Accordion.vue'
 import AccordionContent from '@/components/ui/accordion/AccordionContent.vue'
 import AccordionItem from '@/components/ui/accordion/AccordionItem.vue'
@@ -41,80 +38,71 @@ useSeoMetaTags(props.seo)
 const page = usePage()
 const isLoggedIn = computed(() => !!page.props.auth?.user)
 const registerHref = computed(() => (isLoggedIn.value ? '/dopa' : route('register')))
+const proCtaHref = computed(() => (isLoggedIn.value ? route('subscriptions.create') : route('register')))
 
 const features = [
   {
-    icon: '📱',
-    title: 'WhatsApp Integration',
-    description: 'Envie fotos + hashtags direto no WhatsApp. Zero apps extras, zero fricção. Check-in automático em 30 segundos.',
+    icon: '🎯',
+    title: 'Desafios que viram rotina',
+    description: 'Crie seu desafio (ou entre em um) e transforme intenção em hábito com metas simples e claras.',
   },
   {
-    icon: '🧠',
-    title: 'IA Inteligente',
-    description: 'Análise automática de fotos com OpenAI Vision. Extrai dados, valida check-ins e personaliza respostas.',
+    icon: '✅',
+    title: 'Check-in em segundos',
+    description: 'Registre seu progresso diariamente sem fricção — rápido, simples e direto ao ponto.',
+  },
+  {
+    icon: '🔥',
+    title: 'Streak que motiva',
+    description: 'Acompanhe sua sequência e mantenha consistência. Um dia de cada vez, com foco no longo prazo.',
   },
   {
     icon: '📊',
-    title: 'Dashboard Visual',
-    description: 'Progresso visual com streaks, estatísticas e conquistas. Veja sua evolução em tempo real.',
+    title: 'Evolução visível',
+    description: 'Dashboard com taxa de conclusão, histórico e progresso do desafio. Saiba exatamente onde você está.',
   },
   {
-    icon: '👥',
-    title: 'Comunidade Ativa',
-    description: 'Participe de desafios com milhares de pessoas. Social proof e motivação coletiva.',
+    icon: '🌎',
+    title: 'Perfil público compartilhável',
+    description: 'Mostre sua jornada (se quiser). Um perfil público para inspirar e criar compromisso.',
   },
   {
-    icon: '🎯',
-    title: 'Desafios Personalizados',
-    description: 'Crie seus próprios desafios ou participe dos templates oficiais. 21 dias de leitura, 30 dias de treino.',
-  },
-  {
-    icon: '🚀',
-    title: 'Compartilhamento Viral',
-    description: 'Gere imagens automáticas para stories. Perfil público para mostrar suas conquistas.',
-  },
-  {
-    icon: '⚡',
-    title: 'Performance Otimizada',
-    description: 'Laravel 11 + Vue 3 + Redis. Arquitetura escalável para milhares de usuários simultâneos.',
-  },
-  {
-    icon: '🔒',
-    title: 'Segurança Total',
-    description: 'Autenticação social, dados criptografados e backup automático. Sua privacidade é prioridade.',
+    icon: '🏆',
+    title: 'Desafios em comunidade',
+    description: 'Entre em desafios, veja participantes e ganhe motivação extra com o efeito “vamos juntos”.',
   },
 ]
 
 const pricingFeatures = [
   '1 desafio ativo',
-  'Check-in manual',
-  '90 dias de storage',
+  'Check-ins manuais',
+  'Histórico de 90 dias',
   'Dashboard básico',
-  'Comunidade limitada',
+  'Perfil público básico',
   'Suporte por email',
 ]
 
 const proFeatures = [
   'Desafios ilimitados',
-  'IA analisa suas fotos',
-  'Storage ilimitado',
+  'Check-ins ilimitados',
+  'Histórico completo',
   'Dashboard avançado',
-  'Comunidade completa',
+  'Perfil público completo',
+  'Relatórios e exportação',
   'Suporte prioritário',
-  'Relatórios detalhados',
-  'Integração personalizada',
+  'Acesso antecipado a novidades',
 ]
 
 const faqItems = [
   {
     value: 'item-1',
-    title: 'Como funciona o check-in via WhatsApp?',
-    content: 'Simples! Você salva o número do bot no WhatsApp, escolhe um desafio e envia uma foto + hashtag (ex: #leitura). O bot confirma automaticamente e seu dashboard é atualizado em tempo real.',
+    title: 'O que é um desafio no DOPA Check?',
+    content: 'É uma meta com duração e rotina (ex: “21 dias de leitura”). Você faz check-in diariamente e acompanha sua evolução no dashboard.',
   },
   {
     value: 'item-2',
-    title: 'A IA realmente analisa minhas fotos?',
-    content: 'Sim! Com o plano PRO, nossa IA analisa suas fotos para extrair dados (distância, tempo, etc) e validar check-ins automaticamente. Tudo com sua privacidade protegida.',
+    title: 'Posso cancelar o PRO quando quiser?',
+    content: 'Sim. Você pode cancelar a assinatura a qualquer momento e continuar usando o plano gratuito.',
   },
   {
     value: 'item-3',
@@ -127,6 +115,18 @@ const faqItems = [
     content: 'Não tem problema! O sistema calcula sua taxa de conclusão e você pode retomar a qualquer momento. O importante é a consistência, não a perfeição.',
   },
 ]
+
+const billingCycle = ref('monthly') // 'monthly' | 'yearly'
+const proMonthlyPrice = 11.9
+const proYearlyPrice = 99
+
+const formatBRL = (value) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+
+const proPrice = computed(() => (billingCycle.value === 'monthly' ? proMonthlyPrice : proYearlyPrice))
+const proPeriodLabel = computed(() => (billingCycle.value === 'monthly' ? 'por mês' : 'por ano'))
+const yearlySavings = computed(() => (proMonthlyPrice * 12) - proYearlyPrice)
+const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
 
 // Formatar números para exibição
 const formatNumber = (num) => {
@@ -186,7 +186,7 @@ const testimonials = [
         <!-- Badge -->
         <div class="mb-8 inline-flex justify-center">
           <Badge variant="outline" class="rounded-full border bg-blue-100 px-4 py-1 text-xs sm:text-sm">
-            ✨ WhatsApp + IA + Hábitos = Tracking sem fricção
+            ✨ Desafios + check-ins + streak = consistência de verdade
           </Badge>
         </div>
 
@@ -211,9 +211,26 @@ const testimonials = [
           :style="{ contain: 'layout paint' }"
           fetchpriority="high"
         >
-          Envie uma foto + hashtag no WhatsApp e receba confirmação automática. 
-          Dashboard visual, IA inteligente e comunidade ativa para manter consistência.
+          Crie desafios, faça check-in em segundos e acompanhe sua evolução com streak e dashboard.
+          Um jeito simples (e gostoso) de manter constância.
         </p>
+
+        <div class="mx-auto mt-8 max-w-2xl">
+          <ul class="grid gap-3 text-left text-sm text-gray-700 sm:grid-cols-3">
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5">✅</span>
+              <span>Check-in rápido e sem complicação</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5">🔥</span>
+              <span>Streak e motivação todos os dias</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5">🌎</span>
+              <span>Perfil público para compartilhar (opcional)</span>
+            </li>
+          </ul>
+        </div>
 
         <!-- CTA Buttons -->
         <div class="mt-10 flex items-center justify-center gap-4 flex-col sm:flex-row">
@@ -255,7 +272,7 @@ const testimonials = [
         <div class="text-center mb-12">
           <h2 class="text-3xl font-bold text-gray-900 mb-4">Como funciona em 30 segundos</h2>
           <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            Zero apps extras, zero fricção. Use o WhatsApp que você já tem.
+            Sem planilha, sem fricção. É só escolher um desafio e fazer check-in todo dia.
           </p>
         </div>
 
@@ -272,24 +289,24 @@ const testimonials = [
             <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span class="text-2xl">2️⃣</span>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Salve o bot</h3>
-            <p class="text-gray-600 text-sm">Receba o número do WhatsApp e adicione aos contatos</p>
+            <h3 class="font-semibold text-gray-900 mb-2">Faça o check-in</h3>
+            <p class="text-gray-600 text-sm">Registre seu progresso em segundos e siga a rotina</p>
           </div>
           
           <div class="text-center">
             <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span class="text-2xl">3️⃣</span>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Envie foto + hashtag</h3>
-            <p class="text-gray-600 text-sm">Ex: foto do livro + #leitura</p>
+            <h3 class="font-semibold text-gray-900 mb-2">Veja sua evolução</h3>
+            <p class="text-gray-600 text-sm">Streak, taxa de conclusão e histórico sempre à mão</p>
           </div>
           
           <div class="text-center">
             <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span class="text-2xl">4️⃣</span>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Dashboard atualiza</h3>
-            <p class="text-gray-600 text-sm">Progresso visual + streak + confirmação</p>
+            <h3 class="font-semibold text-gray-900 mb-2">Compartilhe (opcional)</h3>
+            <p class="text-gray-600 text-sm">Deixe público para ganhar motivação e compromisso</p>
           </div>
         </div>
       </div>
@@ -381,8 +398,39 @@ const testimonials = [
             
             <div class="text-center mb-8">
               <h3 class="text-2xl font-bold mb-2">PRO</h3>
-              <div class="text-4xl font-bold mb-2">R$ 19</div>
-              <p class="text-blue-100">por mês</p>
+              <div class="mx-auto mt-4 inline-flex rounded-full bg-white/10 p-1 text-sm">
+                <button
+                  type="button"
+                  class="rounded-full px-4 py-2 transition"
+                  :class="billingCycle === 'monthly' ? 'bg-white text-blue-700' : 'text-white/90 hover:text-white'"
+                  @click="billingCycle = 'monthly'"
+                >
+                  Mensal
+                </button>
+                <button
+                  type="button"
+                  class="rounded-full px-4 py-2 transition"
+                  :class="billingCycle === 'yearly' ? 'bg-white text-blue-700' : 'text-white/90 hover:text-white'"
+                  @click="billingCycle = 'yearly'"
+                >
+                  Anual
+                  <span class="ml-2 rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-semibold text-yellow-900">
+                    economize
+                  </span>
+                </button>
+              </div>
+
+              <div class="mt-6">
+                <div class="text-4xl font-bold leading-none">
+                  {{ formatBRL(proPrice) }}
+                </div>
+                <p class="mt-2 text-blue-100">
+                  {{ proPeriodLabel }}
+                </p>
+                <p v-if="billingCycle === 'yearly'" class="mt-3 text-sm text-blue-100">
+                  Economize {{ formatBRL(yearlySavings) }} no ano (equivale a {{ formatBRL(yearlyEquivalentMonthly) }}/mês).
+                </p>
+              </div>
             </div>
             
             <ul class="space-y-4 mb-8">
@@ -394,8 +442,8 @@ const testimonials = [
               </li>
             </ul>
             
-            <Button :as="Link" :href="registerHref" variant="secondary" class="w-full">
-              Começar PRO
+            <Button :as="Link" :href="proCtaHref" variant="secondary" class="w-full">
+              Assinar PRO
             </Button>
           </div>
         </div>
@@ -446,5 +494,31 @@ const testimonials = [
         </div>
       </div>
     </section>
+
+    <!-- Footer (necessário para validação do Google OAuth) -->
+    <footer class="border-t bg-white">
+      <div class="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <div class="text-sm text-gray-600">
+            © {{ new Date().getFullYear() }} DOPA Check. Todos os direitos reservados.
+          </div>
+
+          <div class="flex items-center gap-6 text-sm">
+            <Link
+              :href="route('policy.show')"
+              class="text-gray-600 hover:text-gray-900 hover:underline underline-offset-4"
+            >
+              Política de Privacidade
+            </Link>
+            <Link
+              :href="route('terms.show')"
+              class="text-gray-600 hover:text-gray-900 hover:underline underline-offset-4"
+            >
+              Termos de Serviço
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
   </WebLayout>
 </template>
