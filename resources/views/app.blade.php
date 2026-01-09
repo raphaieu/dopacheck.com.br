@@ -8,33 +8,66 @@
 
     <link rel="canonical" href="{{ url()->current() }}">
 
+    @php
+        $appUrl = rtrim((string) config('app.url', 'https://dopacheck.com.br'), '/');
+        $currentUrl = url()->current();
+        $ogTitle = 'DOPA Check';
+        $ogDescription = 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.';
+        // WhatsApp costuma falhar com WebP. Preferimos PNG.
+        $ogImage = $appUrl.'/images/og.png';
+
+        // JSON-LD (evita usar "@context" inline no Blade, pois o Blade interpreta "@context" como diretiva)
+        $jsonLd = json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'SoftwareApplication',
+            'name' => $ogTitle,
+            'url' => $appUrl.'/',
+            'image' => $ogImage,
+            'description' => $ogDescription,
+            'applicationCategory' => 'LifestyleApplication',
+            'operatingSystem' => 'All',
+            'offers' => [
+                '@type' => 'Offer',
+                'price' => '0',
+                'priceCurrency' => 'BRL',
+                'category' => 'Freemium',
+            ],
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    @endphp
+
+    <!-- Primary Meta Tags -->
+    <title>{{ $ogTitle }}</title>
+    <meta name="title" content="{{ $ogTitle }}">
+    <meta name="description" content="{{ $ogDescription }}">
+
+    <!-- Open Graph / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <meta property="og:site_name" content="{{ $ogTitle }}">
+    <meta property="og:url" content="{{ $currentUrl }}">
+    <meta property="og:title" content="{{ $ogTitle }}">
+    <meta property="og:description" content="{{ $ogDescription }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:image:secure_url" content="{{ $ogImage }}">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="DOPA Check - Tracking de hábitos e desafios">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $ogTitle }}">
+    <meta name="twitter:description" content="{{ $ogDescription }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+
     <!-- Favicon & App Icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
 
-    <!-- Structured Data (Example: JSON-LD Schema.org) -->
-    @verbatim
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "DOPA Check",
-        "url": "{{ rtrim(config('app.url', 'https://dopacheck.com.br'), '/') }}/",
-        "image": "{{ rtrim(config('app.url', 'https://dopacheck.com.br'), '/') }}/images/og.webp",
-        "description": "DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.",
-        "applicationCategory": "LifestyleApplication",
-        "operatingSystem": "All",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "BRL",
-            "category": "Freemium"
-        }
-    }
-    </script>
-    @endverbatim
+    <!-- Structured Data (JSON-LD / Schema.org) -->
+    <script type="application/ld+json">{!! $jsonLd !!}</script>
 
     <!-- PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes">
