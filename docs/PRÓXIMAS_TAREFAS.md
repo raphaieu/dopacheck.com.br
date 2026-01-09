@@ -45,25 +45,26 @@
 - [x] Core Web funcional (desafios, tasks, check-ins web)
 - [x] MySQL + Redis (Horizon) no docker-compose “core web”
 - [x] Termos e Política em pt-BR (marca DOPA Check)
+- [x] Login Social (Google) end-to-end
+- [x] Assinatura PRO (Stripe + Cashier) end-to-end (planos mensal/anual + sincronização de status)
+- [x] Docs/README sincronizados com o estado real (DB/URLs/roadmap)
 
-### 📝 Agora (antes de WhatsApp)
+### 📝 Agora (pós-MVP sem WhatsApp)
 
-#### 1. **Sincronizar docs/README com estado real**
-- **Descrição**: Atualizar setup, DB oficial, ports/URLs e roadmap
+#### 1. **Perfil público (`/u/{username}`)**
+- **Descrição**: Finalizar a página pública do usuário para compartilhamento.
 - **Prioridade**: 🔴 Alta
 
-#### 2. **Login Social (Google) end-to-end**
-- **Descrição**: Expor botão “Entrar com Google” e fechar regras de conta existente por e-mail
-- **Arquivos-chave**: `config/oauth.php`, `config/services.php`, `resources/js/Pages/Auth/*`, `app/Http/Controllers/User/OauthController.php`
-- **Prioridade**: 🔴 Alta
+#### 2. **Configurações de usuário**
+- **Descrição**: Consolidar a tela existente (perfil, preferências e gestão do plano).
+- **Prioridade**: 🟡 Média
 
-#### 3. **Assinatura PRO mensal (Stripe + Cashier)**
-- **Descrição**: Definir plano PRO e finalizar fluxo de upgrade + portal
-- **Arquivos-chave**: `config/cashier.php`, `config/subscriptions.php`, `SubscriptionController`, webhook Stripe (quando ativar)
-- **Prioridade**: 🔴 Alta
+#### 3. **Relatórios/Métricas**
+- **Descrição**: Página de relatórios com métricas e visão histórica do progresso.
+- **Prioridade**: 🟡 Média
 
-#### 4. **Higiene/consistência geral**
-- **Descrição**: Remover divergências (nomes Larasonic vs DOPA, docs antigas, etc.)
+#### 4. **Otimizações e robustez**
+- **Descrição**: Performance do streak, invalidação de cache, melhorias de upload e agendamentos.
 - **Prioridade**: 🟡 Média
 
 ### 🕒 Depois (fora do escopo do MVP atual)

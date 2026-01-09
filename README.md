@@ -35,6 +35,7 @@
 
 ### ✅ **Já Funcionando**
 - **🔐 Autenticação** completa (login/senha)
+- **🔐 Login Social (Google OAuth)** end-to-end
 - **📱 Dashboard mobile-first** responsivo e moderno
 - **🏆 Sistema de desafios** completo (criar, participar, filtrar)
 - **✅ Check-ins web** com ou sem imagem
@@ -42,11 +43,10 @@
 - **🎯 Progresso visual** com anéis e estatísticas
 - **📊 Estados dinâmicos** (ativo, concluído, pausado)
 - **🎨 Interface polida** seguindo design system
+- **💳 Assinatura PRO (Stripe + Cashier)** com planos mensal/anual configurados
+- **🖼️ Geração de cards** para compartilhamento (download/uso em redes)
 
 ### 🚧 **Em Desenvolvimento**
-- **🔐 Login Social (Google)** (infra pronta; UI/fluxo em ajuste)
-- **💳 Assinatura PRO mensal (Stripe + Cashier)** (infra pronta; falta fechar plano e sincronização)
-- **🖼️ Geração de cards** para compartilhamento
 - **👤 Páginas de perfil** e configurações
 - **📈 Relatórios detalhados** com métricas
 - **🎨 Compartilhamento nativo** mobile

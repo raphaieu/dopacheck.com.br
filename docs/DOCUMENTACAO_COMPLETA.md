@@ -3,16 +3,33 @@
 ## 🎯 **Status Atual - Beta Funcional**
 
 **Versão**: 1.0-beta  
-**Última Atualização**: 07/01/2026  
-**Status**: ✅ **Core Web Funcional** (WhatsApp adiado no MVP atual) + 🚧 **Google OAuth / Stripe PRO em andamento**
+**Última Atualização**: 09/01/2026  
+**Status**: ✅ **Core Web Funcional** (MVP **sem WhatsApp**) + ✅ **Google OAuth** + ✅ **Assinatura PRO (Stripe + Cashier)**
 
 ---
 
 ## 🆕 Atualizações recentes (Jan/2026)
 
-- **Home pós-login**: o destino padrão após autenticação é **`/dopa`** (config do Fortify). A rota **`/dashboard`** existe apenas por compatibilidade e **redireciona para `/dopa`**.
+- **Infra “core web” padronizada**: ambiente oficial com **MySQL + Redis** (WhatsApp isolado/adiado no MVP).
+- **Home pós-login**: destino padrão após autenticação é **`/dopa`** (Fortify). A rota **`/dashboard`** existe por compatibilidade e **redireciona para `/dopa`**.
 - **Páginas legais**: **Termos de Uso** e **Política de Privacidade** revisados em **pt-BR** e alinhados à marca **DOPA Check**.
 - **SEO/Brand**: defaults globais de SEO (título, description, keywords, Open Graph e Twitter) padronizados para **DOPA Check** e `og.webp` em `public/images/og.webp`.
+- **OAuth (Google)**: provider **ativo** e fluxo end-to-end com tratamento de conta existente/erros em pt-BR.
+- **Monetização (Stripe + Cashier)**: planos **PRO mensal/anual** configurados; ponte de sincronização de status pós-checkout.
+- **DX/UX**:
+  - **Toasts globais** para feedback (sucesso/erro/info) durante navegação.
+  - **GA4** com pageview para SPA (Inertia) via `VITE_GA_MEASUREMENT_ID`.
+  - **Correções CSRF/XSRF**: melhoria de estabilidade contra erros 419/TokenMismatch.
+  - **PWA/Service Worker**: melhorias de cache e proteções para não cachear HTML/navegação.
+
+## ✅ Entregas concluídas — MVP “sem WhatsApp” (Jan/2026)
+
+- [x] Padronização do projeto para **produção/beta** com DB oficial **MySQL** e cache/queue via **Redis**
+- [x] Correções de **legal/branding** (marca DOPA Check + pt-BR) e limpeza de placeholders
+- [x] **Login Social (Google)** (Socialite) end-to-end com regras de conta existente
+- [x] **Assinatura PRO** via **Stripe + Cashier** (mensal/anual) + sincronização do status do usuário
+- [x] **Docs sincronizadas** com o estado real (setup, DB, URLs/ports, roadmap)
+- [x] Melhorias de **experiência**: toasts globais, tracking GA4, endurecimento CSRF/XSRF, melhorias no PWA
 
 ## 🏗️ **Arquitetura da Aplicação**
 
@@ -220,58 +237,11 @@ const { loading, get, post, delete } = useApi()
 
 ---
 
-## 🤖 **Integração WhatsApp**
+## 🤖 **Integração WhatsApp (adiada no MVP atual)**
 
-### **Arquitetura de Sessão**
-```php
-// Fluxo simplificado - UM bot para todos
-1. Usuário clica "Conectar WhatsApp"
-2. Abre conversa com número único do bot
-3. Backend identifica usuário pelo número
-4. Valida permissões via cache Redis
-5. Libera funções (PRO) ou incentiva upgrade (Free)
-```
+A integração com WhatsApp **não faz parte do escopo do MVP em produção/beta**. Ela existe como trilha de evolução e pode estar parcialmente presente no código/infra para experimentos, mas **não é considerada “feature entregue”** neste momento.
 
-### **Cache Redis para Performance**
-```php
-// Sessões WhatsApp (TTL: 5 min)
-Cache::remember("whatsapp_user_{$phone}", 300, function() use ($phone) {
-    return User::where('whatsapp_number', $phone)->first();
-});
-
-// Permissões de plano (TTL: 1 hora)
-Cache::remember("user_plan_{$userId}", 3600, function() use ($userId) {
-    return User::find($userId)->plan;
-});
-```
-
-### **Webhook Structure (Pronto)**
-```php
-POST /webhook/whatsapp
-{
-  "data": {
-    "key": {
-      "remoteJid": "5511999998888@s.whatsapp.net"
-    },
-    "message": {
-      "conversation": "Fiz meu treino hoje! #treino",
-      "imageMessage": {
-        "url": "https://...",
-        "mimetype": "image/jpeg"
-      }
-    }
-  }
-}
-```
-
-### **Jobs WhatsApp (Em Desenvolvimento)**
-```php
-ProcessWhatsAppMessage::class     // Processa webhook
-ParseMessageContent::class        // Extrai hashtags + imagem  
-CreateAutoCheckin::class          // Check-in automático
-AnalyzeImageWithAI::class         // Análise IA (PRO)
-SendBotResponse::class            // Resposta personalizada
-```
+- **Documentação específica**: veja `docs/DOC_TEC_WHATSAPP_IA.md`
 
 ---
 
@@ -538,9 +508,9 @@ RateLimiter::for('upload', function (Request $request) {
 - [ ] PWA (Service Worker)
 
 ### 🎯 **PRÓXIMO (MVP sem WhatsApp por enquanto)**
-- [ ] **Login Social (Google)** end-to-end
-- [ ] **Assinatura PRO mensal (Stripe + Cashier)** end-to-end
-- [ ] Higiene/consistência de docs (DB/URLs/roadmap)
+- [x] **Login Social (Google)** end-to-end
+- [x] **Assinatura PRO (Stripe + Cashier)** end-to-end
+- [x] Higiene/consistência de docs (DB/URLs/roadmap)
 
 ### 🕒 **FUTURO (após Google + Stripe)**
 - [ ] Integração WhatsApp (EvolutionAPI): do webhook/buffer até check-in automático
