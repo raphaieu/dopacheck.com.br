@@ -47,6 +47,18 @@
     @vite(['resources/js/app.js'])
     @inertiaHead
 
+    <!-- Google Analytics (GA4) via gtag.js -->
+    @if (filled(env('VITE_GA_MEASUREMENT_ID')))
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ env('VITE_GA_MEASUREMENT_ID') }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            // SPA (Inertia): o page_view será disparado no frontend em cada navegação
+            gtag('config', '{{ env('VITE_GA_MEASUREMENT_ID') }}', { send_page_view: false });
+        </script>
+    @endif
+
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {

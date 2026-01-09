@@ -38,6 +38,30 @@ router.on('success', (event) => {
   }
 })
 
+// Google Analytics (GA4) - Pageviews para SPA (Inertia)
+function trackPageView(urlString) {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
+  const id = import.meta.env.VITE_GA_MEASUREMENT_ID
+  if (!id) return
+
+  const url = new URL(urlString, window.location.origin)
+  window.gtag('event', 'page_view', {
+    page_title: document.title,
+    page_location: url.href,
+    page_path: `${url.pathname}${url.search}`,
+    send_to: id,
+  })
+}
+
+// dispara no primeiro load
+trackPageView(window.location.href)
+// dispara a cada navegação Inertia
+router.on('navigate', (event) => {
+  const nextUrl = event.detail?.page?.url
+  if (!nextUrl) return
+  trackPageView(nextUrl)
+})
+
 createInertiaApp({
   resolve: name => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
   setup({ el, App, props, plugin }) {
