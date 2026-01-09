@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
-import Sonner from '@/components/ui/sonner/Sonner.vue'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
@@ -91,8 +90,6 @@ useSeoMetaTags({
 </script>
 
 <template>
-  <Sonner position="top-center" />
-
   <div class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
     <Card class="mx-auto w-full max-w-[420px] shadow-xl border-0 transition-all duration-300 hover:shadow-2xl">
       <!-- Header -->

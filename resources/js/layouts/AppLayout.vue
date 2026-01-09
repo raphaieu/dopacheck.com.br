@@ -12,7 +12,6 @@ import SidebarMenu from '@/components/ui/sidebar/SidebarMenu.vue'
 import SidebarMenuItem from '@/components/ui/sidebar/SidebarMenuItem.vue'
 import SidebarProvider from '@/components/ui/sidebar/SidebarProvider.vue'
 import SidebarTrigger from '@/components/ui/sidebar/SidebarTrigger.vue'
-import Sonner from '@/components/ui/sonner/Sonner.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 const props = defineProps({
@@ -26,7 +25,6 @@ useSeoMetaTags({
 
 <template>
   <div>
-    <Sonner position="top-center" />
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader>

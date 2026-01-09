@@ -4,6 +4,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import { CapoPlugin } from 'unhead'
 import { createApp, h } from 'vue'
 import { ZiggyVue } from 'ziggy-js'
+import { toast } from 'vue-sonner'
+import Sonner from '@/components/ui/sonner/Sonner.vue'
 import './bootstrap'
 import '../css/app.css'
 import { refreshXsrfCookie, syncCsrfMetaFromCookie } from '@/utils/csrf.js'
@@ -38,6 +40,23 @@ router.on('success', (event) => {
   }
 })
 
+// Flash messages (Inertia) -> toasts globais
+let lastFlashSignature = null
+function handleFlash(page) {
+  const flash = page?.props?.flash || {}
+  const message = flash.error || flash.success || flash.message
+  if (!message) return
+
+  const type = flash.error ? 'error' : (flash.success ? 'success' : 'message')
+  const signature = `${type}:${message}`
+  if (signature === lastFlashSignature) return
+  lastFlashSignature = signature
+
+  if (flash.error) toast.error(message)
+  else if (flash.success) toast.success(message)
+  else toast(message)
+}
+
 // Google Analytics (GA4) - Pageviews para SPA (Inertia)
 function trackPageView(urlString) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
@@ -65,7 +84,20 @@ router.on('navigate', (event) => {
 createInertiaApp({
   resolve: name => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
   setup({ el, App, props, plugin }) {
-    return createApp({ render: () => h(App, props) })
+    // Monta o Sonner uma única vez para todo o app (evita ter que colocar em cada página/layout).
+    const Root = {
+      render: () => [
+        h(Sonner, { position: 'top-center' }),
+        h(App, props),
+      ],
+    }
+
+    // dispara toast no primeiro render (SSR/hydration)
+    handleFlash(props?.initialPage)
+    // dispara a cada navegação/response
+    router.on('success', (event) => handleFlash(event.detail?.page))
+
+    return createApp(Root)
       .use(plugin)
       .use(ZiggyVue)
       .use(head)
