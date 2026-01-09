@@ -8,6 +8,7 @@ import { toast } from 'vue-sonner'
 import Sonner from '@/components/ui/sonner/Sonner.vue'
 import './bootstrap'
 import '../css/app.css'
+import 'vue-sonner/style.css'
 import { refreshXsrfCookie, syncCsrfMetaFromCookie } from '@/utils/csrf.js'
 
 /**

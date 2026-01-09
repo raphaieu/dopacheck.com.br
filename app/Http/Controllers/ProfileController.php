@@ -14,6 +14,58 @@ use Illuminate\Http\RedirectResponse;
 class ProfileController extends Controller
 {
     /**
+     * Normaliza preferências para o formato esperado pelo frontend.
+     * Isso também corrige dados legados corrompidos (ex.: array_merge_recursive
+     * gerava arrays onde deveriam ser booleans).
+     */
+    private function normalizePreferences(?array $preferences): array
+    {
+        $preferences = $preferences ?? [];
+
+        $getBool = function (mixed $value, bool $default): bool {
+            // Corrige legado: se vier array (ex.: [true,false]), pega o último escalar.
+            if (is_array($value)) {
+                $value = end($value);
+            }
+
+            if (is_bool($value)) {
+                return $value;
+            }
+
+            if (is_int($value)) {
+                return $value === 1;
+            }
+
+            if (is_string($value)) {
+                $v = strtolower(trim($value));
+                if (in_array($v, ['1', 'true', 'on', 'yes'], true)) {
+                    return true;
+                }
+                if (in_array($v, ['0', 'false', 'off', 'no'], true)) {
+                    return false;
+                }
+            }
+
+            return $default;
+        };
+
+        $privacy = $preferences['privacy'] ?? [];
+        $notifications = $preferences['notifications'] ?? [];
+
+        return [
+            'privacy' => [
+                'public_profile' => $getBool($privacy['public_profile'] ?? null, true),
+                'show_progress' => $getBool($privacy['show_progress'] ?? null, true),
+            ],
+            'notifications' => [
+                'email' => $getBool($notifications['email'] ?? null, true),
+                'whatsapp' => $getBool($notifications['whatsapp'] ?? null, false),
+                'daily_reminder' => $getBool($notifications['daily_reminder'] ?? null, false),
+            ],
+        ];
+    }
+
+    /**
      * Show user's public profile
      */
     public function public(string $username): Response
@@ -94,6 +146,7 @@ class ProfileController extends Controller
     public function settings(Request $request): Response
     {
         $user = $request->user();
+        $preferences = $this->normalizePreferences($user->preferences);
         
         return Inertia::render('Profile/Settings', [
             'user' => [
@@ -105,7 +158,7 @@ class ProfileController extends Controller
                 'plan' => $user->plan,
                 'is_pro' => $user->is_pro,
                 'subscription_ends_at' => $user->subscription_ends_at,
-                'preferences' => $user->preferences ?? [],
+                'preferences' => $preferences,
             ],
             'whatsappSession' => $user->whatsappSession,
         ]);
@@ -139,8 +192,12 @@ class ProfileController extends Controller
         
         // Update preferences
         if (isset($validated['preferences'])) {
-            $currentPreferences = $user->preferences ?? [];
-            $user->preferences = array_merge_recursive($currentPreferences, $validated['preferences']);
+            $currentPreferences = $this->normalizePreferences($user->preferences);
+            $incomingPreferences = $this->normalizePreferences($validated['preferences']);
+            // array_merge_recursive transforma escalares (ex: boolean) em arrays quando a chave já existe,
+            // causando estado quebrado no frontend (checkboxes "conflitando" e reset após salvar).
+            // array_replace_recursive faz o comportamento esperado: override dos valores.
+            $user->preferences = array_replace_recursive($currentPreferences, $incomingPreferences);
         }
         
         $user->save();

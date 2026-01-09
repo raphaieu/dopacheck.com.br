@@ -3,7 +3,8 @@
 @import 'tw-animate-css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+/* NÃO use storage/framework/views (views compiladas mudam a cada request e causam full reload infinito no Vite). */
+@source '../views/**/*.blade.php';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -164,7 +165,7 @@
   --card: hsl(0 0% 3.9%);
   --card-foreground: hsl(0 0% 98%);
   --popover: hsl(0 0% 3.9%);
-  --popover-foreground: 0 0% 98%;
+  --popover-foreground: hsl(0 0% 98%);
   --primary: hsl(0 0% 98%);
   --primary-foreground: hsl(0 0% 9%);
   --secondary: hsl(0 0% 14.9%);

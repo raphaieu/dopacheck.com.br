@@ -50,6 +50,8 @@
                 <p class="text-sm text-gray-600">Permitir que outros vejam seu perfil público</p>
               </div>
               <input 
+                id="pref_privacy_public_profile"
+                name="preferences[privacy][public_profile]"
                 v-model="form.preferences.privacy.public_profile" 
                 type="checkbox"
                 class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -62,6 +64,8 @@
                 <p class="text-sm text-gray-600">Exibir desafios ativos no perfil público</p>
               </div>
               <input 
+                id="pref_privacy_show_progress"
+                name="preferences[privacy][show_progress]"
                 v-model="form.preferences.privacy.show_progress" 
                 type="checkbox"
                 class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -81,6 +85,8 @@
                 <p class="text-sm text-gray-600">Receber notificações por email</p>
               </div>
               <input 
+                id="pref_notifications_email"
+                name="preferences[notifications][email]"
                 v-model="form.preferences.notifications.email" 
                 type="checkbox"
                 class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -93,6 +99,8 @@
                 <p class="text-sm text-gray-600">Receber notificações via WhatsApp</p>
               </div>
               <input 
+                id="pref_notifications_whatsapp"
+                name="preferences[notifications][whatsapp]"
                 v-model="form.preferences.notifications.whatsapp" 
                 type="checkbox"
                 class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
@@ -105,6 +113,8 @@
                 <p class="text-sm text-gray-600">Receber lembretes diários de check-in</p>
               </div>
               <input 
+                id="pref_notifications_daily_reminder"
+                name="preferences[notifications][daily_reminder]"
                 v-model="form.preferences.notifications.daily_reminder" 
                 type="checkbox"
                 class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"

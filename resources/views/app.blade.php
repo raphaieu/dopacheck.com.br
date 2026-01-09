@@ -64,16 +64,20 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
+    @if (app()->environment('production'))
+        <link rel="manifest" href="/site.webmanifest">
+    @endif
 
     <!-- Structured Data (JSON-LD / Schema.org) -->
     <script type="application/ld+json">{!! $jsonLd !!}</script>
 
     <!-- PWA Meta Tags -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="DOPA Check">
+    @if (app()->environment('production'))
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="DOPA Check">
+    @endif
 
     <!-- Scripts -->
     @routes
@@ -93,19 +97,36 @@
     @endif
 
     <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('Service Worker registrado com sucesso:', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.log('Falha ao registrar Service Worker:', error);
-                    });
-            });
-        }
-    </script>
+    @if (!app()->environment('production'))
+        <script>
+            // Em dev (qualquer ambiente != production), o Service Worker costuma atrapalhar (cache + reloads).
+            // Garantimos que ele fique desativado e limpamos caches.
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations()
+                    .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))
+                    .catch(() => {});
+            }
+            if ('caches' in window) {
+                caches.keys()
+                    .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+                    .catch(() => {});
+            }
+        </script>
+    @else
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then((registration) => {
+                            console.log('Service Worker registrado com sucesso:', registration.scope);
+                        })
+                        .catch((error) => {
+                            console.log('Falha ao registrar Service Worker:', error);
+                        });
+                });
+            }
+        </script>
+    @endif
 </head>
 
 <body class="font-sans antialiased">
