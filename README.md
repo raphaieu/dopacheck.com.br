@@ -66,7 +66,7 @@ flowchart TD
     B --> C[Escolhe ou cria desafio]
     C --> D[Define tasks diarias]
     D --> E[Dashboard com tasks]
-    E --> F[Check-in web (com ou sem imagem)]
+    E --> F[Check-in web - com ou sem imagem]
     F --> G[Progresso atualizado]
     G --> H[Compartilha card gerado]
 ```
