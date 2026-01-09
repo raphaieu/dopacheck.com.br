@@ -1,5 +1,7 @@
 # 🧠 DOPA Check
 
+![DOPA Check - Open Graph](public/images/og.webp)
+
 <div align="center">
 
 **Transforme seu smartphone em um tracker de hábitos inteligente**
@@ -59,14 +61,14 @@
 ### 🚀 **Fluxo Principal (3 cliques)**
 
 ```mermaid
-graph TD
-    A[📱 Acessa dopacheck.com.br] --> B[🔐 Login rápido]
-    B --> C[🎯 Escolhe/Cria Desafio]
-    C --> D[📋 Define Tasks Diárias]
-    D --> E[🏠 Dashboard com Tasks]
-    E --> F[📸 Check-in Web (com ou sem imagem)]
-    F --> G[🎉 Progresso Atualizado!]
-    G --> H[🎨 Compartilha Card Gerado]
+flowchart TD
+    A[Acessa dopacheck.com.br] --> B[Login]
+    B --> C[Escolhe ou cria desafio]
+    C --> D[Define tasks diarias]
+    D --> E[Dashboard com tasks]
+    E --> F[Check-in web (com ou sem imagem)]
+    F --> G[Progresso atualizado]
+    G --> H[Compartilha card gerado]
 ```
 
 ### 📱 **Interface Atual**
