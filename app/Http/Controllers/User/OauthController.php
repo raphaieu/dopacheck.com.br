@@ -27,7 +27,21 @@ final class OauthController extends Controller
     {
         abort_unless($this->isValidProvider($provider), 404);
 
-        return Socialite::driver($provider)->redirect();
+        $driver = Socialite::driver($provider);
+
+        // Para Google OAuth, precisamos solicitar os escopos necessários
+        // para obter nome, email e foto de perfil
+        if ($provider === 'google') {
+            /** @var \Laravel\Socialite\Two\GoogleProvider $driver */
+            $driver->scopes([
+                'openid',
+                'profile',
+                'email',
+            ])
+            ->with(['access_type' => 'offline', 'prompt' => 'consent']);
+        }
+
+        return $driver->redirect();
     }
 
     public function callback(string $provider): RedirectResponse
