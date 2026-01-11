@@ -29,13 +29,13 @@ final class LoginLinkMail extends Notification
         return ['mail'];
     }
 
-    public function toMail(): MailMessage
+    public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Magic Login Link')
-            ->line('Click the button below to log in.')
-            ->action('Log In', $this->magicLinkUrl)
-            ->line('This link will expire in 15 minutes.')
-            ->line('If you did not request this link, no action is needed.');
+            ->subject(__('Your Magic Login Link'))
+            ->line(__('Click the button below to log in.'))
+            ->action(__('Log In'), $this->magicLinkUrl)
+            ->line(__('This link will expire in 15 minutes.'))
+            ->line(__('If you did not request this link, no action is needed.'));
     }
 }
