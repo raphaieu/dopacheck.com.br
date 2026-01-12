@@ -8,14 +8,14 @@ const siteUrl = typeof window !== 'undefined'
 const defaultSeoMeta = {
   title: 'DOPA Check',
   titleTemplate: '%s | DOPA Check',
-  description: 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.',
+  description: 'DOPA Check é o Strava dos hábitos e da mente. Um sistema de check-ins que transforma disciplina em algo visual, social e viciante - no bom sentido.',
   keywords: 'DOPA Check, hábitos, tracker de hábitos, desafios, check-in, rotina, produtividade, bem-estar, metas, streak, comunidade, dashboard, mobile-first, WhatsApp',
   robots: 'index, follow',
-  themeColor: '#0EA5E9',
+  themeColor: '#7b18ed',
 
   // Open Graph
   ogTitle: '%s | DOPA Check',
-  ogDescription: 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins e acompanhe seu progresso em um dashboard simples e mobile-first.',
+  ogDescription: 'DOPA Check é o Strava dos hábitos e da mente. Um sistema de check-ins que transforma disciplina em algo visual, social e viciante - no bom sentido.',
   ogUrl: siteUrl,
   ogType: 'website',
   ogImage: `${siteUrl}/images/og.webp`,
@@ -24,7 +24,7 @@ const defaultSeoMeta = {
 
   // Twitter
   twitterTitle: '%s | DOPA Check',
-  twitterDescription: 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins e acompanhe seu progresso em um dashboard simples e mobile-first.',
+  twitterDescription: 'DOPA Check é o Strava dos hábitos e da mente. Um sistema de check-ins que transforma disciplina em algo visual, social e viciante - no bom sentido.',
   twitterCard: 'summary_large_image',
   twitterImage: `${siteUrl}/images/og.webp`,
   twitterSite: '@raphaieu',

@@ -137,6 +137,7 @@ import { computed, ref } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
+import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 const props = defineProps({
   profileUser: Object,
@@ -157,5 +158,39 @@ const selectedImage = ref(null)
 const openImageModal = (imageUrl) => {
   selectedImage.value = imageUrl
 }
+console.log(props.profileUser)
+const origin = typeof window !== 'undefined' ? window.location.origin : 'https://dopacheck.com.br'
+const ogImageUrl = computed(() => {
+  const avatarUrl = props.profileUser?.avatar
+  return avatarUrl ? avatarUrl : `${origin}/images/og.png`
+})
+
+useSeoMetaTags({
+  title: computed(() => props.profileUser?.name ? props.profileUser.name : 'Perfil Público'),
+  description: computed(() => {
+    if (!props.profileUser?.name) return undefined
+    const u = props.profileUser?.username ? `@${props.profileUser.username}` : `#${props.profileUser.id}`
+    return `Veja o perfil público de ${props.profileUser.name} (${u}) no DOPA Check e acompanhe desafios e check-ins.`
+  }),
+
+  ogTitle: computed(() => props.profileUser?.name ? `${props.profileUser.name} | DOPA Check` : 'DOPA Check'),
+  ogDescription: computed(() => {
+    if (!props.profileUser?.name) return undefined
+    const u = props.profileUser?.username ? `@${props.profileUser.username}` : `#${props.profileUser.id}`
+    return `Veja o perfil público de ${props.profileUser.name} (${u}) no DOPA Check e acompanhe desafios e check-ins.`
+  }),
+  ogUrl: computed(() => typeof window !== 'undefined' ? window.location.href : undefined),
+  ogType: 'profile',
+  ogImage: ogImageUrl,
+
+  twitterTitle: computed(() => props.profileUser?.name ? `${props.profileUser.name} | DOPA Check` : 'DOPA Check'),
+  twitterDescription: computed(() => {
+    if (!props.profileUser?.name) return undefined
+    const u = props.profileUser?.username ? `@${props.profileUser.username}` : `#${props.profileUser.id}`
+    return `Veja o perfil público de ${props.profileUser.name} (${u}) no DOPA Check e acompanhe desafios e check-ins.`
+  }),
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImageUrl,
+})
 </script>
 

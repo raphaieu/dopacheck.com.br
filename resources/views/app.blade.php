@@ -15,7 +15,7 @@
         $seo = isset($seo) && is_array($seo) ? $seo : [];
 
         $defaultTitle = 'DOPA Check';
-        $defaultDescription = 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.';
+        $defaultDescription = 'DOPA Check é o Strava dos hábitos e da mente. Um sistema de check-ins que transforma disciplina em algo visual, social e viciante - no bom sentido.';
         // WhatsApp costuma falhar com WebP. Preferimos PNG.
         $defaultImage = $appUrl.'/images/og.png';
 
@@ -23,9 +23,54 @@
         $ogDescription = (string) ($seo['description'] ?? $defaultDescription);
         $ogImage = (string) ($seo['image'] ?? $defaultImage);
         $ogType = (string) ($seo['type'] ?? 'website');
-        $ogImageType = (string) ($seo['image_type'] ?? 'image/png');
-        $ogImageWidth = (string) ($seo['image_width'] ?? '1200');
-        $ogImageHeight = (string) ($seo['image_height'] ?? '630');
+        // Se o controller não informar dimensões/tipo, tentamos inferir a partir do $ogImage.
+        // Observação: para URLs remotas, evitamos fetch aqui (custo/latência). Nesses casos, usa defaults.
+        $ogImageType = $seo['image_type'] ?? null;
+        $ogImageWidth = $seo['image_width'] ?? null;
+        $ogImageHeight = $seo['image_height'] ?? null;
+
+        $ogImagePath = (string) (parse_url($ogImage, PHP_URL_PATH) ?? '');
+
+        // Nossos OG endpoints já são padronizados em 1200x630 JPEG.
+        if (\Illuminate\Support\Str::startsWith($ogImagePath, '/og/')) {
+            $ogImageType = $ogImageType ?: 'image/jpeg';
+            $ogImageWidth = $ogImageWidth ?: '1200';
+            $ogImageHeight = $ogImageHeight ?: '630';
+        } else {
+            // Tenta inferir apenas quando o arquivo existir localmente em /public.
+            $localPath = null;
+            if (\Illuminate\Support\Str::startsWith($ogImage, $appUrl)) {
+                $localPath = public_path(ltrim((string) parse_url($ogImage, PHP_URL_PATH), '/'));
+            } elseif (\Illuminate\Support\Str::startsWith($ogImagePath, ['/images/', '/storage/'])) {
+                $localPath = public_path(ltrim($ogImagePath, '/'));
+            }
+
+            if ($localPath && is_file($localPath)) {
+                $info = @getimagesize($localPath);
+                if (is_array($info)) {
+                    $ogImageWidth = $ogImageWidth ?: (string) ($info[0] ?? null);
+                    $ogImageHeight = $ogImageHeight ?: (string) ($info[1] ?? null);
+                    $ogImageType = $ogImageType ?: (string) ($info['mime'] ?? null);
+                }
+            }
+
+            // Fallback do mime por extensão (quando não deu pra ler do disco).
+            if (! $ogImageType) {
+                $ext = strtolower(pathinfo($ogImagePath, PATHINFO_EXTENSION));
+                $ogImageType = match ($ext) {
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    'png' => 'image/png',
+                    'webp' => 'image/webp',
+                    'gif' => 'image/gif',
+                    default => 'image/png',
+                };
+            }
+
+            $ogImageWidth = (string) ($ogImageWidth ?: '1200');
+            $ogImageHeight = (string) ($ogImageHeight ?: '630');
+        }
+
+        $ogImageType = (string) ($ogImageType ?: 'image/png');
         $ogImageAlt = (string) ($seo['image_alt'] ?? 'DOPA Check - Tracking de hábitos e desafios');
 
         // JSON-LD (evita usar "@context" inline no Blade, pois o Blade interpreta "@context" como diretiva)
@@ -61,7 +106,6 @@
     <meta property="og:title" content="{{ $ogTitle }}">
     <meta property="og:description" content="{{ $ogDescription }}">
     <meta property="og:image" content="{{ $ogImage }}">
-    <meta property="og:image:secure_url" content="{{ $ogImage }}">
     <meta property="og:image:type" content="{{ $ogImageType }}">
     <meta property="og:image:width" content="{{ $ogImageWidth }}">
     <meta property="og:image:height" content="{{ $ogImageHeight }}">

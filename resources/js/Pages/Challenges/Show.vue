@@ -338,8 +338,25 @@ const joining = ref(false)
 // Computed
 const isParticipating = computed(() => !!props.userChallenge)
 
+const origin = typeof window !== 'undefined' ? window.location.origin : 'https://dopacheck.com.br'
+const ogImageUrl = computed(() =>
+    props.challenge?.image_url ? props.challenge.image_url : `${origin}/images/og.png`
+)
+
 useSeoMetaTags({
     title: computed(() => props.challenge?.title ? props.challenge.title : 'Desafio'),
+    description: computed(() => props.challenge?.description ? props.challenge.description : undefined),
+
+    ogTitle: computed(() => props.challenge?.title ? `${props.challenge.title} | DOPA Check` : 'DOPA Check'),
+    ogDescription: computed(() => props.challenge?.description ? props.challenge.description : undefined),
+    ogUrl: computed(() => typeof window !== 'undefined' ? window.location.href : undefined),
+    ogType: 'website',
+    ogImage: ogImageUrl,
+
+    twitterTitle: computed(() => props.challenge?.title ? `${props.challenge.title} | DOPA Check` : 'DOPA Check'),
+    twitterDescription: computed(() => props.challenge?.description ? props.challenge.description : undefined),
+    twitterCard: 'summary_large_image',
+    twitterImage: ogImageUrl,
 })
 
 // Methods
