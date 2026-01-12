@@ -52,7 +52,15 @@
 
                                 <!-- Challenge Icon/Image -->
                                 <div class="lg:col-span-1 flex justify-center lg:justify-end">
-                                    <div
+                                    <div v-if="challenge.image_url"
+                                        class="w-full max-w-sm lg:max-w-none flex justify-center lg:justify-end">
+                                        <div
+                                            class="w-64 h-40 lg:w-80 lg:h-52 rounded-3xl overflow-hidden shadow-xl border border-white/30 bg-white/20">
+                                            <img :src="challenge.image_url" :alt="`Imagem do desafio ${challenge.title}`"
+                                                class="w-full h-full object-cover" />
+                                        </div>
+                                    </div>
+                                    <div v-else
                                         class="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-xl">
                                         <span class="text-6xl">{{ getCategoryIcon(challenge.category) }}</span>
                                     </div>
