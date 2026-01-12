@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 
 class ProfileController extends Controller
 {
@@ -112,6 +113,16 @@ class ProfileController extends Controller
         // Calculate public stats
         $stats = $user->calculateStats();
         
+        $appUrl = rtrim((string) config('app.url', 'https://dopacheck.com.br'), '/');
+        $displayUsername = $user->username ? '@' . $user->username : null;
+        $title = trim($user->name . ($displayUsername ? ' (' . $displayUsername . ')' : '')) . ' | DOPA Check';
+        $description = Str::of("Veja o perfil público de {$user->name} no DOPA Check e acompanhe desafios e check-ins.")
+            ->squish()
+            ->limit(180)
+            ->toString();
+
+        $ogImageUrl = route('og.user', ['username' => $user->username ?: (string) $user->id]);
+
         return Inertia::render('Profile/Public', [
             'profileUser' => [
                 'id' => $user->id,
@@ -136,6 +147,32 @@ class ProfileController extends Controller
                 'total_checkins' => $stats['total_checkins'],
                 'current_streak' => $stats['current_streak'],
                 'best_streak' => $stats['best_streak'],
+            ],
+        ])->withViewData([
+            'seo' => [
+                'type' => 'profile',
+                'title' => $title,
+                'description' => $description,
+                'image' => $ogImageUrl,
+                'image_type' => 'image/jpeg',
+                'image_width' => '1200',
+                'image_height' => '630',
+                'image_alt' => 'Foto de perfil de ' . $user->name,
+                'json_ld' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'ProfilePage',
+                    'name' => $user->name,
+                    'description' => $description,
+                    'url' => url()->current(),
+                    'image' => $ogImageUrl,
+                    'mainEntity' => [
+                        '@type' => 'Person',
+                        'name' => $user->name,
+                        'identifier' => $user->username ?: (string) $user->id,
+                        'url' => $appUrl . '/u/' . ($user->username ?: (string) $user->id),
+                        'image' => $ogImageUrl,
+                    ],
+                ],
             ],
         ]);
     }

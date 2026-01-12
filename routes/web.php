@@ -23,6 +23,7 @@ use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\OgImageController;
 
 // ========================================
 // HEALTH CHECK
@@ -60,6 +61,13 @@ Route::get('/csrf-cookie', function () {
 Route::prefix('u')->group(function () {
     Route::get('/{username}', [ProfileController::class, 'public'])->name('profile.public');
 });
+
+// Open Graph images (WhatsApp/Telegram/Discord previews)
+Route::get('/og/challenge/{challenge}.jpg', [OgImageController::class, 'challenge'])
+    ->where('challenge', '[0-9]+')
+    ->name('og.challenge');
+Route::get('/og/u/{username}.jpg', [OgImageController::class, 'user'])
+    ->name('og.user');
 
 // Public challenges
 Route::prefix('challenges')->group(function () {
