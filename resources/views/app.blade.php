@@ -11,13 +11,25 @@
     @php
         $appUrl = rtrim((string) config('app.url', 'https://dopacheck.com.br'), '/');
         $currentUrl = url()->current();
-        $ogTitle = 'DOPA Check';
-        $ogDescription = 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.';
+        /** @var array<string, mixed> $seo */
+        $seo = isset($seo) && is_array($seo) ? $seo : [];
+
+        $defaultTitle = 'DOPA Check';
+        $defaultDescription = 'DOPA Check é uma plataforma de tracking de hábitos e desafios. Faça check-ins (com ou sem foto) e acompanhe seu progresso em um dashboard simples e mobile-first.';
         // WhatsApp costuma falhar com WebP. Preferimos PNG.
-        $ogImage = $appUrl.'/images/og.png';
+        $defaultImage = $appUrl.'/images/og.png';
+
+        $ogTitle = (string) ($seo['title'] ?? $defaultTitle);
+        $ogDescription = (string) ($seo['description'] ?? $defaultDescription);
+        $ogImage = (string) ($seo['image'] ?? $defaultImage);
+        $ogType = (string) ($seo['type'] ?? 'website');
+        $ogImageType = (string) ($seo['image_type'] ?? 'image/png');
+        $ogImageWidth = (string) ($seo['image_width'] ?? '1200');
+        $ogImageHeight = (string) ($seo['image_height'] ?? '630');
+        $ogImageAlt = (string) ($seo['image_alt'] ?? 'DOPA Check - Tracking de hábitos e desafios');
 
         // JSON-LD (evita usar "@context" inline no Blade, pois o Blade interpreta "@context" como diretiva)
-        $jsonLd = json_encode([
+        $jsonLdPayload = $seo['json_ld'] ?? [
             '@context' => 'https://schema.org',
             '@type' => 'SoftwareApplication',
             'name' => $ogTitle,
@@ -32,7 +44,8 @@
                 'priceCurrency' => 'BRL',
                 'category' => 'Freemium',
             ],
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        ];
+        $jsonLd = json_encode($jsonLdPayload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     @endphp
 
     <!-- Primary Meta Tags -->
@@ -41,18 +54,18 @@
     <meta name="description" content="{{ $ogDescription }}">
 
     <!-- Open Graph / WhatsApp -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <meta property="og:site_name" content="{{ $ogTitle }}">
+    <meta property="og:site_name" content="{{ $defaultTitle }}">
     <meta property="og:url" content="{{ $currentUrl }}">
     <meta property="og:title" content="{{ $ogTitle }}">
     <meta property="og:description" content="{{ $ogDescription }}">
     <meta property="og:image" content="{{ $ogImage }}">
     <meta property="og:image:secure_url" content="{{ $ogImage }}">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="DOPA Check - Tracking de hábitos e desafios">
+    <meta property="og:image:type" content="{{ $ogImageType }}">
+    <meta property="og:image:width" content="{{ $ogImageWidth }}">
+    <meta property="og:image:height" content="{{ $ogImageHeight }}">
+    <meta property="og:image:alt" content="{{ $ogImageAlt }}">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">

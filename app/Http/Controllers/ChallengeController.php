@@ -17,6 +17,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class ChallengeController extends Controller
 {
@@ -293,6 +294,26 @@ class ChallengeController extends Controller
                 ];
             });
         
+        $appUrl = rtrim((string) config('app.url', 'https://dopacheck.com.br'), '/');
+        $description = Str::of((string) $challenge->description)->squish()->limit(180)->toString();
+
+        $imageUrl = $challenge->image_url ? (string) $challenge->image_url : null;
+        if ($imageUrl && !Str::startsWith($imageUrl, ['http://', 'https://'])) {
+            $imageUrl = $appUrl.'/'.ltrim($imageUrl, '/');
+        }
+
+        $imageType = 'image/png';
+        if ($imageUrl) {
+            $path = parse_url($imageUrl, PHP_URL_PATH) ?: '';
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $imageType = match ($ext) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                default => 'image/png',
+            };
+        }
+
         return Inertia::render('Challenges/Show', [
             'challenge' => $challenge,
             'userChallenge' => $userChallenge,
@@ -300,6 +321,31 @@ class ChallengeController extends Controller
             'stats' => $stats,
             'recentParticipants' => $recentParticipants,
             'isAuthenticated' => (bool) $user,
+        ])->withViewData([
+            // OG tags precisam sair no HTML inicial para WhatsApp/Telegram/Discord.
+            'seo' => [
+                'type' => 'website',
+                'title' => $challenge->title.' | DOPA Check',
+                'description' => $description,
+                'image' => $imageUrl ?: ($appUrl.'/images/og.png'),
+                'image_type' => $imageUrl ? $imageType : 'image/png',
+                'image_width' => '1200',
+                'image_height' => '630',
+                'image_alt' => 'Imagem do desafio: '.$challenge->title,
+                'json_ld' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => $challenge->title,
+                    'description' => $description,
+                    'url' => url()->current(),
+                    'image' => $imageUrl ?: ($appUrl.'/images/og.png'),
+                    'isPartOf' => [
+                        '@type' => 'WebSite',
+                        'name' => 'DOPA Check',
+                        'url' => $appUrl.'/',
+                    ],
+                ],
+            ],
         ]);
     }
     
