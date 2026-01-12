@@ -388,6 +388,7 @@
 <script setup>
 import { ref, computed, reactive } from 'vue'
 import { router } from '@inertiajs/vue3'
+import { toast } from 'vue-sonner'
 import DopaHeader from '@/components/DopaHeader.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
@@ -488,18 +489,47 @@ const validateField = (field) => {
     }
 }
 
+const showServerErrorsToast = (serverErrors = {}) => {
+    // Prioriza mensagens "globais" mais úteis pro usuário
+    const priorityKeys = ['message', 'tasks', 'title', 'description', 'category', 'difficulty', 'duration_days']
+    for (const key of priorityKeys) {
+        const value = serverErrors?.[key]
+        if (typeof value === 'string' && value.trim()) {
+            toast.error(value)
+            return
+        }
+    }
+
+    // Se vierem chaves tipo "tasks.0.hashtag", pega a primeira mensagem string
+    const firstString = Object.values(serverErrors).find(v => typeof v === 'string' && v.trim())
+    if (firstString) {
+        toast.error(firstString)
+        return
+    }
+
+    // Fallback (quando só recebemos um objeto vazio ou formatos inesperados)
+    if (Object.keys(serverErrors || {}).length > 0) {
+        toast.error('Não foi possível salvar. Revise os campos destacados e tente novamente.')
+    } else {
+        toast.error('Não foi possível salvar. Tente novamente.')
+    }
+}
+
 const handleSubmit = async () => {
     if (!canProceed.value || submitting.value) return
 
     submitting.value = true
 
     try {
-        await router.post('/challenges', form, {
+        router.post('/challenges', form, {
             onSuccess: () => {
-                // Redirect will be handled by backend
+                // Redirect/flash normalmente é tratado globalmente,
+                // mas deixamos um feedback mínimo caso não haja mensagem.
+                toast.success('Salvando... redirecionando')
             },
             onError: (serverErrors) => {
                 Object.assign(errors, serverErrors)
+                showServerErrorsToast(serverErrors)
                 // Go back to first step if there are basic info errors
                 if (serverErrors.title || serverErrors.description || serverErrors.category || serverErrors.difficulty) {
                     currentStep.value = 1
@@ -513,6 +543,7 @@ const handleSubmit = async () => {
         })
     } catch (error) {
         console.error('Error creating challenge:', error)
+        toast.error('Erro inesperado ao criar desafio. Tente novamente.')
         submitting.value = false
     }
 }
@@ -587,6 +618,7 @@ textarea::placeholder {
 /* Custom color picker */
 input[type="color"] {
     -webkit-appearance: none;
+    appearance: none;
     border: none;
     width: 32px;
     height: 32px;
