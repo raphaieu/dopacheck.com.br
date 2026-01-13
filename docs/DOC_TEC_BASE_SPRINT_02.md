@@ -55,7 +55,7 @@ bg-gradient-to-r from-blue-600 to-purple-600          // Accent gradient
 - ✅ **Check-in web** com modal de upload
 - ✅ **Check-in rápido** sem imagem (AJAX)
 - ✅ **Info do check-in** (horário, fonte, imagem)
-- ✅ **Campos/UX para PRO** (ex.: badge de “IA”) — feature PRO ainda em evolução
+- ✅ **Campos/UX para PRO** (ex.: badge de “IA”) - feature PRO ainda em evolução
 - ✅ **Remoção de check-in** com confirmação
 - ✅ **Dicas WhatsApp** (quando existir conexão; opcional/futuro)
 - ✅ **Indicador de streak** quando > 1 dia
@@ -103,7 +103,7 @@ interface ProgressRingProps {
 - ✅ **Preview de imagem** com remoção
 - ✅ **Validação** (tipo, tamanho máx 5MB)
 - ✅ **FormData upload** com progress
-- ✅ **Gancho/placeholder para PRO** (ex.: “IA”) — feature ainda em evolução
+- ✅ **Gancho/placeholder para PRO** (ex.: “IA”) - feature ainda em evolução
 - ✅ **Mensagem opcional** com textarea
 - ✅ **Estados visuais** (uploading, error, success)
 

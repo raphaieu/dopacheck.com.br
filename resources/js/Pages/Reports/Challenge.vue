@@ -89,7 +89,7 @@ const props = defineProps({
 })
 
 useSeoMetaTags({
-  title: computed(() => props.userChallenge?.challenge?.title ? `Relatório — ${props.userChallenge.challenge.title}` : 'Relatório Detalhado'),
+  title: computed(() => props.userChallenge?.challenge?.title ? `Relatório - ${props.userChallenge.challenge.title}` : 'Relatório Detalhado'),
 })
 
 const formatStatus = (status) => {

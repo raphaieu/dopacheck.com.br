@@ -204,7 +204,7 @@ const props = defineProps({
 })
 
 useSeoMetaTags({
-    title: computed(() => props.challenge?.title ? `Participantes — ${props.challenge.title}` : 'Participantes'),
+    title: computed(() => props.challenge?.title ? `Participantes - ${props.challenge.title}` : 'Participantes'),
 })
 
 // Helper methods

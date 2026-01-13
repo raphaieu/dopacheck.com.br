@@ -49,7 +49,7 @@ const features = [
   {
     icon: '✅',
     title: 'Check-in em segundos',
-    description: 'Registre seu progresso diariamente sem fricção — rápido, simples e direto ao ponto.',
+    description: 'Registre seu progresso diariamente sem fricção - rápido, simples e direto ao ponto.',
   },
   {
     icon: '🔥',
@@ -383,7 +383,7 @@ const testimonials = [
               </li>
             </ul>
             
-            <Button :as="Link" :href="registerHref" class="w-full">
+            <Button :as="Link" :href="registerHref" class="w-full  bg-blue-600 hover:bg-blue-700">
               Começar Grátis
             </Button>
           </div>
@@ -442,7 +442,7 @@ const testimonials = [
               </li>
             </ul>
             
-            <Button :as="Link" :href="proCtaHref" variant="secondary" class="w-full">
+            <Button :as="Link" :href="proCtaHref" class="w-full">
               Assinar PRO
             </Button>
           </div>

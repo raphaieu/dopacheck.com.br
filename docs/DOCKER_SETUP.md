@@ -121,7 +121,7 @@ docker compose exec horizon php artisan horizon:continue
 docker compose exec horizon php artisan horizon:terminate
 ```
 
-### Evolution API (WhatsApp) — opcional / fora do MVP atual
+### Evolution API (WhatsApp) - opcional / fora do MVP atual
 ```bash
 # A integração WhatsApp foi isolada em um compose separado (Sprint WhatsApp).
 # Suba assim (recomendado: subir o core web primeiro para criar a network dopacheck-net):

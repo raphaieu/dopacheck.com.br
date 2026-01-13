@@ -104,7 +104,7 @@ final class TeamApplicationResource extends Resource
                         ->label('Aprovado por')
                         ->content(function (?TeamApplication $record): string {
                             if (! $record || ! $record->approved_by) {
-                                return '—';
+                                return '-';
                             }
                             $u = $record->approvedBy;
                             if (! $u) {
@@ -119,7 +119,7 @@ final class TeamApplicationResource extends Resource
                         ->label('Usuário (claim)')
                         ->content(function (?TeamApplication $record): string {
                             if (! $record || ! $record->user_id) {
-                                return '—';
+                                return '-';
                             }
                             $u = $record->user;
                             if (! $u) {

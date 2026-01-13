@@ -50,7 +50,7 @@ Demonstrar capacidade **FullStack completa**:
 - ✅ **Open-source** para comunidade
 
 ## 📈 **Timeline**
-— (em revisão)
+- (em revisão)
 
 ---
 

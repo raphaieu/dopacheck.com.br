@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
+import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-vue-next'
 import WebLayout from '@/layouts/WebLayout.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
@@ -21,6 +22,8 @@ const props = defineProps({
 
 const page = usePage()
 const flashSuccess = computed(() => page.props.flash?.success)
+const flashError = computed(() => page.props.flash?.error)
+const flashWarning = computed(() => page.props.flash?.warning || page.props.flash?.message)
 const teamName = computed(() => props.team?.name || 'o time')
 const onboardingTitle = computed(() => props.team?.onboarding_title || `🎈 Formulário de Inscrição | ${teamName.value} 🎈`)
 const whatsappJoinUrl = computed(() => props.team?.whatsapp_join_url || '')
@@ -36,23 +39,74 @@ const form = useForm({
   circle_url: '',
 })
 
+function onlyDigits(value) {
+  return String(value ?? '').replace(/\D+/g, '')
+}
+
+function formatBrPhoneFromDigits(digits) {
+  const clean = onlyDigits(digits).slice(0, 10)
+  if (clean === '') return ''
+
+  const ddd = clean.slice(0, 2)
+  const rest = clean.slice(2) // 8 dígitos
+
+  let formatted = ''
+  if (ddd.length > 0) formatted += `(${ddd}`
+  if (ddd.length === 2) formatted += ') '
+
+  if (rest.length > 5) formatted += `${rest.slice(0, 5)}-${rest.slice(5)}`
+  else formatted += rest
+
+  return formatted.trim()
+}
+
+const whatsappDigits = computed({
+  get: () => onlyDigits(form.whatsapp_number).slice(0, 10),
+  set: (value) => {
+    form.whatsapp_number = onlyDigits(value).slice(0, 10)
+  },
+})
+
+const whatsappMasked = computed({
+  get: () => formatBrPhoneFromDigits(whatsappDigits.value),
+  set: (value) => {
+    whatsappDigits.value = value
+  },
+})
+
+function onWhatsappBeforeInput(event) {
+  // Bloqueia letras/símbolos (mantém backspace/delete etc.)
+  if (event?.data && /\D/.test(event.data)) event.preventDefault()
+}
+
+function onWhatsappPaste(event) {
+  event.preventDefault()
+  const pasted = event?.clipboardData?.getData('text') ?? ''
+  whatsappDigits.value = pasted
+}
+
 function submit() {
   form.post(route('teams.join.store', props.team.slug), {
     preserveScroll: true,
   })
 }
+
+const showFormErrorAlert = computed(() => form.hasErrors && !flashError.value)
 </script>
 
 <template>
   <WebLayout>
-    <main class="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-red-950">
+    <main
+      class="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-red-950"
+      style="--primary: hsl(0 84% 45%); --primary-foreground: hsl(0 0% 98%); --ring: hsl(0 84% 45%);"
+    >
       <div class="mx-auto w-full max-w-5xl px-4 py-10">
         <div class="mb-8">
           <h1 class="text-3xl font-bold tracking-tight text-white">
             {{ onboardingTitle }}
           </h1>
           <p class="mt-2 text-zinc-300">
-            Bem-vindo(a) — que bom ter você por aqui.
+            Bem-vindo(a) - que bom ter você por aqui.
           </p>
         </div>
 
@@ -73,7 +127,7 @@ function submit() {
 
               <div v-else class="space-y-4 text-sm leading-relaxed text-zinc-200">
                 <p>
-                  Para fazer parte do <strong>{{ teamName }}</strong> é rapidinho — só seguir dois passos:
+                  Para fazer parte do <strong>{{ teamName }}</strong> é rapidinho - só seguir dois passos:
                 </p>
 
                 <ol class="space-y-3">
@@ -108,7 +162,11 @@ function submit() {
                   </a>
                 </div>
 
-                <Alert class="mt-4" variant="default">
+                <Alert
+                  class="mt-4 border-white/20 bg-white/10 text-white [&_[data-slot=alert-title]]:text-white [&_[data-slot=alert-description]]:text-white/90"
+                  variant="default"
+                >
+                  <Info />
                   <AlertTitle>Importante</AlertTitle>
                   <AlertDescription>
                     A entrada no grupo só será liberada após o preenchimento do formulário.
@@ -134,10 +192,35 @@ function submit() {
             </CardHeader>
 
             <CardContent class="px-6">
-              <Alert v-if="flashSuccess" class="mb-6" variant="default">
+              <Alert v-if="flashError" class="mb-6" variant="destructive">
+                <XCircle />
+                <AlertTitle>Não foi possível enviar</AlertTitle>
+                <AlertDescription>
+                  {{ flashError }}
+                </AlertDescription>
+              </Alert>
+
+              <Alert v-else-if="flashWarning" class="mb-6" variant="warning">
+                <AlertTriangle />
+                <AlertTitle>Atenção</AlertTitle>
+                <AlertDescription>
+                  {{ flashWarning }}
+                </AlertDescription>
+              </Alert>
+
+              <Alert v-else-if="flashSuccess" class="mb-6" variant="success">
+                <CheckCircle2 />
                 <AlertTitle>Inscrição enviada</AlertTitle>
                 <AlertDescription>
                   {{ flashSuccess }}
+                </AlertDescription>
+              </Alert>
+
+              <Alert v-if="showFormErrorAlert" class="mb-6" variant="destructive">
+                <XCircle />
+                <AlertTitle>Revise os campos</AlertTitle>
+                <AlertDescription>
+                  Alguns dados estão inválidos ou já foram usados. Confira os campos destacados abaixo e tente novamente.
                 </AlertDescription>
               </Alert>
 
@@ -164,14 +247,19 @@ function submit() {
                   <Label for="whatsapp_number">Número de WhatsApp</Label>
                   <Input
                     id="whatsapp_number"
-                    v-model="form.whatsapp_number"
+                    v-model="whatsappMasked"
                     class="mt-1 w-full"
                     inputmode="numeric"
-                    placeholder="Ex: 11999998888"
+                    pattern="[0-9]*"
+                    autocomplete="tel"
+                    maxlength="15"
+                    placeholder="Ex: (11) 98888-7777"
+                    @beforeinput="onWhatsappBeforeInput"
+                    @paste="onWhatsappPaste"
                     required
                   />
                   <p class="mt-2 text-xs text-gray-500">
-                    Dica: informe apenas números (DDD + número).
+                    Dica: informe seu número com DDD (apenas números).
                   </p>
                   <InputError :message="form.errors.whatsapp_number" class="mt-2" />
                 </div>
@@ -191,13 +279,13 @@ function submit() {
                 </div>
 
                 <div>
-                  <Label for="circle_url">Link do seu perfil no Circle/Jugular</Label>
+                  <Label for="circle_url">Link do seu perfil na Jugular (Circle) ou do seu Parinho(a)</Label>
                   <Input
                     id="circle_url"
                     v-model="form.circle_url"
                     class="mt-1 w-full"
                     type="url"
-                    placeholder="https://comunidade.../u/seu-perfil"
+                    placeholder="https://.../u/seu-perfil"
                     required
                   />
                   <InputError :message="form.errors.circle_url" class="mt-2" />

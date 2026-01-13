@@ -23,7 +23,7 @@
   - **Correções CSRF/XSRF**: melhoria de estabilidade contra erros 419/TokenMismatch.
   - **PWA/Service Worker**: melhorias de cache e proteções para não cachear HTML/navegação.
 
-## ✅ Entregas concluídas — MVP “sem WhatsApp” (Jan/2026)
+## ✅ Entregas concluídas - MVP “sem WhatsApp” (Jan/2026)
 
 - [x] Padronização do projeto para **produção/beta** com DB oficial **MySQL** e cache/queue via **Redis**
 - [x] Correções de **legal/branding** (marca DOPA Check + pt-BR) e limpeza de placeholders
