@@ -40,13 +40,20 @@
                                     </div>
 
                                     <!-- Creator Info -->
-                                    <div v-if="challenge.creator" class="flex items-center space-x-3 text-gray-600">
+                                    <div v-if="challenge.creator" class="flex items-center justify-between gap-4 text-gray-600">
                                         <img :src="challenge.creator.profile_photo_url || '/default-avatar.png'"
                                             :alt="challenge.creator.name" class="w-8 h-8 rounded-full">
-                                        <span class="text-sm">
+                                        <span class="text-sm flex-1">
                                             Criado por <span class="font-medium">{{ challenge.creator.name }}</span>
                                             • {{ formatDate(challenge.created_at) }}
                                         </span>
+                                        <Link
+                                          v-if="canEdit"
+                                          :href="`/challenges/${challenge.id}/edit`"
+                                          class="cursor-pointer inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                        >
+                                          ✏️ Editar
+                                        </Link>
                                     </div>
                                 </div>
 
@@ -279,9 +286,8 @@
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Visibilidade</span>
-                                <span
-                                    class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-                                    🌍 Público
+                                <span :class="visibilityBadgeClass">
+                                    {{ visibilityBadgeText }}
                                 </span>
                             </div>
                         </div>
@@ -294,7 +300,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import TaskPreview from '@/components/TaskPreview.vue'
 import ParticipantCard from '@/components/ParticipantCard.vue'
@@ -337,6 +343,27 @@ const joining = ref(false)
 
 // Computed
 const isParticipating = computed(() => !!props.userChallenge)
+const canEdit = computed(() => {
+    const page = usePage()
+    const userId = page?.props?.auth?.user?.id
+    return false
+    // TODO: descomentar quando decidir se realmente os desafios serão EDITÁVEIS pelo criador.
+    // return !!userId && Number(props.challenge?.created_by) === Number(userId)
+})
+
+const visibilityBadgeText = computed(() => {
+    const v = props.challenge?.visibility
+    if (v === 'private') return '🔒 Privado'
+    if (v === 'team') return `👥 ${props.challenge?.team?.name ?? 'Time'}`
+    return '🌍 Global'
+})
+
+const visibilityBadgeClass = computed(() => {
+    const v = props.challenge?.visibility
+    if (v === 'private') return 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700'
+    if (v === 'team') return 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800'
+    return 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800'
+})
 
 const origin = typeof window !== 'undefined' ? window.location.origin : 'https://dopacheck.com.br'
 const ogImageUrl = computed(() =>

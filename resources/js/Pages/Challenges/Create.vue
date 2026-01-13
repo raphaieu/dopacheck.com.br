@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <!-- Header -->
-        <DopaHeader subtitle="Criar Desafio" max-width="4xl" :show-back-button="true" back-link="/challenges" />
+        <DopaHeader :subtitle="isEditMode ? 'Editar Desafio' : 'Criar Desafio'" max-width="4xl" :show-back-button="true" back-link="/challenges" />
 
         <main class="max-w-4xl mx-auto px-4 py-8">
             <!-- Progress Steps -->
@@ -140,17 +140,43 @@
                             </div>
                         </div>
 
-                        <!-- Visibility -->
+                        <!-- Visibility / Sharing -->
                         <div class="bg-gray-50 rounded-lg p-4">
                             <label class="flex items-center space-x-3">
-                                <input v-model="form.is_public" type="checkbox"
+                                <input v-model="shareEnabled" type="checkbox"
                                     class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                                 <div>
-                                    <span class="text-sm font-medium text-gray-900">Tornar desafio público</span>
-                                    <p class="text-sm text-gray-600">Outras pessoas poderão ver e participar do seu
-                                        desafio</p>
+                                    <span class="text-sm font-medium text-gray-900">Compartilhar desafio</span>
+                                    <p class="text-sm text-gray-600">
+                                        Compartilhe globalmente ou com um time específico.
+                                    </p>
                                 </div>
                             </label>
+
+                            <div class="mt-4 grid gap-2 md:grid-cols-2">
+                                <div class="md:col-span-2">
+                                    <label for="share_scope" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Onde compartilhar
+                                    </label>
+                                    <select
+                                      id="share_scope"
+                                      v-model="shareScope"
+                                      :disabled="!shareEnabled"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                                    >
+                                      <option value="global">🌍 Global (qualquer pessoa pode participar)</option>
+                                      <optgroup v-if="teamOptions.length" label="Times">
+                                        <option v-for="team in teamOptions" :key="team.id" :value="String(team.id)">
+                                          👥 {{ team.name }}
+                                        </option>
+                                      </optgroup>
+                                    </select>
+                                    <span v-if="errors.team_id" class="text-sm text-red-600">{{ errors.team_id }}</span>
+                                    <p v-if="!shareEnabled" class="mt-2 text-xs text-gray-500">
+                                      Desmarcado = privado (só você vê e participa).
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -316,7 +342,7 @@
                                     </div>
                                     <div>
                                         <span class="text-sm text-gray-600">Visibilidade:</span>
-                                        <p class="text-gray-800 font-medium">{{ form.is_public ? '🌍 Público' : '🔒 Privado' }}</p>
+                                        <p class="text-gray-800 font-medium">{{ visibilityPreview }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -376,7 +402,7 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            <span>{{ submitting ? 'Criando...' : 'Criar Desafio' }}</span>
+                            <span>{{ submitting ? (isEditMode ? 'Salvando...' : 'Criando...') : (isEditMode ? 'Salvar Alterações' : 'Criar Desafio') }}</span>
                         </button>
                     </div>
                 </div>
@@ -398,7 +424,7 @@ const submitting = ref(false)
 const errors = reactive({})
 
 useSeoMetaTags({
-    title: 'Criar Desafio',
+    title: 'Desafio',
 })
 
 // Form data
@@ -408,8 +434,41 @@ const form = reactive({
     duration_days: 21,
     category: '',
     difficulty: '',
-    is_public: true,
-    tasks: []
+    visibility: 'global',
+    team_id: null,
+    tasks: [],
+})
+
+const props = defineProps({
+    teams: {
+        type: Array,
+        default: () => [],
+    },
+    challenge: {
+        type: Object,
+        default: null,
+    },
+})
+
+const isEditMode = computed(() => !!props.challenge?.id)
+
+const teamOptions = computed(() => (props.teams || []).filter(t => !t.personal_team))
+
+// Sharing UI state
+const shareEnabled = ref(true)
+const shareScope = ref('global') // 'global' | teamId (string)
+
+const visibility = computed(() => {
+    if (!shareEnabled.value) return 'private'
+    if (shareScope.value === 'global') return 'global'
+    return 'team'
+})
+
+const visibilityPreview = computed(() => {
+    if (visibility.value === 'private') return '🔒 Privado (só você)'
+    if (visibility.value === 'global') return '🌍 Global'
+    const team = teamOptions.value.find(t => String(t.id) === String(shareScope.value))
+    return `👥 Time: ${team?.name ?? 'Selecionado'}`
 })
 
 // Computed
@@ -521,11 +580,25 @@ const handleSubmit = async () => {
     submitting.value = true
 
     try {
-        router.post('/challenges', form, {
+        // Monta payload com regras de visibilidade
+        const payload = {
+            ...form,
+            visibility: visibility.value,
+            team_id: visibility.value === 'team' ? Number(shareScope.value) : null,
+        }
+
+        // Limpa erros do server antigos relacionados à visibilidade
+        delete errors.team_id
+        delete errors.visibility
+
+        const url = isEditMode.value ? `/challenges/${props.challenge.id}` : '/challenges'
+        const method = isEditMode.value ? 'put' : 'post'
+
+        router[method](url, payload, {
             onSuccess: () => {
                 // Redirect/flash normalmente é tratado globalmente,
                 // mas deixamos um feedback mínimo caso não haja mensagem.
-                toast.success('Salvando... redirecionando')
+                toast.success(isEditMode.value ? 'Salvando alterações...' : 'Salvando... redirecionando')
             },
             onError: (serverErrors) => {
                 Object.assign(errors, serverErrors)
@@ -542,8 +615,8 @@ const handleSubmit = async () => {
             }
         })
     } catch (error) {
-        console.error('Error creating challenge:', error)
-        toast.error('Erro inesperado ao criar desafio. Tente novamente.')
+        console.error('Error saving challenge:', error)
+        toast.error(isEditMode.value ? 'Erro inesperado ao salvar desafio. Tente novamente.' : 'Erro inesperado ao criar desafio. Tente novamente.')
         submitting.value = false
     }
 }
@@ -572,7 +645,33 @@ const formatDifficultyPreview = (difficulty) => {
 }
 
 // Initialize with one task
-if (form.tasks.length === 0) {
+if (isEditMode.value) {
+    form.title = props.challenge?.title ?? ''
+    form.description = props.challenge?.description ?? ''
+    form.duration_days = props.challenge?.duration_days ?? 21
+    form.category = props.challenge?.category ?? ''
+    form.difficulty = props.challenge?.difficulty ?? ''
+    form.visibility = props.challenge?.visibility ?? 'global'
+    form.team_id = props.challenge?.team_id ?? null
+
+    // Preenche UI de sharing (checkbox + select) a partir do enum
+    shareEnabled.value = (form.visibility !== 'private')
+    shareScope.value = form.visibility === 'team' ? String(form.team_id ?? '') : 'global'
+
+    const tasks = Array.isArray(props.challenge?.tasks) ? props.challenge.tasks : []
+    form.tasks = tasks
+        .slice()
+        .sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
+        .map(t => ({
+            id: t.id,
+            name: t.name ?? '',
+            hashtag: t.hashtag ?? '',
+            description: t.description ?? '',
+            is_required: (t.is_required ?? true),
+            icon: t.icon ?? '📝',
+            color: t.color ?? '#3B82F6',
+        }))
+} else if (form.tasks.length === 0) {
     addTask()
 }
 </script>

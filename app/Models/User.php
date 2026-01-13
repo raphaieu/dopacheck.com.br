@@ -146,9 +146,22 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
      */
     public function getIsProAttribute(): bool
     {
-        return $this->plan === 'pro' && 
-               $this->subscription_ends_at && 
-               $this->subscription_ends_at->isFuture();
+        // Importante: em alguns contextos (ex.: serialização parcial do usuário),
+        // atributos podem não estar carregados. Como o projeto está em strict mode,
+        // acessos diretos ($this->plan) podem lançar MissingAttributeException.
+        $attributes = $this->getAttributes();
+        $plan = $attributes['plan'] ?? null;
+
+        if ($plan !== 'pro') {
+            return false;
+        }
+
+        $subscriptionEndsAt = $this->getAttribute('subscription_ends_at');
+        if (! $subscriptionEndsAt) {
+            return false;
+        }
+
+        return $subscriptionEndsAt->isFuture();
     }
 
     /**
@@ -156,12 +169,15 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
      */
     public function getPublicProfileUrlAttribute(): string
     {
+        $attributes = $this->getAttributes();
+        $username = $attributes['username'] ?? null;
+
         // Correção temporária até implementarmos as rotas
         try {
-            return route('profile.public', $this->username ?: $this->id);
+            return route('profile.public', $username ?: $this->id);
         } catch (\Exception $e) {
             // Fallback se a rota não existir ainda
-            return url('/u/' . ($this->username ?: $this->id));
+            return url('/u/' . ($username ?: $this->id));
         }
     }
 

@@ -158,7 +158,6 @@ const selectedImage = ref(null)
 const openImageModal = (imageUrl) => {
   selectedImage.value = imageUrl
 }
-console.log(props.profileUser)
 const origin = typeof window !== 'undefined' ? window.location.origin : 'https://dopacheck.com.br'
 const ogImageUrl = computed(() => {
   const avatarUrl = props.profileUser?.avatar

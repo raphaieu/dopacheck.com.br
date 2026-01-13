@@ -104,6 +104,62 @@
       </div>
     </div>
   </header>
+
+  <!-- Bottom navigation (mobile-first) -->
+  <div
+    v-if="user"
+    class="md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur"
+  >
+    <nav class="mx-auto max-w-7xl px-2 py-2">
+      <div class="grid grid-cols-5 gap-1">
+        <Link
+          href="/reports"
+          class="flex flex-col items-center justify-center rounded-lg px-2 py-2 text-xs transition-colors"
+          :class="isActive('/reports') ? 'text-blue-700 bg-blue-50' : 'text-gray-600 hover:bg-gray-50'"
+        >
+          <Icon icon="lucide:bar-chart-3" class="size-5" />
+          <span class="mt-1">Relatórios</span>
+        </Link>
+
+        <Link
+          href="/challenges"
+          class="flex flex-col items-center justify-center rounded-lg px-2 py-2 text-xs transition-colors"
+          :class="isActive('/challenges') ? 'text-indigo-700 bg-indigo-50' : 'text-gray-600 hover:bg-gray-50'"
+        >
+          <Icon icon="lucide:target" class="size-5" />
+          <span class="mt-1">Desafios</span>
+        </Link>
+
+        <Link
+          href="/dopa"
+          class="flex flex-col items-center justify-center rounded-lg px-2 py-2 text-xs transition-colors"
+          :class="isActive('/dopa') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-50'"
+        >
+          <Icon icon="lucide:layout-dashboard" class="size-5" />
+          <span class="mt-1">Início</span>
+        </Link>
+
+        <Link
+          :href="profileHref"
+          class="flex flex-col items-center justify-center rounded-lg px-2 py-2 text-xs transition-colors"
+          :class="isActive('/u/') ? 'text-fuchsia-700 bg-fuchsia-50' : 'text-gray-600 hover:bg-gray-50'"
+          @click="showMenu = false"
+        >
+          <Icon icon="lucide:user" class="size-5" />
+          <span class="mt-1">Perfil</span>
+        </Link>
+
+        <button
+          type="button"
+          @click="handleLogout"
+          class="flex flex-col items-center justify-center rounded-lg px-2 py-2 text-xs text-gray-600 transition-colors hover:bg-gray-50"
+        >
+          <Icon icon="lucide:log-out" class="size-5" />
+          <span class="mt-1">Sair</span>
+        </button>
+      </div>
+    </nav>
+  </div>
 </template>
 
 <script setup>
@@ -168,6 +224,12 @@ function handleLogout() {
   router.post('/logout')
 }
 
+function isActive(prefix) {
+  const url = String(page.url || '')
+  if (prefix === '/u/') return url.startsWith('/u/')
+  return url === prefix || url.startsWith(`${prefix}/`)
+}
+
 // Fechar menu ao clicar fora
 function handleClickOutside(event) {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
@@ -177,10 +239,16 @@ function handleClickOutside(event) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  if (user.value && typeof document !== 'undefined') {
+    document.body?.classList?.add('dopa-bottom-nav')
+  }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  if (typeof document !== 'undefined') {
+    document.body?.classList?.remove('dopa-bottom-nav')
+  }
 })
 </script>
 

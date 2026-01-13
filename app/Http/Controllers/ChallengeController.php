@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Team;
 use App\Models\Challenge;
+use App\Models\ChallengeTask;
 use App\Models\Checkin;
 use App\Models\UserChallenge;
 use App\Helpers\CacheHelper;
@@ -21,6 +23,44 @@ use Illuminate\Support\Str;
 
 class ChallengeController extends Controller
 {
+    private function ensureChallengeEditableByUser(?\App\Models\User $user, Challenge $challenge): void
+    {
+        // Segurança por obscuridade: não expõe existência.
+        abort_unless($user && $challenge->created_by === $user->id, 404);
+        abort_if((bool) ($challenge->is_template ?? false), 404);
+    }
+
+    private function userVisibleTeamIds(?\App\Models\User $user): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        // Jetstream: inclui times em que o usuário é membro (inclui personal team também).
+        return $user->allTeams()->pluck('id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    private function ensureChallengeVisibleToUser(?\App\Models\User $user, Challenge $challenge): void
+    {
+        if ($challenge->visibility === Challenge::VISIBILITY_GLOBAL) {
+            return;
+        }
+
+        if ($challenge->visibility === Challenge::VISIBILITY_PRIVATE) {
+            abort_unless($user && $challenge->created_by === $user->id, 404);
+            return;
+        }
+
+        if ($challenge->visibility === Challenge::VISIBILITY_TEAM) {
+            abort_unless($user && $challenge->team_id, 404);
+            $team = Team::query()->find($challenge->team_id);
+            abort_unless($team && $user->belongsToTeam($team), 404);
+            return;
+        }
+
+        abort(404);
+    }
+
     /**
      * Display challenges listing
      */
@@ -28,20 +68,29 @@ class ChallengeController extends Controller
     {
         $user = $request->user();
         $showPrivate = $request->boolean('show_private', false);
-        
-        // Base query - public challenges
-        $query = Challenge::public()->with(['creator', 'tasks']);
-        
-        // If user wants to see private challenges, include them
-        if ($showPrivate && $user) {
-            $query = Challenge::where(function ($q) use ($user) {
-                $q->public() // Public challenges
-                  ->orWhere(function ($subQ) use ($user) {
-                      $subQ->where('is_public', false) // Private challenges
-                           ->where('created_by', $user->id); // Created by current user
-                  });
-            })->with(['creator', 'tasks']);
-        }
+
+        $teamIds = $user ? $this->userVisibleTeamIds($user) : [];
+
+        // Base query - visibilidade do usuário (agrupada para não quebrar filtros)
+        $query = Challenge::query()
+            ->with(['creator', 'tasks', 'team'])
+            ->where(function ($q) use ($user, $teamIds, $showPrivate) {
+                $q->where('visibility', Challenge::VISIBILITY_GLOBAL);
+
+                if ($user && ! empty($teamIds)) {
+                    $q->orWhere(function ($subQ) use ($teamIds) {
+                        $subQ->where('visibility', Challenge::VISIBILITY_TEAM)
+                            ->whereIn('team_id', $teamIds);
+                    });
+                }
+
+                if ($showPrivate && $user) {
+                    $q->orWhere(function ($subQ) use ($user) {
+                        $subQ->where('visibility', Challenge::VISIBILITY_PRIVATE)
+                            ->where('created_by', $user->id);
+                    });
+                }
+            });
         
         // Filter by category
         if ($request->category) {
@@ -141,8 +190,10 @@ class ChallengeController extends Controller
         }
         
         // Get featured challenges for hero section
-        $featuredChallenges = Challenge::featured()
-            ->with(['creator', 'tasks'])
+        $featuredChallenges = Challenge::query()
+            ->where('visibility', Challenge::VISIBILITY_GLOBAL)
+            ->where('is_featured', true)
+            ->with(['creator', 'tasks', 'team'])
             ->limit(3)
             ->get();
         
@@ -257,7 +308,9 @@ class ChallengeController extends Controller
      */
     public function show(Request $request, Challenge $challenge): Response
     {
-        $challenge->load(['creator', 'tasks', 'activeParticipants.user']);
+        $this->ensureChallengeVisibleToUser($request->user(), $challenge);
+
+        $challenge->load(['creator', 'tasks', 'team', 'activeParticipants.user']);
         
         $user = $request->user();
         $userChallenge = null;
@@ -340,11 +393,7 @@ class ChallengeController extends Controller
      */
     public function participants(Request $request, Challenge $challenge): Response
     {
-        // Check if challenge is public or user is participating
-        $user = $request->user();
-        if (!$challenge->is_public && (!$user || !$challenge->isUserParticipating($user))) {
-            abort(404);
-        }
+        $this->ensureChallengeVisibleToUser($request->user(), $challenge);
         
         $challenge->load(['creator', 'tasks']);
         
@@ -408,7 +457,52 @@ class ChallengeController extends Controller
                 ->with('error', 'Você já tem o máximo de desafios ativos. Upgrade para PRO para desafios ilimitados.');
         }
         
-        return Inertia::render('Challenges/Create');
+        return Inertia::render('Challenges/Create', [
+            'teams' => $user->allTeams()->map(fn ($team) => [
+                'id' => $team->id,
+                'name' => $team->name,
+                'personal_team' => (bool) ($team->personal_team ?? false),
+            ])->values(),
+        ]);
+    }
+
+    /**
+     * Show edit challenge form (reusa a tela de criação)
+     */
+    public function edit(Request $request, Challenge $challenge): Response
+    {
+        $user = $request->user();
+        $this->ensureChallengeEditableByUser($user, $challenge);
+
+        $challenge->load(['tasks']);
+
+        return Inertia::render('Challenges/Create', [
+            'teams' => $user->allTeams()->map(fn ($team) => [
+                'id' => $team->id,
+                'name' => $team->name,
+                'personal_team' => (bool) ($team->personal_team ?? false),
+            ])->values(),
+            'challenge' => [
+                'id' => $challenge->id,
+                'title' => $challenge->title,
+                'description' => $challenge->description,
+                'duration_days' => $challenge->duration_days,
+                'category' => $challenge->category,
+                'difficulty' => $challenge->difficulty,
+                'visibility' => $challenge->visibility,
+                'team_id' => $challenge->team_id,
+                'tasks' => $challenge->tasks->map(fn (ChallengeTask $task) => [
+                    'id' => $task->id,
+                    'name' => $task->name,
+                    'hashtag' => $task->hashtag,
+                    'description' => $task->description,
+                    'is_required' => (bool) $task->is_required,
+                    'icon' => $task->icon,
+                    'color' => $task->color,
+                    'order' => $task->order,
+                ])->values(),
+            ],
+        ]);
     }
     
     /**
@@ -429,15 +523,46 @@ class ChallengeController extends Controller
             'duration_days' => ['required', 'integer', 'min:1', 'max:365'],
             'category' => ['required', 'string', 'max:50'],
             'difficulty' => ['required', 'string', Rule::in(['beginner', 'intermediate', 'advanced'])],
-            'is_public' => ['boolean'],
+            'visibility' => ['required', 'string', Rule::in([
+                Challenge::VISIBILITY_PRIVATE,
+                Challenge::VISIBILITY_TEAM,
+                Challenge::VISIBILITY_GLOBAL,
+            ])],
+            'team_id' => ['nullable', 'integer'],
             'tasks' => ['required', 'array', 'min:1', 'max:10'],
             'tasks.*.name' => ['required', 'string', 'max:255'],
-            'tasks.*.hashtag' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_]+$/', 'unique:challenge_tasks,hashtag'],
+            'tasks.*.hashtag' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_]+$/'],
             'tasks.*.description' => ['nullable', 'string', 'max:500'],
             'tasks.*.is_required' => ['boolean'],
             'tasks.*.icon' => ['nullable', 'string', 'max:10'],
             'tasks.*.color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
+
+        // Regras de visibilidade:
+        // - private: team_id deve ser null
+        // - global: team_id deve ser null
+        // - team: team_id obrigatório e o usuário precisa pertencer ao time
+        if (in_array($validated['visibility'], [Challenge::VISIBILITY_PRIVATE, Challenge::VISIBILITY_GLOBAL], true)) {
+            $validated['team_id'] = null;
+        }
+
+        if ($validated['visibility'] === Challenge::VISIBILITY_TEAM) {
+            $teamId = (int) ($validated['team_id'] ?? 0);
+            if ($teamId <= 0) {
+                return redirect()->back()
+                    ->withErrors(['team_id' => 'Selecione um time para compartilhar este desafio.'])
+                    ->withInput();
+            }
+
+            $team = Team::query()->find($teamId);
+            if (! $team || ! $user->belongsToTeam($team)) {
+                return redirect()->back()
+                    ->withErrors(['team_id' => 'Você não tem acesso a este time.'])
+                    ->withInput();
+            }
+
+            $validated['team_id'] = $teamId;
+        }
         
         // Validação customizada: verificar hashtags duplicadas dentro do array
         $hashtags = array_map(function ($task) {
@@ -450,6 +575,34 @@ class ChallengeController extends Controller
                 ->withErrors(['tasks' => 'Hashtags duplicadas não são permitidas: ' . implode(', ', array_unique($duplicates))])
                 ->withInput();
         }
+
+        // Unicidade por escopo:
+        // - global => scope_team_id = 0
+        // - team => scope_team_id = team_id
+        // - private => scope_team_id = 1e12 + challenge_id (definido após criar o challenge)
+        $scopeTeamId = 0;
+        if (($validated['visibility'] ?? null) === Challenge::VISIBILITY_TEAM) {
+            $scopeTeamId = (int) ($validated['team_id'] ?? 0);
+        }
+
+        if (($validated['visibility'] ?? null) !== Challenge::VISIBILITY_PRIVATE) {
+            $existing = DB::table('challenge_tasks')
+                ->where('scope_team_id', $scopeTeamId)
+                ->whereIn('hashtag', $hashtags)
+                ->pluck('hashtag')
+                ->map(fn ($h) => "#{$h}")
+                ->unique()
+                ->values()
+                ->all();
+
+            if (! empty($existing)) {
+                return redirect()->back()
+                    ->withErrors([
+                        'tasks' => 'Algumas hashtags já existem neste escopo (global/time): ' . implode(', ', $existing),
+                    ])
+                    ->withInput();
+            }
+        }
         
         // Create challenge
         $challenge = Challenge::create([
@@ -458,15 +611,25 @@ class ChallengeController extends Controller
             'duration_days' => $validated['duration_days'],
             'category' => $validated['category'],
             'difficulty' => $validated['difficulty'],
-            'is_public' => $validated['is_public'] ?? true,
+            // Legado (compat):
+            'is_public' => $validated['visibility'] !== Challenge::VISIBILITY_PRIVATE,
+            'visibility' => $validated['visibility'],
+            'team_id' => $validated['team_id'] ?? null,
             'participant_count' => 1,
             'created_by' => $user->id,
         ]);
+
+        $taskScopeTeamId = match ($challenge->visibility) {
+            Challenge::VISIBILITY_TEAM => (int) ($challenge->team_id ?? 0),
+            Challenge::VISIBILITY_PRIVATE => Challenge::PRIVATE_HASHTAG_SCOPE_OFFSET + (int) $challenge->id,
+            default => 0,
+        };
         
         // Create tasks
         foreach ($validated['tasks'] as $index => $taskData) {
             $challenge->tasks()->create([
                 'name' => $taskData['name'],
+                'scope_team_id' => $taskScopeTeamId,
                 'hashtag' => strtolower($taskData['hashtag']),
                 'description' => $taskData['description'] ?? null,
                 'is_required' => $taskData['is_required'] ?? true,
@@ -480,6 +643,7 @@ class ChallengeController extends Controller
         $userChallenge = UserChallenge::create([
             'user_id' => $user->id,
             'challenge_id' => $challenge->id,
+            'team_id' => $challenge->team_id,
             'status' => 'active',
             'started_at' => now(),
         ]);
@@ -491,6 +655,188 @@ class ChallengeController extends Controller
         return redirect()->route('challenges.show', $challenge)
             ->with('success', 'Desafio criado com sucesso! Você já está participando.');
     }
+
+    /**
+     * Update existing challenge
+     */
+    public function update(Request $request, Challenge $challenge): RedirectResponse
+    {
+        $user = $request->user();
+        $this->ensureChallengeEditableByUser($user, $challenge);
+
+        $challenge->load(['tasks']);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:1000'],
+            'duration_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'category' => ['required', 'string', 'max:50'],
+            'difficulty' => ['required', 'string', Rule::in(['beginner', 'intermediate', 'advanced'])],
+            'visibility' => ['required', 'string', Rule::in([
+                Challenge::VISIBILITY_PRIVATE,
+                Challenge::VISIBILITY_TEAM,
+                Challenge::VISIBILITY_GLOBAL,
+            ])],
+            'team_id' => ['nullable', 'integer'],
+            'tasks' => ['required', 'array', 'min:1', 'max:10'],
+            'tasks.*.id' => ['nullable', 'integer'],
+            'tasks.*.name' => ['required', 'string', 'max:255'],
+            'tasks.*.hashtag' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_]+$/'],
+            'tasks.*.description' => ['nullable', 'string', 'max:500'],
+            'tasks.*.is_required' => ['boolean'],
+            'tasks.*.icon' => ['nullable', 'string', 'max:10'],
+            'tasks.*.color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ]);
+
+        // Regras de visibilidade:
+        // - private/global: team_id null
+        // - team: team_id obrigatório e usuário precisa pertencer ao time
+        if (in_array($validated['visibility'], [Challenge::VISIBILITY_PRIVATE, Challenge::VISIBILITY_GLOBAL], true)) {
+            $validated['team_id'] = null;
+        }
+
+        if ($validated['visibility'] === Challenge::VISIBILITY_TEAM) {
+            $teamId = (int) ($validated['team_id'] ?? 0);
+            if ($teamId <= 0) {
+                return redirect()->back()
+                    ->withErrors(['team_id' => 'Selecione um time para compartilhar este desafio.'])
+                    ->withInput();
+            }
+
+            $team = Team::query()->find($teamId);
+            if (! $team || ! $user->belongsToTeam($team)) {
+                return redirect()->back()
+                    ->withErrors(['team_id' => 'Você não tem acesso a este time.'])
+                    ->withInput();
+            }
+
+            $validated['team_id'] = $teamId;
+        }
+
+        // Validação customizada: hashtags duplicadas dentro do array
+        $hashtags = array_map(function ($task) {
+            return strtolower((string) ($task['hashtag'] ?? ''));
+        }, $validated['tasks']);
+
+        $duplicates = array_diff_assoc($hashtags, array_unique($hashtags));
+        if (! empty($duplicates)) {
+            return redirect()->back()
+                ->withErrors(['tasks' => 'Hashtags duplicadas não são permitidas: ' . implode(', ', array_unique($duplicates))])
+                ->withInput();
+        }
+
+        // Evita hijack: ids enviados precisam pertencer ao desafio
+        $existingTaskIds = $challenge->tasks->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $incomingTaskIds = array_values(array_filter(array_map(
+            fn ($t) => isset($t['id']) ? (int) $t['id'] : null,
+            $validated['tasks']
+        )));
+
+        foreach ($incomingTaskIds as $incomingId) {
+            if (! in_array($incomingId, $existingTaskIds, true)) {
+                return redirect()->back()
+                    ->withErrors(['tasks' => 'Task inválida para este desafio.'])
+                    ->withInput();
+            }
+        }
+
+        // Regra de remoção: só permite remover task se não existir check-in e não houver outros participantes.
+        $removedIds = array_values(array_diff($existingTaskIds, $incomingTaskIds));
+        if (! empty($removedIds)) {
+            $hasOtherParticipants = UserChallenge::query()
+                ->where('challenge_id', $challenge->id)
+                ->where('user_id', '!=', $user->id)
+                ->exists();
+            $hasCheckins = Checkin::query()->whereIn('task_id', $removedIds)->exists();
+
+            if ($hasOtherParticipants || $hasCheckins) {
+                return redirect()->back()
+                    ->withErrors(['tasks' => 'Este desafio já tem participação/check-ins. Não é possível remover tasks existentes.'])
+                    ->withInput();
+            }
+        }
+
+        // Calcula o scope_team_id alvo com base na nova visibilidade
+        $taskScopeTeamId = match ($validated['visibility']) {
+            Challenge::VISIBILITY_TEAM => (int) ($validated['team_id'] ?? 0),
+            Challenge::VISIBILITY_PRIVATE => Challenge::PRIVATE_HASHTAG_SCOPE_OFFSET + (int) $challenge->id,
+            default => 0,
+        };
+
+        // Unicidade por escopo (global/time): checa conflitos fora deste desafio
+        if ($validated['visibility'] !== Challenge::VISIBILITY_PRIVATE) {
+            $conflicts = DB::table('challenge_tasks')
+                ->where('scope_team_id', $taskScopeTeamId)
+                ->whereIn('hashtag', $hashtags)
+                ->whereNotIn('id', $existingTaskIds)
+                ->pluck('hashtag')
+                ->map(fn ($h) => "#{$h}")
+                ->unique()
+                ->values()
+                ->all();
+
+            if (! empty($conflicts)) {
+                return redirect()->back()
+                    ->withErrors([
+                        'tasks' => 'Algumas hashtags já existem neste escopo (global/time): ' . implode(', ', $conflicts),
+                    ])
+                    ->withInput();
+            }
+        }
+
+        DB::transaction(function () use ($challenge, $validated, $existingTaskIds, $incomingTaskIds, $removedIds, $taskScopeTeamId): void {
+            // Atualiza challenge
+            $challenge->forceFill([
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'duration_days' => $validated['duration_days'],
+                'category' => $validated['category'],
+                'difficulty' => $validated['difficulty'],
+                // Legado (compat):
+                'is_public' => $validated['visibility'] !== Challenge::VISIBILITY_PRIVATE,
+                'visibility' => $validated['visibility'],
+                'team_id' => $validated['team_id'] ?? null,
+            ])->save();
+
+            // Remove tasks (se permitido)
+            if (! empty($removedIds)) {
+                ChallengeTask::query()->whereIn('id', $removedIds)->delete();
+            }
+
+            $existingById = ChallengeTask::query()
+                ->whereIn('id', $existingTaskIds)
+                ->get()
+                ->keyBy('id');
+
+            foreach ($validated['tasks'] as $index => $taskData) {
+                $taskId = isset($taskData['id']) ? (int) $taskData['id'] : null;
+
+                $payload = [
+                    'name' => $taskData['name'],
+                    'scope_team_id' => $taskScopeTeamId,
+                    'hashtag' => strtolower((string) $taskData['hashtag']),
+                    'description' => $taskData['description'] ?? null,
+                    'is_required' => $taskData['is_required'] ?? true,
+                    'icon' => $taskData['icon'] ?? '✅',
+                    'color' => $taskData['color'] ?? '#3B82F6',
+                    'order' => $index + 1,
+                ];
+
+                if ($taskId && $existingById->has($taskId)) {
+                    /** @var ChallengeTask $task */
+                    $task = $existingById->get($taskId);
+                    $task->forceFill($payload)->save();
+                } else {
+                    $challenge->tasks()->create($payload);
+                }
+            }
+        });
+
+        CacheHelper::invalidateChallengeCache($challenge->id);
+
+        return redirect()->route('challenges.show', $challenge)
+            ->with('success', 'Desafio atualizado com sucesso!');
+    }
     
     /**
      * Join a challenge
@@ -498,6 +844,8 @@ class ChallengeController extends Controller
     public function join(Request $request, Challenge $challenge): RedirectResponse
     {
         $user = $request->user();
+
+        $this->ensureChallengeVisibleToUser($user, $challenge);
         
         // Check if user can join
         if (!$user->canCreateChallenge()) {
@@ -541,6 +889,7 @@ class ChallengeController extends Controller
             UserChallenge::create([
                 'user_id' => $user->id,
                 'challenge_id' => $challenge->id,
+                'team_id' => $challenge->team_id,
                 'status' => 'active',
                 'started_at' => now(),
             ]);
@@ -593,7 +942,8 @@ class ChallengeController extends Controller
         $user = $request->user();
         
         $recommended = Cache::remember("recommended_challenges_user_{$user->id}", 1800, function () use ($user) {
-            return Challenge::public()
+            return Challenge::query()
+                ->where('visibility', Challenge::VISIBILITY_GLOBAL)
                 ->where('is_featured', true)
                 ->withCount('userChallenges')
                 ->orderBy('participant_count', 'desc')
@@ -626,9 +976,14 @@ class ChallengeController extends Controller
      */
     public function stats(Request $request, Challenge $challenge): JsonResponse
     {
-        // Verificar se é público ou se o usuário está participando
-        if (!$challenge->is_public && !$challenge->isUserParticipating($request->user())) {
-            return response()->json(['message' => 'Desafio não encontrado'], 404);
+        $user = $request->user();
+        // Verificar visibilidade (global/team/private) OU permitir se o usuário participa.
+        try {
+            $this->ensureChallengeVisibleToUser($user, $challenge);
+        } catch (\Throwable) {
+            if (! $user || ! $challenge->isUserParticipating($user)) {
+                return response()->json(['message' => 'Desafio não encontrado'], 404);
+            }
         }
         
         $stats = Cache::remember("challenge_stats_{$challenge->id}", 900, function () use ($challenge) {

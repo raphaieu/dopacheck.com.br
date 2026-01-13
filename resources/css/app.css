@@ -205,3 +205,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile bottom nav (usado pelo DopaHeader) */
+.dopa-bottom-nav {
+  padding-bottom: 72px;
+}

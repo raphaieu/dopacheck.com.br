@@ -21,7 +21,7 @@ final class WelcomeController extends Controller
         $stats = Cache::remember('welcome_stats', 300, function () {
             $totalCheckins = Checkin::whereNull('deleted_at')->count();
             $totalUsers = User::whereNotNull('email_verified_at')->count();
-            $totalChallenges = Challenge::where('is_public', true)->count();
+                $totalChallenges = Challenge::where('visibility', Challenge::VISIBILITY_GLOBAL)->count();
             
             // Calcular taxa de conclusão média
             $completedChallenges = UserChallenge::where('status', 'completed')->count();

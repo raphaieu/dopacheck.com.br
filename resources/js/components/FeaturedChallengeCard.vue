@@ -8,10 +8,18 @@
                 ⭐ Destaque
             </span>
 
-            <!-- Private Badge -->
-            <span v-if="!challenge.is_public"
-                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white shadow-md">
-                🔒 Privado
+            <!-- Visibility Badge -->
+            <span
+              v-if="challenge.visibility === 'private'"
+              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-600 text-white shadow-md"
+            >
+              🔒 Privado
+            </span>
+            <span
+              v-else-if="challenge.visibility === 'team'"
+              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-600 text-white shadow-md"
+            >
+              👥 {{ challenge.team?.name || 'Time' }}
             </span>
         </div>
 

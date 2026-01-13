@@ -26,10 +26,18 @@
 
         <!-- Challenge Meta -->
         <div class="flex flex-wrap gap-2 mb-4">
-            <!-- Private Indicator -->
-            <span v-if="!challenge.is_public" 
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                🔒 Privado
+            <!-- Visibility Indicator -->
+            <span
+              v-if="challenge.visibility === 'private'"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+            >
+              🔒 Privado
+            </span>
+            <span
+              v-else-if="challenge.visibility === 'team'"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+            >
+              👥 {{ challenge.team?.name || 'Time' }}
             </span>
 
             <!-- Category -->

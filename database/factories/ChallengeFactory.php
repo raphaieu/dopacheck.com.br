@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\Challenge;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,15 +21,20 @@ final class ChallengeFactory extends Factory
     {
         $categories = ['fitness', 'mindfulness', 'learning', 'productivity', 'lifestyle', 'health'];
         $difficulties = ['beginner', 'intermediate', 'advanced'];
+
+        $visibility = fake()->boolean(80) ? Challenge::VISIBILITY_GLOBAL : Challenge::VISIBILITY_PRIVATE;
         
         return [
             'title' => fake()->sentence(3),
             'description' => fake()->paragraph(2),
             'duration_days' => fake()->randomElement([7, 14, 21, 30]),
             'is_template' => false,
-            'is_public' => fake()->boolean(80),
+            // Legado: mantemos consistente com visibility
+            'is_public' => $visibility !== Challenge::VISIBILITY_PRIVATE,
+            'visibility' => $visibility,
             'is_featured' => fake()->boolean(20),
             'created_by' => User::factory(),
+            'team_id' => null,
             'participant_count' => fake()->numberBetween(0, 500),
             'category' => fake()->randomElement($categories),
             'difficulty' => fake()->randomElement($difficulties),
@@ -45,7 +51,9 @@ final class ChallengeFactory extends Factory
         return $this->state([
             'is_template' => true,
             'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
             'created_by' => null,
+            'team_id' => null,
         ]);
     }
 
@@ -57,6 +65,7 @@ final class ChallengeFactory extends Factory
         return $this->state([
             'is_featured' => true,
             'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
             'participant_count' => fake()->numberBetween(100, 1000),
         ]);
     }
@@ -68,7 +77,21 @@ final class ChallengeFactory extends Factory
     {
         return $this->state([
             'is_public' => false,
+            'visibility' => Challenge::VISIBILITY_PRIVATE,
+            'team_id' => null,
             'is_featured' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the challenge is shared with a team.
+     */
+    public function team(): self
+    {
+        return $this->state([
+            'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_TEAM,
+            'team_id' => Team::factory()->state(['personal_team' => false]),
         ]);
     }
 

@@ -3,7 +3,7 @@
 ## 🎯 **Status Atual - Beta Funcional**
 
 **Versão**: 1.0-beta  
-**Última Atualização**: 09/01/2026  
+**Última Atualização**: 13/01/2026  
 **Status**: ✅ **Core Web Funcional** (MVP **sem WhatsApp**) + ✅ **Google OAuth** + ✅ **Assinatura PRO (Stripe + Cashier)**
 
 ---
@@ -12,6 +12,15 @@
 
 - **Infra “core web” padronizada**: ambiente oficial com **MySQL + Redis** (WhatsApp isolado/adiado no MVP).
 - **Onboarding de Teams (WhatsApp)**: inscrição pública via **`/join/{team:slug}`**, aprovação por **owner/admin** e **claim automático** no login (sem criar usuário).
+- **Painel Admin (Filament)**: acesso em **`/admin`** (controle via `User::canAccessPanel()` e roles/permissões de team).
+- **Teams**:
+  - **Jetstream** para gestão de times e membros.
+  - **Inscrições do time**: listagem/aprovação em **`/teams/{team}/applications`**.
+- **UX**:
+  - Alertas do onboarding (`/join`) com estados visuais consistentes: **success (verde)**, **warning (amarelo)** e **error (vermelho)**.
+  - Botão de login do Google com visual mais “Google-like” e maior contraste.
+- **Conta / Perfil**:
+  - Ao autenticar (cadastro/login social), se o e-mail existir em `team_applications`, o sistema **vincula o usuário ao time**, copia **telefone/WhatsApp** e gera um `username` (slug) único.
 - **Home pós-login**: destino padrão após autenticação é **`/dopa`** (Fortify). A rota **`/dashboard`** existe por compatibilidade e **redireciona para `/dopa`**.
 - **Páginas legais**: **Termos de Uso** e **Política de Privacidade** revisados em **pt-BR** e alinhados à marca **DOPA Check**.
 - **SEO/Brand**: defaults globais de SEO (título, description, keywords, Open Graph e Twitter) padronizados para **DOPA Check** e `og.webp` em `public/images/og.webp`.
@@ -106,15 +115,19 @@ team_applications (
 challenges (
     id, title, description, duration_days,
     is_template BOOLEAN, is_public BOOLEAN, is_featured BOOLEAN,
+    visibility ENUM('private','team','global') NOT NULL DEFAULT 'global',
     created_by, team_id NULL, participant_count, category, difficulty,
     created_at, updated_at
 )
 
 -- Tasks do Desafio  
 challenge_tasks (
-    id, challenge_id, name, hashtag UNIQUE,
+    id, challenge_id, name,
+    hashtag,
+    scope_team_id BIGINT NOT NULL DEFAULT 0,
     description, order, is_required BOOLEAN,
     icon, color, created_at, updated_at
+    -- UNIQUE(scope_team_id, hashtag)
 )
 
 -- Participação do Usuário
@@ -145,6 +158,65 @@ whatsapp_sessions (
     created_at, updated_at
 )
 ```
+
+### 🧭 **Visibilidade de desafios (implementado)**
+
+> **Motivação**: com a chegada de **Teams** e do onboarding público (`/join/{team:slug}`), o antigo `is_public` ficou ambíguo (misturava “privado só para mim” vs “compartilhável” vs “global”).  
+> Agora o sistema usa um campo explícito **`visibility`** para definir o escopo do desafio.
+
+**Modelo:**
+
+- **`visibility = 'private'`**: só o criador vê/participa.
+- **`visibility = 'global'`**: visível para qualquer usuário da plataforma (e participável).
+- **`visibility = 'team'`**: visível/participável apenas para membros de um `team_id` específico (**`team_id` obrigatório**).
+
+**Schema (atual):**
+
+```sql
+challenges (
+  ...,
+  visibility ENUM('private','team','global') NOT NULL DEFAULT 'global',
+  team_id BIGINT NULL REFERENCES teams(id),
+  -- OBS: is_public segue existindo por compatibilidade legada (não é mais a fonte de verdade)
+)
+```
+
+**UX em `/challenges/create`:**
+
+- Checkbox “Compartilhar” (ou similar) controla se deixa de ser `private`.
+- Select “Onde compartilhar”:
+  - **Global** → `visibility = global` e `team_id = NULL`
+  - **Um dos meus times** → `visibility = team` e `team_id = <id>`
+
+**Regras de listagem:**
+
+- **Guest**: apenas `visibility = global`.
+- **Logado**:
+  - sempre enxerga seus `private` (`created_by = user`)
+  - enxerga `global`
+  - enxerga `team` apenas se pertence ao time do desafio
+
+### 🏷️ **Hashtags por escopo (implementado)**
+
+Como a `#hashtag` identifica uma task (inclusive para uso via WhatsApp), a unicidade deixou de ser “global no sistema” e passou a ser **por escopo** via `challenge_tasks.scope_team_id`:
+
+- **Global**: `scope_team_id = 0`
+- **Team**: `scope_team_id = <team_id>`
+- **Private**: `scope_team_id = 1e12 + <challenge_id>` (um “namespace” por desafio privado)
+
+**Constraint no banco:**
+
+- `UNIQUE(scope_team_id, hashtag)`
+
+Isso permite reutilizar a mesma hashtag em desafios de **times diferentes**, mantendo unicidade dentro do mesmo escopo.
+
+### ✏️ **Edição de desafios (implementado)**
+
+- **Apenas o autor** pode editar um desafio (e desafios template não são editáveis).
+- **Rotas**:
+  - `GET /challenges/{id}/edit` → abre a mesma tela de criação preenchida
+  - `PUT /challenges/{id}` → salva as alterações
+- **Regra de segurança**: se já houver participação/check-ins de terceiros, o sistema bloqueia **remoção de tasks existentes** para não quebrar histórico.
 
 ### **Relacionamentos Principais**
 ```php
@@ -222,6 +294,13 @@ POST /join/{team:slug}       # Cria TeamApplication (pending)
 ```php
 GET   /teams/{team}/applications                 # Lista inscrições (filtro por status via query)
 PATCH /teams/{team}/applications/{application}   # Aprovar/rejeitar (action=approve|reject)
+```
+
+#### **Admin (Filament)** - Painel administrativo
+```php
+GET  /admin              # Dashboard admin
+GET  /admin/login        # Login (Livewire)
+POST /admin/logout       # Logout
 ```
 
 ---

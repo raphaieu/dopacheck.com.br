@@ -144,6 +144,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         // Authenticated challenge routes
         Route::get('/create', [ChallengeController::class, 'create'])->name('create');
         Route::post('/', [ChallengeController::class, 'store'])->name('store');
+        Route::get('/{challenge}/edit', [ChallengeController::class, 'edit'])
+            ->where('challenge', '[0-9]+')
+            ->name('edit');
+        Route::put('/{challenge}', [ChallengeController::class, 'update'])
+            ->where('challenge', '[0-9]+')
+            ->name('update');
         Route::post('/{challenge}/join', [ChallengeController::class, 'join'])->name('join');
         Route::post('/{challenge}/leave', [ChallengeController::class, 'leave'])->name('leave');
     });

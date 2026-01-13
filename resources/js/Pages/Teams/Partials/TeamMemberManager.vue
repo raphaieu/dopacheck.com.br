@@ -111,7 +111,8 @@ function removeTeamMember() {
 }
 
 function displayableRole(role) {
-  return props.availableRoles.find(r => r.key === role).name
+  const found = props.availableRoles?.find(r => r.key === role)
+  return found?.name ?? role ?? '—'
 }
 </script>
 

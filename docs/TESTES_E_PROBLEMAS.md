@@ -77,9 +77,24 @@ Este documento lista os problemas identificados durante a análise completa do s
 
 ---
 
+### 6. **Filament Admin: login falha com MethodNotAllowed (POST /admin/login)**
+**Sintoma**:
+- Erro: `MethodNotAllowedHttpException` dizendo que `POST /admin/login` não é suportado (apenas `GET|HEAD`).
+
+**Causa raiz (infra / Nginx)**:
+- O login do Filament é **Livewire**. A página `GET /admin/login` renderiza um `<form method="post" wire:submit="authenticate">`.
+- Se o **JS do Livewire não carregar/executar**, o navegador faz fallback e envia `POST` para a própria URL (`/admin/login`).
+- Em alguns setups de Nginx (ex.: regra genérica `location ~ .*\.(js|css)?$ { ... }`), URLs como `/livewire/livewire.js` são tratadas como “arquivo estático” e não passam pelo `index.php`, quebrando o Livewire.
+
+**Correção**:
+- Ajustar Nginx para que `/livewire/*` caia no Laravel (ou usar `try_files` em `.js/.css`), por exemplo:
+  - `location ^~ /livewire/ { try_files $uri $uri/ /index.php?$query_string; }`
+
+---
+
 ## ⚠️ Problemas de Média Prioridade
 
-### 6. **Cálculo de streak pode ser ineficiente**
+### 7. **Cálculo de streak pode ser ineficiente**
 **Localização**: `app/Models/UserChallenge.php:297`
 **Problema**: O método `calculateCurrentStreak()` itera dia por dia, o que pode ser lento para desafios longos.
 
@@ -91,7 +106,7 @@ Este documento lista os problemas identificados durante a análise completa do s
 
 ---
 
-### 7. **Falta validação de limite de planos em múltiplos lugares**
+### 8. **Falta validação de limite de planos em múltiplos lugares**
 **Localização**: Vários controllers
 **Problema**: A validação `canCreateChallenge()` é feita apenas em alguns lugares, mas não em todos os pontos onde um desafio pode ser criado.
 
@@ -103,7 +118,7 @@ Este documento lista os problemas identificados durante a análise completa do s
 
 ---
 
-### 8. **Check-ins de desafios pausados podem ser criados**
+### 9. **Check-ins de desafios pausados podem ser criados**
 **Localização**: `app/Http/Controllers/CheckinController.php:98`
 **Problema**: A validação verifica apenas `status = 'active'`, mas não verifica se o desafio está pausado.
 

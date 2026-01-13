@@ -40,7 +40,7 @@ describe('login link model tests', function (): void {
             'user_id' => $user->id,
         ]);
 
-        $user->delete();
+        $user->forceDelete();
         expect(LoginLink::query()->find($loginLink->id))->toBeNull();
     });
 });

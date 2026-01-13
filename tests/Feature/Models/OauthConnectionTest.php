@@ -64,7 +64,7 @@ describe('oauth connection model tests', function (): void {
             'user_id' => $user->id,
         ]);
 
-        $user->delete();
+        $user->forceDelete();
         expect(OauthConnection::query()->find($connection->id))->toBeNull();
     });
 });

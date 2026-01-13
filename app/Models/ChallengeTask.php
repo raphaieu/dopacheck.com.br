@@ -18,6 +18,7 @@ class ChallengeTask extends Model
      */
     protected $fillable = [
         'challenge_id',
+        'scope_team_id',
         'name',
         'hashtag',
         'description',

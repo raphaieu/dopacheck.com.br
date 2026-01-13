@@ -112,7 +112,7 @@ test('admin can delete user', function (): void {
     $response = $this->deleteJson("/api/user/{$this->writer->id}");
 
     $response->assertNoContent();
-    $this->assertDatabaseMissing('users', ['id' => $this->writer->id]);
+    $this->assertSoftDeleted('users', ['id' => $this->writer->id]);
 });
 
 test('users can view their own profile', function (): void {

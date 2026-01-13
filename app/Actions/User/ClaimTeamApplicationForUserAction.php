@@ -72,7 +72,10 @@ final readonly class ClaimTeamApplicationForUserAction
 
     private function ensureUsername(User $user, ?string $fallbackName = null): void
     {
-        if (is_string($user->username) && trim($user->username) !== '') {
+        $attributes = $user->getAttributes();
+        $currentUsername = $attributes['username'] ?? null;
+
+        if (is_string($currentUsername) && trim($currentUsername) !== '') {
             return;
         }
 

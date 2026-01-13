@@ -24,7 +24,7 @@ class ChallengeParticipationTest extends TestCase
         
         // Criar desafio
         $challenge = Challenge::factory()->create([
-            'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
             'is_featured' => false,
         ]);
         
@@ -58,7 +58,7 @@ class ChallengeParticipationTest extends TestCase
         
         // Criar desafio
         $challenge = Challenge::factory()->create([
-            'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
             'is_featured' => false,
         ]);
         
@@ -85,7 +85,7 @@ class ChallengeParticipationTest extends TestCase
         
         // Criar desafio em destaque
         $featuredChallenge = Challenge::factory()->create([
-            'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
             'is_featured' => true,
         ]);
         
@@ -113,7 +113,7 @@ class ChallengeParticipationTest extends TestCase
     {
         // Criar desafio
         $challenge = Challenge::factory()->create([
-            'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
             'is_featured' => false,
         ]);
         

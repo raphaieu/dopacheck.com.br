@@ -76,7 +76,7 @@ color VARCHAR(7) DEFAULT '#3B82F6' -- Hex color
 validation_rules JSON              -- Regras para IA
 
 -- Constraints únicos e índices
-UNIQUE(hashtag), UNIQUE(challenge_id, hashtag)
+UNIQUE(scope_team_id, hashtag)  -- unicidade por escopo (global/time/private)
 INDEX(challenge_id, order), INDEX(hashtag)
 ```
 

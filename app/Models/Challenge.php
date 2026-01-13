@@ -13,6 +13,11 @@ class Challenge extends Model
 {
     use HasFactory;
 
+    public const VISIBILITY_PRIVATE = 'private';
+    public const VISIBILITY_TEAM = 'team';
+    public const VISIBILITY_GLOBAL = 'global';
+    public const PRIVATE_HASHTAG_SCOPE_OFFSET = 1000000000000;
+
     /**
      * The attributes that are mass assignable.
      */
@@ -21,9 +26,11 @@ class Challenge extends Model
         'description',
         'duration_days',
         'is_template',
-        'is_public',
+        'is_public', // legado: será substituído por visibility
+        'visibility',
         'is_featured',
         'created_by',
+        'team_id',
         'participant_count',
         'category',
         'difficulty',
@@ -50,6 +57,14 @@ class Challenge extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the team this challenge belongs to (quando visibility = team)
+     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
     }
 
     /**
@@ -127,11 +142,27 @@ class Challenge extends Model
     }
 
     /**
-     * Scope for public challenges
+     * Scope for global challenges (visíveis para todos)
      */
     public function scopePublic($query)
     {
-        return $query->where('is_public', true);
+        return $query->where('visibility', self::VISIBILITY_GLOBAL);
+    }
+
+    /**
+     * Scope for team challenges (visíveis para membros do time)
+     */
+    public function scopeTeam($query)
+    {
+        return $query->where('visibility', self::VISIBILITY_TEAM);
+    }
+
+    /**
+     * Scope for private challenges (apenas o criador)
+     */
+    public function scopePrivate($query)
+    {
+        return $query->where('visibility', self::VISIBILITY_PRIVATE);
     }
 
     /**
@@ -147,7 +178,8 @@ class Challenge extends Model
      */
     public function scopeFeatured($query)
     {
-        return $query->where('is_featured', true)->where('is_public', true);
+        // Featured aparece para qualquer usuário => somente global.
+        return $query->where('is_featured', true)->where('visibility', self::VISIBILITY_GLOBAL);
     }
 
     /**

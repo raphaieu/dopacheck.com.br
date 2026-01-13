@@ -16,9 +16,9 @@ class ChallengeParticipantsTest extends TestCase
 
     public function test_can_view_challenge_participants_page(): void
     {
-        // Criar desafio público
+        // Criar desafio global
         $challenge = Challenge::factory()->create([
-            'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
         ]);
         
         // Fazer requisição para a página de participantes
@@ -37,7 +37,7 @@ class ChallengeParticipantsTest extends TestCase
     {
         // Criar desafio privado
         $challenge = Challenge::factory()->create([
-            'is_public' => false,
+            'visibility' => Challenge::VISIBILITY_PRIVATE,
         ]);
         
         // Tentar acessar sem autenticação
@@ -48,6 +48,7 @@ class ChallengeParticipantsTest extends TestCase
     
     public function test_private_challenge_participants_allowed_for_participant(): void
     {
+        // Em "private", apenas o criador pode ver/participar.
         // Criar usuário com todos os campos necessários
         $user = User::factory()->create([
             'plan' => 'free',
@@ -57,14 +58,8 @@ class ChallengeParticipantsTest extends TestCase
         
         // Criar desafio privado
         $challenge = Challenge::factory()->create([
-            'is_public' => false,
-        ]);
-        
-        // Usuário participa do desafio
-        UserChallenge::factory()->create([
-            'user_id' => $user->id,
-            'challenge_id' => $challenge->id,
-            'status' => 'active',
+            'visibility' => Challenge::VISIBILITY_PRIVATE,
+            'created_by' => $user->id,
         ]);
         
         // Fazer requisição autenticada
@@ -77,7 +72,7 @@ class ChallengeParticipantsTest extends TestCase
     {
         // Criar desafio
         $challenge = Challenge::factory()->create([
-            'is_public' => true,
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
         ]);
         
         // Criar usuários com campos necessários

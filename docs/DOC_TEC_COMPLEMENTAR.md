@@ -23,14 +23,18 @@ users (
 -- Desafios Templates/Criados
 challenges (
     id, title, description, duration_days, 
-    is_template, is_public, created_by, 
+    is_template, is_public, visibility ENUM('private','team','global'),
+    team_id NULL,
+    created_by,
     participant_count, created_at, updated_at
 )
 
 -- Tasks do Desafio
 challenge_tasks (
     id, challenge_id, name, hashtag, 
-    description, order, created_at, updated_at
+    scope_team_id BIGINT NOT NULL DEFAULT 0,
+    description, order, created_at, updated_at,
+    UNIQUE(scope_team_id, hashtag)
 )
 
 -- Participação do Usuário
@@ -53,6 +57,36 @@ whatsapp_sessions (
     is_active, last_activity, created_at, updated_at
 )
 ```
+
+### 🧭 **Visibilidade de desafios (implementado)**
+
+> Para suportar desafios **privados**, **globais** e **do time**, o sistema usa um campo explícito `visibility` (e mantém `is_public` apenas por compatibilidade legada).
+
+**Modelo proposto:**
+
+- `visibility = private` → só o criador vê/participa
+- `visibility = global` → qualquer usuário vê/participa (`team_id = NULL`)
+- `visibility = team` → apenas membros do time vêem/participam (`team_id` obrigatório)
+
+```sql
+-- challenges (atual)
+challenges (
+  ...,
+  visibility ENUM('private','team','global') NOT NULL DEFAULT 'global',
+  team_id BIGINT NULL REFERENCES teams(id)
+)
+```
+
+### 🏷️ **Hashtags por escopo (implementado)**
+
+- `challenge_tasks.scope_team_id` define o escopo de unicidade da hashtag.
+- Índice/constraint: `UNIQUE(scope_team_id, hashtag)`.
+
+Regras de `scope_team_id`:
+
+- Global: `0`
+- Team: `<team_id>`
+- Private: `1e12 + <challenge_id>`
 
 #### **Relacionamentos**
 - **User** hasMany **UserChallenges**
