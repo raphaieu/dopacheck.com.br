@@ -545,7 +545,7 @@ Challenge::public()->featured()->popular(10)
 ### **Sistema de Check-ins:**
 - Um check-in por task por dia (constraint)
 - Soft delete para TTL de imagens (free users)
-- Campo/estrutura para validações/IA (PRO) — feature PRO ainda em evolução
+- Campo/estrutura para validações/IA (PRO) - feature PRO ainda em evolução
 - Origem rastreada (web/whatsapp)
 
 ### **Sistema WhatsApp:**
@@ -600,7 +600,7 @@ Challenge::public()->featured()->popular(10)
 - 🤖 **Jobs IA** para análise de imagens (PRO)
 - 📧 **Notificações** e lembretes
 - 📊 **Analytics** e relatórios detalhados
-- 💳 **Sistema de pagamentos** (Stripe/Cashier) — roadmap (não entregue na Sprint 1)
+- 💳 **Sistema de pagamentos** (Stripe/Cashier) - roadmap (não entregue na Sprint 1)
 
 ---
 

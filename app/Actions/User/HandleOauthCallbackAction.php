@@ -34,6 +34,7 @@ final readonly class HandleOauthCallbackAction
         $this->validateAuthenticatedUserConnection($provider, $socialiteUser, $user);
 
         $this->updateUserProfile($user, $socialiteUser, $provider);
+        (new ClaimTeamApplicationForUserAction())->handle($user);
 
         return $user;
     }
@@ -85,6 +86,7 @@ final readonly class HandleOauthCallbackAction
         // Se já existe uma conexão desse provider para esse usuário, apenas atualizamos os dados.
         if ($user->oauthConnections()->where('provider', $provider)->exists()) {
             $this->updateUserProfile($user, $socialiteUser, $provider);
+            (new ClaimTeamApplicationForUserAction())->handle($user);
             return $user;
         }
 
@@ -99,6 +101,7 @@ final readonly class HandleOauthCallbackAction
         throw_if($isProviderAccountAlreadyLinked, OAuthAccountLinkingException::existingConnection());
 
         $this->updateUserProfile($user, $socialiteUser, $provider);
+        (new ClaimTeamApplicationForUserAction())->handle($user);
 
         return $user;
     }
@@ -112,6 +115,7 @@ final readonly class HandleOauthCallbackAction
         ]);
 
         $this->updateUserProfile($user, $socialiteUser, $provider);
+        (new ClaimTeamApplicationForUserAction())->handle($user);
 
         return $user;
     }

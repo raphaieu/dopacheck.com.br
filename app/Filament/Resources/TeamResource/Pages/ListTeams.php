@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\UserResource\Pages;
+namespace App\Filament\Resources\TeamResource\Pages;
 
 use Filament\Actions;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use App\Filament\Resources\UserResource;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\TeamResource;
 
-final class ListUsers extends ListRecords
+final class ListTeams extends ListRecords
 {
-    protected static string $resource = UserResource::class;
+    protected static string $resource = TeamResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -23,8 +23,13 @@ final class ListUsers extends ListRecords
             return [];
         }
 
+        // Teams são criados via Jetstream; aqui só redirecionamos para o fluxo oficial.
         return [
-            Actions\CreateAction::make(),
+            Actions\Action::make('createTeam')
+                ->label('Novo team')
+                ->icon('heroicon-o-plus')
+                ->url(url('/teams/create')),
         ];
     }
 }
+

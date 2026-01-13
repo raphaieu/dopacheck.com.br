@@ -6,7 +6,7 @@
 
 **Transforme seu smartphone em um tracker de hábitos inteligente**
 
-*Plataforma web (mobile-first) para tracking de hábitos e desafios — com integração WhatsApp planejada para depois do core web*
+*Plataforma web (mobile-first) para tracking de hábitos e desafios - com integração WhatsApp planejada para depois do core web*
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel)](https://laravel.com)
@@ -189,7 +189,7 @@ docker compose exec app php artisan migrate --seed
 - **Compatibilidade**: `/dashboard` existe apenas por legado e **redireciona para `/dopa`**
 - **Desafios**: `/challenges`
 - **Perfil público**: `/u/{username}`
-- **Páginas legais**: Termos de Uso e Política de Privacidade (Jetstream) — `route('terms.show')` e `route('policy.show')`
+- **Páginas legais**: Termos de Uso e Política de Privacidade (Jetstream) - `route('terms.show')` e `route('policy.show')`
 
 ### ⚙️ Configuração WhatsApp (Opcional)
 
@@ -244,8 +244,8 @@ Senha: password
 
 ### **Integrações**
 - **OAuth**: Socialite (Google)
-- **Payments**: Stripe (Cashier) — em andamento
-- **WhatsApp**: EvolutionAPI — adiado (infra/estrutura existe, mas sem fluxo end-to-end no MVP)
+- **Payments**: Stripe (Cashier) - em andamento
+- **WhatsApp**: EvolutionAPI - adiado (infra/estrutura existe, mas sem fluxo end-to-end no MVP)
 - **Analytics**: Implementação própria
 
 ---

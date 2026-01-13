@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\User;
+use App\Listeners\ClaimTeamApplicationsOnLogin;
 use Prism\Prism\Prism;
 use Carbon\CarbonImmutable;
 use Knuckles\Scribe\Scribe;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Login;
 use Laravel\Sanctum\Sanctum;
 use Prism\Prism\Enums\Provider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
 use Prism\Prism\Facades\PrismServer;
 use Prism\Prism\Text\PendingRequest;
@@ -59,6 +62,7 @@ final class AppServiceProvider extends ServiceProvider
         $this->configurePrisms();
         $this->configureScribeDocumentation();
         $this->configureRateLimiting();
+        $this->configureAuthEvents();
     }
 
     /**
@@ -168,5 +172,13 @@ final class AppServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('login-link', fn (Request $request) => $request->email ? Limit::perHour(5)->by($request->email) : Limit::perHour(5)->by($request->ip()));
+    }
+
+    /**
+     * Claim automático de TeamApplications aprovadas no login.
+     */
+    private function configureAuthEvents(): void
+    {
+        Event::listen(Login::class, ClaimTeamApplicationsOnLogin::class);
     }
 }

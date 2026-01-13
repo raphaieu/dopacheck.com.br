@@ -6,7 +6,7 @@ Esta Política de Privacidade explica como o **DOPA Check** coleta, usa, compart
 
 ### 1. Quem somos
 
-O **DOPA Check** é uma plataforma de tracking de hábitos, desafios e check-ins. Para fins da **Lei Geral de Proteção de Dados (LGPD — Lei 13.709/2018)**, atuamos como **Controlador** dos dados pessoais tratados no Serviço.
+O **DOPA Check** é uma plataforma de tracking de hábitos, desafios e check-ins. Para fins da **Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018)**, atuamos como **Controlador** dos dados pessoais tratados no Serviço.
 
 ### 2. Quais dados coletamos
 

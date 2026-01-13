@@ -6,6 +6,7 @@ namespace App\Actions\Fortify;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Actions\User\ClaimTeamApplicationForUserAction;
 use Stripe\Customer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -41,6 +42,7 @@ final class CreateNewUser implements CreatesNewUsers
         ]), function (User $user): void {
             $this->createTeam($user);
             $this->createCustomer($user);
+            (new ClaimTeamApplicationForUserAction())->handle($user);
         }));
     }
 
