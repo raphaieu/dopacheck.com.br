@@ -6,6 +6,7 @@ namespace App\Actions\Jetstream;
 
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Laravel\Jetstream\Jetstream;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Jetstream\Events\AddingTeam;
@@ -34,6 +35,22 @@ final class CreateTeam implements CreatesTeams
             'name' => $input['name'],
             'personal_team' => false,
         ]);
+
+        // Slug é nullable e NÃO fazemos backfill automático para teams existentes.
+        // Para novos teams, geramos um slug estável para uso no onboarding público.
+        if (($team->slug ?? null) === null) {
+            $base = Str::slug($team->name);
+            if ($base === '') {
+                $base = 'team';
+            }
+
+            $slug = Team::query()->where('slug', $base)->exists()
+                ? "{$base}-{$team->id}"
+                : $base;
+
+            $team->forceFill(['slug' => $slug])->save();
+        }
+
         $user->switchTeam($team);
 
         return $team;

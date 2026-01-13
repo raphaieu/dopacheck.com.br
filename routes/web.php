@@ -24,6 +24,8 @@ use App\Http\Controllers\WhatsAppController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\OgImageController;
+use App\Http\Controllers\TeamJoinController;
+use App\Http\Controllers\TeamApplicationsController;
 
 // ========================================
 // HEALTH CHECK
@@ -41,6 +43,12 @@ Route::get('/health', function () {
 // PUBLIC ROUTES
 // ========================================
 Route::get('/', [WelcomeController::class, 'home'])->name('home');
+
+// ========================================
+// PUBLIC TEAM ONBOARDING (Join by slug)
+// ========================================
+Route::get('/join/{team:slug}', [TeamJoinController::class, 'show'])->name('teams.join.show');
+Route::post('/join/{team:slug}', [TeamJoinController::class, 'store'])->name('teams.join.store');
 
 // ========================================
 // CSRF / XSRF COOKIE REFRESH (SPA/Inertia)
@@ -187,6 +195,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/challenge/{userChallenge}', [ReportController::class, 'challenge'])->name('challenge');
         Route::get('/export', [ReportController::class, 'export'])->name('export');
+    });
+
+    // ========================================
+    // TEAM APPLICATIONS (onboarding approvals)
+    // ========================================
+    Route::prefix('teams/{team}')->name('teams.')->group(function () {
+        Route::get('/applications', [TeamApplicationsController::class, 'index'])->name('applications.index');
+        Route::patch('/applications/{application}', [TeamApplicationsController::class, 'update'])->name('applications.update');
     });
     
     // ========================================

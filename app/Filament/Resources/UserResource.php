@@ -12,6 +12,8 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\UserResource\Pages;
 
 final class UserResource extends Resource
@@ -23,6 +25,29 @@ final class UserResource extends Resource
     protected static ?string $navigationGroup = 'User Management';
 
     protected static ?int $navigationSort = 1;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = Auth::user();
+
+        return $user instanceof User
+            && mb_strtolower((string) $user->email) === 'rapha@raphael-martins.com';
+    }
+
+    public static function canViewAny(): bool
+    {
+        return self::shouldRegisterNavigation();
+    }
+
+    public static function canCreate(): bool
+    {
+        return self::shouldRegisterNavigation();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return self::shouldRegisterNavigation();
+    }
 
     public static function getNavigationBadge(): string
     {
@@ -110,6 +135,10 @@ final class UserResource extends Resource
                         )),
             ])
             ->actions([
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (): bool => self::shouldRegisterNavigation()),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn (): bool => self::shouldRegisterNavigation()),
             ])
             ->bulkActions([
             ]);

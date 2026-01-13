@@ -11,6 +11,7 @@
 ## 🆕 Atualizações recentes (Jan/2026)
 
 - **Infra “core web” padronizada**: ambiente oficial com **MySQL + Redis** (WhatsApp isolado/adiado no MVP).
+- **Onboarding de Teams (WhatsApp)**: inscrição pública via **`/join/{team:slug}`**, aprovação por **owner/admin** e **claim automático** no login (sem criar usuário).
 - **Home pós-login**: destino padrão após autenticação é **`/dopa`** (Fortify). A rota **`/dashboard`** existe por compatibilidade e **redireciona para `/dopa`**.
 - **Páginas legais**: **Termos de Uso** e **Política de Privacidade** revisados em **pt-BR** e alinhados à marca **DOPA Check**.
 - **SEO/Brand**: defaults globais de SEO (título, description, keywords, Open Graph e Twitter) padronizados para **DOPA Check** e `og.webp` em `public/images/og.webp`.
@@ -79,11 +80,33 @@ users (
     subscription_ends_at, created_at, updated_at
 )
 
+-- Teams (Jetstream)
+teams (
+    id, user_id, name, slug NULL UNIQUE, personal_team,
+    created_at, updated_at
+)
+
+-- Pivot de membros do team (Jetstream)
+team_user (
+    id, team_id, user_id, role NULL,
+    created_at, updated_at
+)
+
+-- Onboarding interno (inscrições por Team)
+team_applications (
+    id, team_id,
+    name, birthdate, email, whatsapp_number, city, neighborhood, circle_url,
+    status ENUM('pending','approved','rejected'),
+    user_id NULL, approved_by NULL, approved_at NULL,
+    meta JSON,
+    created_at, updated_at
+)
+
 -- Desafios
 challenges (
     id, title, description, duration_days,
     is_template BOOLEAN, is_public BOOLEAN, is_featured BOOLEAN,
-    created_by, participant_count, category, difficulty,
+    created_by, team_id NULL, participant_count, category, difficulty,
     created_at, updated_at
 )
 
@@ -96,7 +119,7 @@ challenge_tasks (
 
 -- Participação do Usuário
 user_challenges (
-    id, user_id, challenge_id,
+    id, user_id, challenge_id, team_id NULL,
     status ENUM('active', 'completed', 'paused', 'abandoned'),
     started_at, completed_at, current_day,
     total_checkins, streak_days, completion_rate,
@@ -127,6 +150,9 @@ whatsapp_sessions (
 ```php
 User hasMany UserChallenges
 User hasOne WhatsAppSession
+Team hasMany TeamApplications
+TeamApplication belongsTo Team
+TeamApplication belongsTo User (claim futuro)
 Challenge hasMany ChallengeTasks
 Challenge hasMany UserChallenges  
 UserChallenge hasMany Checkins
@@ -184,6 +210,18 @@ GET  /whatsapp/status        # Status da conexão
 DELETE /whatsapp/disconnect  # Desconectar
 GET  /api/whatsapp-status    # Status (AJAX)
 POST /webhook/whatsapp       # Webhook EvolutionAPI
+```
+
+#### **TeamJoinController** - Onboarding público por Team
+```php
+GET  /join/{team:slug}       # Formulário público (equivalente ao Google Forms)
+POST /join/{team:slug}       # Cria TeamApplication (pending)
+```
+
+#### **TeamApplicationsController** - Painel de aprovação (owner/admin)
+```php
+GET   /teams/{team}/applications                 # Lista inscrições (filtro por status via query)
+PATCH /teams/{team}/applications/{application}   # Aprovar/rejeitar (action=approve|reject)
 ```
 
 ---

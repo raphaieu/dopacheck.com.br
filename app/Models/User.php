@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Filament\Panel;
+use Filament\Models\Contracts\FilamentUser;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Cashier\Billable;
@@ -20,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 {
     use HasApiTokens;
     use HasFactory;
@@ -30,6 +32,8 @@ class User extends Authenticatable implements MustVerifyEmail
     use TwoFactorAuthenticatable;
     use Billable;
     use SoftDeletes;
+
+    private const FILAMENT_SUPERADMIN_EMAIL = 'rapha@raphael-martins.com';
 
     /**
      * The attributes that are mass assignable.
@@ -77,6 +81,35 @@ class User extends Authenticatable implements MustVerifyEmail
             'subscription_ends_at' => 'datetime',
             'preferences' => 'array',
         ];
+    }
+
+    /**
+     * Controle de acesso ao Filament Admin (/admin).
+     * - Superadmin fixo por e-mail
+     * - Owners/admins de teams (apenas teams não-pessoais) também entram
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if ($panel->getId() !== 'admin') {
+            return false;
+        }
+
+        $email = is_string($this->email) ? mb_strtolower(trim($this->email)) : '';
+        if ($email !== '' && $email === self::FILAMENT_SUPERADMIN_EMAIL) {
+            return true;
+        }
+
+        // Importante: todo usuário normalmente tem "personal team".
+        // Para não liberar o admin para todo mundo, consideramos apenas teams não-pessoais.
+        $isOwner = $this->ownedTeams()->where('personal_team', false)->exists();
+        if ($isOwner) {
+            return true;
+        }
+
+        return $this->teams()
+            ->where('personal_team', false)
+            ->wherePivot('role', 'admin')
+            ->exists();
     }
 
     /**

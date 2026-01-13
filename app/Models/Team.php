@@ -53,6 +53,10 @@ final class Team extends JetstreamTeam
      */
     protected $fillable = [
         'name',
+        'slug',
+        'whatsapp_join_url',
+        'onboarding_title',
+        'onboarding_body',
         'personal_team',
     ];
 
