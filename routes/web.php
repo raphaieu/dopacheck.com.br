@@ -257,7 +257,8 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']
 Route::prefix('webhook')->name('webhook.')->group(function () {
     
     // WhatsApp webhook (EvolutionAPI) - para Sprint 3
-    Route::post('/whatsapp', [WhatsAppController::class, 'webhook'])->name('whatsapp');
+    // Aceita GET só para "ping" no browser; Evolution irá usar POST
+    Route::match(['GET', 'POST'], '/whatsapp', [WhatsAppController::class, 'webhook'])->name('whatsapp');
     
     // Stripe webhook (Cashier)
     Route::post('/stripe', [StripeWebhookController::class, 'handleWebhook'])->name('stripe');

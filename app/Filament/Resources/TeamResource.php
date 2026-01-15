@@ -89,6 +89,19 @@ final class TeamResource extends Resource
                             ->maxLength(2048)
                             ->placeholder('https://chat.whatsapp.com/...'),
 
+                        Forms\Components\TextInput::make('whatsapp_group_jid')
+                            ->label('JID do grupo (WhatsApp)')
+                            ->helperText('Identificador do grupo vindo no webhook (remoteJid), ex: 120363404774829500@g.us')
+                            ->maxLength(64)
+                            ->unique(ignoreRecord: true)
+                            ->placeholder('1203...@g.us'),
+
+                        Forms\Components\TextInput::make('whatsapp_group_name')
+                            ->label('Nome do grupo (opcional)')
+                            ->helperText('Apenas para visualização. O que realmente identifica o grupo é o JID.')
+                            ->maxLength(255)
+                            ->placeholder('Nome do grupo no WhatsApp'),
+
                         Forms\Components\TextInput::make('onboarding_title')
                             ->label('Título do onboarding (opcional)')
                             ->maxLength(255)
@@ -129,6 +142,9 @@ final class TeamResource extends Resource
                 Tables\Columns\IconColumn::make('whatsapp_join_url')
                     ->label('WhatsApp')
                     ->boolean(fn (Team $record): bool => is_string($record->whatsapp_join_url) && $record->whatsapp_join_url !== ''),
+                Tables\Columns\IconColumn::make('whatsapp_group_jid')
+                    ->label('Grupo/JID')
+                    ->boolean(fn (Team $record): bool => is_string($record->whatsapp_group_jid) && $record->whatsapp_group_jid !== ''),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()

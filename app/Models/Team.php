@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int $id
  * @property int $user_id
  * @property string $name
+ * @property string|null $whatsapp_group_jid
+ * @property string|null $whatsapp_group_name
  * @property bool $personal_team
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -55,6 +57,8 @@ final class Team extends JetstreamTeam
         'name',
         'slug',
         'whatsapp_join_url',
+        'whatsapp_group_jid',
+        'whatsapp_group_name',
         'onboarding_title',
         'onboarding_body',
         'personal_team',

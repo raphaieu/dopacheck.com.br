@@ -15,24 +15,25 @@ class WhatsappBufferService
     public function addMessage(string $phone, array $message): void
     {
         $key = $this->bufferPrefix . $phone;
-        $buffer = Cache::store('cache')->get($key, []);
+        // Usa o cache padrão do app (ex: redis/database), evitando store inexistente.
+        $buffer = Cache::get($key, []);
         $buffer[] = $message;
-        Cache::store('cache')->put($key, $buffer, now()->addSeconds($this->bufferTtl));
+        Cache::put($key, $buffer, now()->addSeconds($this->bufferTtl));
     }
 
     public function scheduleProcessingJob(string $phone): void
     {
         $lockKey = $this->lockPrefix . $phone;
-        if (!Cache::store('cache')->has($lockKey)) {
+        if (!Cache::has($lockKey)) {
             ProcessWhatsappBufferJob::dispatch($phone)->delay(now()->addSeconds($this->lockTtl));
-            Cache::store('cache')->put($lockKey, true, now()->addSeconds($this->lockTtl));
+            Cache::put($lockKey, true, now()->addSeconds($this->lockTtl));
         }
     }
 
     public function pullBuffer(string $phone): array
     {
         $key = $this->bufferPrefix . $phone;
-        $buffer = Cache::store('cache')->pull($key, []);
+        $buffer = Cache::pull($key, []);
         return $buffer;
     }
 } 

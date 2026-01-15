@@ -1,87 +1,112 @@
 services:
-  # PostgreSQL Database (EvolutionAPI)
-  evolution-postgres:
-    image: postgres:15-alpine
-    container_name: dopacheck_evolution_postgres
+  # Redis (cache para EvolutionAPI) - sem expor porta no host (evita conflito)
+  redis:
+    image: redis:7-alpine
+    container_name: evolution_redis
     restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: ${EVOLUTION_DB_USERNAME:-evolution_user}
-      POSTGRES_PASSWORD: ${EVOLUTION_DB_PASSWORD:-evolution_pass}
-      POSTGRES_DB: ${EVOLUTION_DB_DATABASE:-evolution}
+    command: ["redis-server", "--port", "6379", "--appendonly", "yes"]
     volumes:
-      - evolution_postgres_data:/var/lib/postgresql/data
+      - evolution_redis:/data
     networks:
       - dopacheck-net
+    expose:
+      - "6379"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${EVOLUTION_DB_USERNAME:-evolution_user} -d ${EVOLUTION_DB_DATABASE:-evolution}"]
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Database (EvolutionAPI)
+  postgres:
+    image: postgres:15-alpine
+    container_name: app-postgres
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - max_connections=1000
+      - -c
+      - listen_addresses=*
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-evolution}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pass}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dopacheck-net
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-evolution}"]
       interval: 10s
       timeout: 5s
       retries: 10
 
   # Evolution API (WhatsApp Gateway)
-  evolution-api:
-    image: atendai/evolution-api:v2.2.3
-    container_name: dopacheck_evolution
+  evolutionapi:
+    image: evoapicloud/evolution-api:latest
+    container_name: app-evolutionapi
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
+    extra_hosts:
+      # Para o webhook apontar para o host (Laravel fora do Docker)
+      - "host.docker.internal:host-gateway"
     environment:
-      # Database
-      DATABASE_ENABLED: "true"
-      DATABASE_PROVIDER: "postgresql"
-      DATABASE_CONNECTION_URI: "postgresql://${EVOLUTION_DB_USERNAME:-evolution_user}:${EVOLUTION_DB_PASSWORD:-evolution_pass}@evolution-postgres:5432/${EVOLUTION_DB_DATABASE:-evolution}?schema=public"
-      DATABASE_CONNECTION_CLIENT_NAME: "evolution_exchange"
-      DATABASE_SAVE_DATA_INSTANCE: "true"
-      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
-      DATABASE_SAVE_MESSAGE_UPDATE: "true"
-      DATABASE_SAVE_DATA_CONTACTS: "true"
-      DATABASE_SAVE_DATA_CHATS: "true"
-      DATABASE_SAVE_DATA_LABELS: "true"
-      DATABASE_SAVE_DATA_HISTORIC: "true"
-      CONFIG_SESSION_PHONE_VERSION: "2.3000.1023204200"
+      # Servidor
+      - SERVER_TYPE=${SERVER_TYPE:-http}
+      - SERVER_PORT=8080
+      - SERVER_URL=${SERVER_URL:-http://localhost:8080}
+      - SERVER_DISABLE_DOCS=${SERVER_DISABLE_DOCS:-false}
+      - SERVER_DISABLE_MANAGER=${SERVER_DISABLE_MANAGER:-false}
+
+      # CORS (defaults do .env.example deles)
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - CORS_METHODS=${CORS_METHODS:-POST,GET,PUT,DELETE}
+      - CORS_CREDENTIALS=${CORS_CREDENTIALS:-true}
+
+      # Banco
+      - DATABASE_PROVIDER=${DATABASE_PROVIDER:-postgresql}
+      - DATABASE_CONNECTION_URI=${DATABASE_CONNECTION_URI:-postgresql://user:pass@postgres:5432/evolution?schema=public}
+      - DATABASE_CONNECTION_CLIENT_NAME=${DATABASE_CONNECTION_CLIENT_NAME:-evolution}
 
       # Redis
-      CACHE_REDIS_ENABLED: "true"
-      CACHE_REDIS_URI: "redis://dopacheck_redis:6379"
-      CACHE_REDIS_PREFIX_KEY: "evolution"
-      CACHE_REDIS_SAVE_INSTANCES: "false"
-      CACHE_LOCAL_ENABLED: "false"
+      - CACHE_REDIS_ENABLED=${CACHE_REDIS_ENABLED:-true}
+      - CACHE_REDIS_URI=${CACHE_REDIS_URI:-redis://redis:6379}
+      - CACHE_REDIS_PREFIX_KEY=${CACHE_REDIS_PREFIX_KEY:-evolution-cache}
+      - CACHE_REDIS_TTL=${CACHE_REDIS_TTL:-604800}
+      - CACHE_REDIS_SAVE_INSTANCES=${CACHE_REDIS_SAVE_INSTANCES:-true}
+      - CACHE_LOCAL_ENABLED=${CACHE_LOCAL_ENABLED:-true}
+      - CACHE_LOCAL_TTL=${CACHE_LOCAL_TTL:-86400}
 
-      # Server
-      SERVER_TYPE: "http"
-      SERVER_PORT: 8080
-      CORS_ORIGIN: "*"
-      CORS_METHODS: "GET,POST,PUT,DELETE"
-      CORS_CREDENTIALS: "true"
+      # Auth (mantém compatibilidade com nosso .env)
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-}
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=${AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES:-false}
 
-      # Webhooks (DOPA Check)
-      WEBHOOK_GLOBAL_URL: "http://dopacheck_app:8000/webhook/whatsapp"
-      WEBHOOK_GLOBAL_ENABLED: "true"
-      WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS: "false"
+      # Webhook (mantém compatibilidade com nosso .env)
+      - WEBHOOK_GLOBAL_URL=${WEBHOOK_URL:-http://host.docker.internal:8000/webhook/whatsapp}
+      - WEBHOOK_GLOBAL_ENABLED=${WEBHOOK_ENABLED:-true}
+      - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=${WEBHOOK_BY_EVENTS:-false}
+      # Ligue pelo menos o evento que nosso controller espera
+      - WEBHOOK_EVENTS_MESSAGES_UPSERT=${WEBHOOK_EVENTS_MESSAGES_UPSERT:-true}
 
-      # Instances
-      DEL_INSTANCE: "false"
-      PROVIDER_HOST: "http://localhost:8080"
-      PROVIDER_PORT: "8080"
-
-      # Authentication
-      AUTHENTICATION_TYPE: "apikey"
-      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-evolution_api_key_123}
-      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
-
-      # Logs
-      LOG_LEVEL: "ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK,WEBHOOKS"
-      LOG_COLOR: "true"
-      LOG_BAILEYS: "error"
+      # Logs / idioma / tz
+      # IMPORTANTE: não usar LOG_LEVEL aqui, pois LOG_LEVEL é do Laravel (ex: debug/info).
+      - LOG_LEVEL=${EVOLUTION_LOG_LEVEL:-ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK,WEBHOOKS,WEBSOCKET}
+      - LOG_COLOR=${LOG_COLOR:-true}
+      - LOG_BAILEYS=${LOG_BAILEYS:-error}
+      - LANGUAGE=${LANGUAGE:-pt-BR}
+      - TZ=${TZ:-America/Sao_Paulo}
     volumes:
-      - evolution_instances:/evolution/instances
-      - evolution_store:/evolution/store
+      - evolutionapi-instances:/evolution/instances
     networks:
       - dopacheck-net
     depends_on:
-      evolution-postgres:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "http://localhost:8080/"]
@@ -89,14 +114,26 @@ services:
       timeout: 10s
       retries: 3
 
+  # (Opcional) Manager / Frontend da Evolution
+  evolution-manager:
+    image: evoapicloud/evolution-manager:latest
+    container_name: evolution_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - dopacheck-net
+    profiles:
+      - tools
+
 volumes:
-  evolution_postgres_data:
-  evolution_instances:
-  evolution_store:
+  postgres-data:
+  evolutionapi-instances:
+  evolution_redis:
 
 networks:
   dopacheck-net:
-    external: true
     name: dopacheck-net
+    driver: bridge
 
 

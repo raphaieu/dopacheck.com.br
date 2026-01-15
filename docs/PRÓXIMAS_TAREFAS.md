@@ -74,6 +74,13 @@
 - **Notas**:
   - `docker-compose.whatsapp.yml` existe para testes (EvolutionAPI + Postgres)
   - Webhook do DOPA fica em `POST /webhook/whatsapp` (hoje bufferiza eventos)
+  - **Backlog UI/Redis**:
+    - O card “WhatsApp Bot” (status “Conectado”, contadores e botão “Desconectar”) precisa refletir o **estado real** da sessão.
+    - Hoje pode ficar “Conectado” após reload mesmo sem validarmos a instância/estado no backend.
+    - Planejado: consolidar “fonte da verdade” (Redis/DB) + endpoint de status com healthcheck da Evolution API e contadores reais.
+  - **Backlog (mapping Grupo ↔ Time)**:
+    - Precisamos persistir `whatsapp_group_jid` (ex: `1203...@g.us`) no `Team` para resolver rapidamente “mensagem do grupo pertence a qual time”.
+    - Opcional: armazenar também `whatsapp_group_name` (subject) quando disponível.
 
 #### 5. **Página de Perfil Público (`/u/username`)**
 - **Descrição**: Criar página pública de perfil do usuário
