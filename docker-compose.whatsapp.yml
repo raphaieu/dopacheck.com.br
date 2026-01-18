@@ -50,7 +50,7 @@ services:
     container_name: app-evolutionapi
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:18080:8080"
     extra_hosts:
       # Para o webhook apontar para o host (Laravel fora do Docker)
       - "host.docker.internal:host-gateway"
@@ -58,7 +58,7 @@ services:
       # Servidor
       - SERVER_TYPE=${SERVER_TYPE:-http}
       - SERVER_PORT=8080
-      - SERVER_URL=${SERVER_URL:-http://localhost:8080}
+      - SERVER_URL=${SERVER_URL:-http://localhost:18080}
       - SERVER_DISABLE_DOCS=${SERVER_DISABLE_DOCS:-false}
       - SERVER_DISABLE_MANAGER=${SERVER_DISABLE_MANAGER:-false}
 
