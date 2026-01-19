@@ -146,6 +146,7 @@ class WhatsAppController extends Controller
             'instance' => $data['instance'] ?? null,
             'has_data' => is_array($payload),
             'destination' => $data['destination'] ?? null,
+            'payload' => $payload,
         ]);
 
         // Exemplo para EvolutionAPI: $data['event'] == 'messages.upsert'
@@ -173,13 +174,6 @@ class WhatsAppController extends Controller
                 $len = strlen((string)$item['image_base64']);
                 $head = substr((string)$item['image_base64'], 0, 30);
                 $tail = substr((string)$item['image_base64'], -30);
-
-                Log::info('WhatsApp base64 stats', [
-                    'len' => $len,
-                    'head' => $head,
-                    'tail' => $tail,
-                    'content_length' => request()->server('CONTENT_LENGTH'),
-                ]);
 
                 // Para imagem com hashtag: processa check-in (mesmo sem base64)
                 if (($item['type'] ?? null) === 'image' && !empty($item['hashtags'])) {
