@@ -163,6 +163,7 @@
         :show="showCheckinModal"
         :task="task"
         :user-challenge="userChallenge"
+        :checked-date="selectedDate"
         @close="showCheckinModal = false"
         @checkin-completed="handleCheckinSuccess"
       />
@@ -189,6 +190,10 @@
     task: {
       type: Object,
       required: true
+    },
+    selectedDate: {
+      type: String,
+      default: null
     },
     userChallenge: {
       type: Object,
@@ -245,6 +250,7 @@
         body: JSON.stringify({
           task_id: props.task.id,
           user_challenge_id: props.userChallenge.id,
+          checked_date: props.selectedDate || null,
           source: 'web'
         })
       })

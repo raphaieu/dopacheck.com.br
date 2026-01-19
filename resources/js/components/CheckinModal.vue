@@ -197,6 +197,10 @@
     userChallenge: {
       type: Object,
       required: true
+    },
+    checkedDate: {
+      type: String,
+      default: null
     }
   })
   
@@ -301,6 +305,9 @@
       const formData = new FormData()
       formData.append('task_id', props.task.id)
       formData.append('user_challenge_id', props.userChallenge.id)
+      if (props.checkedDate) {
+        formData.append('checked_date', props.checkedDate)
+      }
       formData.append('source', 'web')
       
       if (form.message.trim()) {

@@ -4,8 +4,28 @@
         <!-- Featured Badge -->
         <div class="absolute top-4 left-4 z-10 flex flex-col space-y-2">
             <span
-                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-md">
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-linear-to-r from-yellow-400 to-orange-500 text-white shadow-md">
                 ⭐ Destaque
+            </span>
+
+            <!-- Status (período global) -->
+            <span
+              v-if="challenge.is_expired"
+              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-700 text-white shadow-md"
+            >
+              ⛔ Encerrado
+            </span>
+            <span
+              v-else-if="challenge.is_future"
+              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-500 text-white shadow-md"
+            >
+              🗓️ Em breve
+            </span>
+            <span
+              v-else-if="challenge.is_active"
+              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white shadow-md"
+            >
+              ✅ Ativo
             </span>
 
             <!-- Visibility Badge -->
@@ -24,14 +44,14 @@
         </div>
 
         <!-- Background Pattern -->
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-60"></div>
+        <div class="absolute inset-0 bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 opacity-60"></div>
 
         <!-- Content -->
         <div class="relative p-8">
             <!-- Icon/Image -->
             <div class="flex justify-center mb-6">
                 <div
-                    class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    class="w-20 h-20 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                     <span class="text-4xl">{{ getCategoryIcon(challenge.category) }}</span>
                 </div>
             </div>
@@ -94,8 +114,10 @@
                     Ver Detalhes
                 </button>
 
-                <button v-if="!isParticipating" @click="handleJoin" :disabled="joining"
-                    class="cursor-pointer flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2">
+                <button v-if="!isParticipating" @click="handleJoin" :disabled="joining || challenge.is_expired"
+                    class="cursor-pointer flex-1 text-white px-6 py-3 rounded-xl font-semibold disabled:opacity-50 transform transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
+                    :class="challenge.is_expired ? 'bg-gray-400 cursor-not-allowed' : 'bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105'"
+                >
                     <svg v-if="joining" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none"
                         viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
@@ -104,11 +126,12 @@
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                         </path>
                     </svg>
-                    <span>{{ joining ? 'Entrando...' : 'Participar Agora' }}</span>
+                    <span v-if="challenge.is_expired">Encerrado</span>
+                    <span v-else>{{ joining ? 'Entrando...' : 'Participar Agora' }}</span>
                 </button>
 
                 <div v-else
-                    class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2">
+                    class="flex-1 bg-linear-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center space-x-2">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -127,10 +150,10 @@
         </div>
 
         <!-- Decorative Elements -->
-        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-200/30 to-transparent rounded-bl-full">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-linear-to-bl from-blue-200/30 to-transparent rounded-bl-full">
         </div>
         <div
-            class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-200/30 to-transparent rounded-tr-full">
+            class="absolute bottom-0 left-0 w-24 h-24 bg-linear-to-tr from-purple-200/30 to-transparent rounded-tr-full">
         </div>
     </div>
 </template>
@@ -166,6 +189,7 @@ const isParticipating = computed(() => {
 // Methods
 const handleJoin = async () => {
     if (joining.value) return
+    if (props.challenge?.is_expired) return
 
     joining.value = true
     try {

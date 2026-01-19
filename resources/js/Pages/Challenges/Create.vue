@@ -86,6 +86,45 @@
                             </div>
                         </div>
 
+                        <!-- Período do desafio -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Data de início *
+                                </label>
+                                <input
+                                    id="start_date"
+                                    v-model="form.start_date"
+                                    type="date"
+                                    required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                    @input="validateField('start_date')"
+                                >
+                                <span v-if="errors.start_date" class="text-sm text-red-600">{{ errors.start_date }}</span>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Use para criar desafios que já estão em andamento.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Data fim *
+                                </label>
+                                <input
+                                    id="end_date"
+                                    v-model="form.end_date"
+                                    type="date"
+                                    required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                                    @input="validateField('end_date')"
+                                >
+                                <span v-if="errors.end_date" class="text-sm text-red-600">{{ errors.end_date }}</span>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Ao alterar, a duração será recalculada automaticamente.
+                                </p>
+                            </div>
+                        </div>
+
                         <!-- Duration & Settings Grid -->
                         <div class="grid md:grid-cols-3 gap-6">
                             <!-- Duration -->
@@ -332,6 +371,14 @@
                                         <span class="text-sm text-gray-600">Duração:</span>
                                         <p class="text-gray-800 font-medium">{{ form.duration_days }} dias</p>
                                     </div>
+                                    <div class="md:col-span-1">
+                                        <span class="text-sm text-gray-600">Início:</span>
+                                        <p class="text-gray-800 font-medium">{{ form.start_date }}</p>
+                                    </div>
+                                    <div class="md:col-span-1">
+                                        <span class="text-sm text-gray-600">Fim:</span>
+                                        <p class="text-gray-800 font-medium">{{ form.end_date }}</p>
+                                    </div>
                                     <div>
                                         <span class="text-sm text-gray-600">Categoria:</span>
                                         <p class="text-gray-800 font-medium">{{ formatCategoryPreview(form.category) }}</p>
@@ -412,7 +459,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { toast } from 'vue-sonner'
 import DopaHeader from '@/components/DopaHeader.vue'
@@ -432,6 +479,8 @@ const form = reactive({
     title: '',
     description: '',
     duration_days: 21,
+    start_date: '',
+    end_date: '',
     category: '',
     difficulty: '',
     visibility: 'global',
@@ -475,7 +524,7 @@ const visibilityPreview = computed(() => {
 const canProceed = computed(() => {
     switch (currentStep.value) {
         case 1:
-            return form.title && form.description && form.duration_days && form.category && form.difficulty
+            return form.title && form.description && form.duration_days && form.start_date && form.end_date && form.category && form.difficulty
         case 2:
             return form.tasks.length > 0 && form.tasks.every(task => task.name && task.hashtag)
         case 3:
@@ -545,8 +594,65 @@ const validateField = (field) => {
                 errors.duration_days = 'Duração deve ser entre 1 e 365 dias'
             }
             break
+        case 'start_date':
+            if (!form.start_date) {
+                errors.start_date = 'Data de início é obrigatória'
+            }
+            break
+        case 'end_date':
+            if (!form.end_date) {
+                errors.end_date = 'Data fim é obrigatória'
+            } else if (form.start_date && form.end_date < form.start_date) {
+                errors.end_date = 'Data fim deve ser maior ou igual à data de início'
+            }
+            break
     }
 }
+
+// Helpers de data (evita UTC shift do toISOString)
+const toLocalIsoDate = (dateObj) => {
+    const d = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000)
+    return d.toISOString().slice(0, 10)
+}
+const parseIsoDate = (iso) => new Date(`${iso}T00:00:00`)
+const addDaysIso = (iso, days) => {
+    const d = parseIsoDate(iso)
+    d.setDate(d.getDate() + days)
+    return toLocalIsoDate(d)
+}
+const diffDaysIso = (startIso, endIso) => {
+    const start = parseIsoDate(startIso)
+    const end = parseIsoDate(endIso)
+    const ms = end.getTime() - start.getTime()
+    return Math.floor(ms / (1000 * 60 * 60 * 24))
+}
+
+let syncingDates = false
+watch(
+    () => [form.start_date, form.duration_days],
+    () => {
+        if (syncingDates) return
+        if (!form.start_date || !form.duration_days) return
+        syncingDates = true
+        form.end_date = addDaysIso(form.start_date, Number(form.duration_days) - 1)
+        syncingDates = false
+    },
+    { deep: false }
+)
+
+watch(
+    () => form.end_date,
+    () => {
+        if (syncingDates) return
+        if (!form.start_date || !form.end_date) return
+        if (form.end_date < form.start_date) return
+        const days = diffDaysIso(form.start_date, form.end_date) + 1
+        if (days < 1 || days > 365) return
+        syncingDates = true
+        form.duration_days = days
+        syncingDates = false
+    }
+)
 
 const showServerErrorsToast = (serverErrors = {}) => {
     // Prioriza mensagens "globais" mais úteis pro usuário
@@ -649,6 +755,8 @@ if (isEditMode.value) {
     form.title = props.challenge?.title ?? ''
     form.description = props.challenge?.description ?? ''
     form.duration_days = props.challenge?.duration_days ?? 21
+    form.start_date = props.challenge?.start_date ?? toLocalIsoDate(new Date())
+    form.end_date = props.challenge?.end_date ?? addDaysIso(form.start_date, Number(form.duration_days) - 1)
     form.category = props.challenge?.category ?? ''
     form.difficulty = props.challenge?.difficulty ?? ''
     form.visibility = props.challenge?.visibility ?? 'global'
@@ -672,6 +780,9 @@ if (isEditMode.value) {
             color: t.color ?? '#3B82F6',
         }))
 } else if (form.tasks.length === 0) {
+    // Defaults de datas no create
+    form.start_date = toLocalIsoDate(new Date())
+    form.end_date = addDaysIso(form.start_date, Number(form.duration_days) - 1)
     addTask()
 }
 </script>

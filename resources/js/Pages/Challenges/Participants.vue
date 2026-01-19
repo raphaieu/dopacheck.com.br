@@ -14,7 +14,7 @@
                 <!-- Participants List -->
                 <div class="lg:col-span-2">
                     <div class="bg-white rounded-2xl shadow-lg border border-gray-200">
-                        <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50">
+                        <div class="p-6 border-b border-gray-200 bg-linear-to-r from-white to-gray-50">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
                                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
@@ -23,8 +23,8 @@
                                     </h2>
                                     <p class="text-gray-600 mt-1 text-sm sm:text-base font-medium">Veja quem está participando deste desafio</p>
                                 </div>
-                                <div class="text-right bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl px-4 py-3 border border-blue-200 shadow-sm self-start sm:self-auto">
-                                    <div class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{{ stats.total_participants }}</div>
+                                <div class="text-right bg-linear-to-br from-blue-50 to-purple-50 rounded-xl px-4 py-3 border border-blue-200 shadow-sm self-start sm:self-auto">
+                                    <div class="text-xl sm:text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{{ stats.total_participants }}</div>
                                     <div class="text-xs text-gray-600 font-medium">Participantes</div>
                                 </div>
                             </div>
@@ -43,7 +43,7 @@
 
                             <div v-else class="space-y-3">
                                 <div v-for="participant in participants.data" :key="participant.id" 
-                                    class="flex items-center justify-between p-5 bg-gradient-to-r from-white to-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+                                    class="flex items-center justify-between p-5 bg-linear-to-r from-white to-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
                                     <div class="flex items-center space-x-4 flex-1">
                                         <div class="relative">
                                             <img :src="participant.user.profile_photo_url || '/default-avatar.png'" 
@@ -70,28 +70,28 @@
                                     
                                     <div class="flex items-center space-x-4">
                                         <div class="text-right">
-                                            <div class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                            <div class="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                                                 {{ Math.round(parseFloat(participant.progress_percentage || 0)) }}%
                                             </div>
                                             <div class="text-xs text-gray-500 font-medium">Progresso</div>
                                             <div class="mt-2 w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                                <div class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300" 
+                                                <div class="h-full bg-linear-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300" 
                                                     :style="{ width: Math.min(100, parseFloat(participant.progress_percentage || 0)) + '%' }"></div>
                                             </div>
                                         </div>
                                         
                                         <div class="flex items-center">
-                                            <span v-if="participant.status === 'completed'" 
-                                                class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200">
-                                                ✅ Concluído
-                                            </span>
-                                            <span v-else-if="participant.status === 'active'" 
-                                                class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border border-blue-200">
-                                                🔄 Ativo
-                                            </span>
-                                            <span v-else 
-                                                class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                                                ⏸️ Pausado
+                                            <span 
+                                                :class="participant.status === 'completed'
+                                                    ? 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-linear-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200'
+                                                    : participant.status === 'active'
+                                                        ? 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-linear-to-r from-blue-100 to-cyan-100 text-blue-800 border border-blue-200'
+                                                        : participant.status === 'paused'
+                                                            ? 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                                            : 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200'
+                                                "
+                                            >
+                                                {{ getParticipantStatusIcon(participant.status) }} {{ getParticipantStatusLabel(participant.status) }}
                                             </span>
                                         </div>
                                     </div>
@@ -110,7 +110,7 @@
                 <!-- Sidebar -->
                 <div class="lg:col-span-1 space-y-6">
                     <!-- Challenge Info -->
-                    <div class="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-lg border border-blue-100">
+                    <div class="bg-linear-to-br from-white to-blue-50 rounded-2xl p-6 shadow-lg border border-blue-100">
                         <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                             <span class="mr-2 text-xl">{{ getCategoryIcon(challenge.category) }}</span>
                             Sobre o Desafio
@@ -123,12 +123,12 @@
                             </div>
                             
                             <div class="grid grid-cols-2 gap-4 pt-4">
-                                <div class="text-center bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
-                                    <div class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{{ stats.active_participants }}</div>
+                                <div class="text-center bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
+                                    <div class="text-3xl font-bold bg-linear-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{{ stats.active_participants }}</div>
                                     <div class="text-xs font-medium text-gray-600 mt-1">Ativos</div>
                                 </div>
-                                <div class="text-center bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                                    <div class="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{{ stats.completed_participants }}</div>
+                                <div class="text-center bg-linear-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                                    <div class="text-3xl font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{{ stats.completed_participants }}</div>
                                     <div class="text-xs font-medium text-gray-600 mt-1">Concluídos</div>
                                 </div>
                             </div>
@@ -139,7 +139,7 @@
                                     <span class="font-bold text-gray-900">{{ stats.completion_rate }}%</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
-                                    <div class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500 shadow-sm" 
+                                    <div class="bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500 shadow-sm" 
                                         :style="{ width: Math.min(100, stats.completion_rate) + '%' }"></div>
                                 </div>
                             </div>
@@ -147,7 +147,7 @@
                     </div>
 
                     <!-- Challenge Details -->
-                    <div class="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-lg border border-purple-100">
+                    <div class="bg-linear-to-br from-white to-purple-50 rounded-2xl p-6 shadow-lg border border-purple-100">
                         <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                             <span class="mr-2">📋</span>
                             Detalhes
@@ -186,6 +186,7 @@ import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import Pagination from '@/components/Pagination.vue'
 import { computed } from 'vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
+import { formatUserChallengeStatus } from '@/utils/userChallengeStatus.js'
 
 // Props
 const props = defineProps({
@@ -220,6 +221,19 @@ const getCategoryIcon = (category) => {
         'lifestyle': '🌟'
     }
     return icons[category] || '🎯'
+}
+
+const getParticipantStatusLabel = (status) => formatUserChallengeStatus(status)
+
+const getParticipantStatusIcon = (status) => {
+    const icons = {
+        active: '🔄',
+        completed: '✅',
+        paused: '⏸️',
+        abandoned: '❌',
+        expired: '🏁',
+    }
+    return icons[status] || '⚪'
 }
 
 const formatCategory = (category) => {

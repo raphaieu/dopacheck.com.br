@@ -1,7 +1,7 @@
 <template>
     <div class="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
         <!-- Avatar -->
-        <div class="flex-shrink-0">
+        <div class="shrink-0">
             <img :src="participant.user?.profile_photo_url || participant.user?.avatar || '/default-avatar.png'"
                 :alt="participant.user?.name || 'Participante'"
                 class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm">
@@ -22,8 +22,8 @@
                 </div>
 
                 <!-- Progress -->
-                <div class="flex-shrink-0 text-right ml-4">
-                    <div class="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <div class="shrink-0 text-right ml-4">
+                    <div class="text-lg font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         {{ Math.round(participant.progress_percentage || participant.completion_rate || 0) }}%
                     </div>
                     <div class="text-xs text-gray-500">Progresso</div>
@@ -42,6 +42,8 @@
 </template>
 
 <script setup>
+import { formatUserChallengeStatus } from '@/utils/userChallengeStatus.js'
+
 // Props
 defineProps({
     participant: {
@@ -56,27 +58,21 @@ const getStatusIcon = (status) => {
         'active': '🟢',
         'completed': '✅',
         'paused': '⏸️',
-        'abandoned': '❌'
+        'abandoned': '❌',
+        'expired': '🏁',
     }
     return icons[status] || '⚪'
 }
 
-const formatStatus = (status) => {
-    const statusMap = {
-        'active': 'Ativo',
-        'completed': 'Concluído',
-        'paused': 'Pausado',
-        'abandoned': 'Abandonado'
-    }
-    return statusMap[status] || status
-}
+const formatStatus = (status) => formatUserChallengeStatus(status)
 
 const getStatusClasses = (status) => {
     const classes = {
         'active': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700',
         'completed': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700',
         'paused': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700',
-        'abandoned': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700'
+        'abandoned': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700',
+        'expired': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700'
     }
     return classes[status] || 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700'
 }

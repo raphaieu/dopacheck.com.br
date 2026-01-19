@@ -4,7 +4,7 @@ import { csrfFetch } from '@/utils/csrf.js'
 export function useCheckins() {
   const submitting = ref(false)
   
-  const quickCheckin = async (taskId: number, userChallengeId: number) => {
+  const quickCheckin = async (taskId: number, userChallengeId: number, checkedDate?: string | null) => {
     submitting.value = true
     
     try {
@@ -16,6 +16,7 @@ export function useCheckins() {
         body: JSON.stringify({
           task_id: taskId,
           user_challenge_id: userChallengeId,
+          checked_date: checkedDate ?? null,
           source: 'web'
         })
       })

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+  <div class="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
     <!-- Header -->
     <DopaHeader subtitle="Relatórios" max-width="4xl" home-link="/dopa" :show-back-button="true" back-link="/dopa" />
 
@@ -81,6 +81,7 @@ import { Link, router } from '@inertiajs/vue3'
 import DopaHeader from '@/components/DopaHeader.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
+import { formatUserChallengeStatus } from '@/utils/userChallengeStatus.js'
 
 const props = defineProps({
   userChallenges: Array,
@@ -100,14 +101,6 @@ const exportData = () => {
   alert('Funcionalidade de exportação em breve!')
 }
 
-const formatStatus = (status) => {
-  const statusMap = {
-    'active': 'Ativo',
-    'completed': 'Completo',
-    'paused': 'Pausado',
-    'abandoned': 'Abandonado',
-  }
-  return statusMap[status] || status
-}
+const formatStatus = (status) => formatUserChallengeStatus(status)
 </script>
 

@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
     <!-- Header -->
     <DopaHeader 
-      :subtitle="currentChallenge ? `Dia ${currentDay} de ${currentChallenge.challenge.duration_days}` : null"
+      :subtitle="currentChallenge ? `Dia ${subtitleDay} de ${currentChallenge.challenge.duration_days}` : null"
       max-width="4xl"
     />
 
@@ -163,10 +163,32 @@
             </span>
           </div>
 
+          <!-- Ir para data -->
+          <div v-if="currentChallenge?.challenge?.start_date" class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+            <div class="flex-1">
+              <label for="goto-date" class="block text-sm font-medium text-gray-700 mb-1">Ir para data</label>
+              <input
+                id="goto-date"
+                v-model="selectedDate"
+                type="date"
+                :min="dateBounds.min"
+                :max="dateBounds.max"
+                class="w-full sm:max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+              />
+              <p class="mt-1 text-xs text-gray-500">
+                Disponível de {{ dateBounds.min }} até {{ dateBounds.max }}.
+              </p>
+            </div>
+            <div class="text-sm text-gray-600 text-center sm:text-right">
+              Dia <span class="font-semibold text-gray-900">{{ subtitleDay }}</span> de {{ currentChallenge.challenge.duration_days }}
+            </div>
+          </div>
+
           <!-- Task Cards -->
           <div class="space-y-3">
             <TaskCard v-for="task in todayTasks" :key="`task-${task.id}`" :task="task"
               :user-challenge="currentChallenge" :is-completed="task.is_completed" :checkin="task.checkin"
+              :selected-date="selectedDate"
               @checkin-completed="handleCheckinCompleted" @checkin-removed="handleCheckinRemoved" />
           </div>
 
@@ -278,6 +300,16 @@ const todayTasks = ref(currentChallenge.value?.today_tasks || [])
 // Atualiza tasks do dia ao trocar de desafio
 watch(currentIndex, (idx) => {
   todayTasks.value = currentChallenge.value?.today_tasks || []
+
+  // Ajusta data selecionada ao trocar de desafio (clamp nos bounds)
+  const { min, max } = dateBounds.value
+  const desired = todayIso()
+  if (!min) {
+    selectedDate.value = desired
+  } else {
+    selectedDate.value = desired < min ? min : (desired > max ? max : desired)
+  }
+  selectedDay.value = null
 })
 
 // State
@@ -291,6 +323,45 @@ const currentDay = computed(() => {
   if (!currentChallenge.value) return 0
   // Usa o current_day do backend que já está limitado corretamente
   return currentChallenge.value.current_day || 1
+})
+
+// ===== Ir para data (data selecionada dentro do período) =====
+const selectedDate = ref(null) // ISO yyyy-mm-dd
+const selectedDay = ref(null) // number (dia do desafio relativo ao start_date global)
+
+const toLocalIsoDate = (dateObj) => {
+  const d = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000)
+  return d.toISOString().slice(0, 10)
+}
+
+const todayIso = () => toLocalIsoDate(new Date())
+
+const dateBounds = computed(() => {
+  const ch = currentChallenge.value?.challenge
+  const min = ch?.start_date || null
+  const end = ch?.end_date || null
+
+  // past_only: max = min(end_date, hoje)
+  const max = (() => {
+    const t = todayIso()
+    if (!end) return t
+    return end < t ? end : t
+  })()
+
+  return { min, max }
+})
+
+const selectedDateFormatted = computed(() => {
+  const iso = selectedDate.value
+  if (!iso) return ''
+  const date = new Date(`${iso}T00:00:00`)
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+  return date.toLocaleDateString('pt-BR', options)
+})
+
+const subtitleDay = computed(() => {
+  if (!currentChallenge.value) return 0
+  return selectedDay.value ?? currentDay.value
 })
 
 const daysRemaining = computed(() => {
@@ -344,16 +415,7 @@ const allTasksCompleted = computed(() => {
   return totalTasksToday.value > 0 && completedTasksToday.value === totalTasksToday.value
 })
 
-const todayFormatted = computed(() => {
-  const today = new Date()
-  const options = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }
-  return today.toLocaleDateString('pt-BR', options)
-})
+const todayFormatted = computed(() => selectedDateFormatted.value || '')
 
 // Navegação do carrossel
 const prevChallenge = () => {
@@ -368,6 +430,29 @@ const nextChallenge = () => {
 // Methods
 const { post: apiPost, loading: apiLoading } = useApi()
 const { shareImage, isSupported: isShareSupported } = useShare()
+
+const fetchTasksForDate = async () => {
+  if (!currentChallenge.value) return
+  const iso = selectedDate.value || todayIso()
+  try {
+    const response = await csrfFetch(`/api/today-tasks?challenge_id=${currentChallenge.value.id}&date=${encodeURIComponent(iso)}`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    })
+    const data = response.ok ? await response.json() : null
+    if (data?.tasks) {
+      todayTasks.value = data.tasks
+    }
+    if (data?.selected_day !== undefined) {
+      selectedDay.value = data.selected_day
+    }
+    if (data?.selected_date) {
+      selectedDate.value = data.selected_date
+    }
+  } catch (e) {
+    console.error('Erro ao carregar tasks por data:', e)
+  }
+}
 
 const atualizarStats = async () => {
   if (!currentChallenge.value) return
@@ -415,6 +500,11 @@ const handleWhatsAppUpdate = (session) => {
   // ...
 }
 
+watch(selectedDate, async (val) => {
+  if (!val) return
+  await fetchTasksForDate()
+})
+
 watch(showShareModal, async (val) => {
   if (val) {
     await generateShareCard()
@@ -430,7 +520,7 @@ const generateShareCard = async () => {
     if (!currentChallenge.value) return
     const payload = {
       challenge_id: currentChallenge.value.id,
-      day: currentDay.value,
+      day: subtitleDay.value,
       total_days: currentChallenge.value.challenge.duration_days,
       title: currentChallenge.value.challenge.title,
       description: currentChallenge.value.challenge.description,
@@ -479,10 +569,20 @@ const downloadShareCard = async () => {
 
 // Lifecycle
 onMounted(() => {
+  // Init: seleciona uma data válida (clamp no período)
+  const { min, max } = dateBounds.value
+  const desired = todayIso()
+  if (!min) {
+    selectedDate.value = desired
+  } else {
+    selectedDate.value = desired < min ? min : (desired > max ? max : desired)
+  }
+
   // Auto-refresh tasks a cada minuto (caso tenha check-ins pelo WhatsApp)
   setInterval(() => {
     if (currentChallenge.value) {
-      csrfFetch(`/api/today-tasks?challenge_id=${currentChallenge.value.id}`, {
+      const iso = selectedDate.value || todayIso()
+      csrfFetch(`/api/today-tasks?challenge_id=${currentChallenge.value.id}&date=${encodeURIComponent(iso)}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -492,6 +592,9 @@ onMounted(() => {
         .then(data => {
           if (data.tasks) {
             todayTasks.value = data.tasks
+          }
+          if (data?.selected_day !== undefined) {
+            selectedDay.value = data.selected_day
           }
         })
         .catch(console.error)

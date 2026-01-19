@@ -8,6 +8,7 @@ use App\Models\ChallengeTask;
 use App\Models\Checkin;
 use App\Models\UserChallenge;
 use App\Helpers\CacheHelper;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -79,6 +80,7 @@ class CheckinController extends Controller
         $validator = Validator::make($request->all(), [
             'task_id' => ['required', 'exists:challenge_tasks,id'],
             'user_challenge_id' => ['required', 'exists:user_challenges,id'],
+            'checked_date' => ['nullable', 'date_format:Y-m-d'],
             'image' => ['nullable', 'image', 'max:5120'], // 5MB
             'message' => ['nullable', 'string', 'max:500'],
             'source' => ['required', Rule::in(['web', 'whatsapp'])],
@@ -143,12 +145,37 @@ class CheckinController extends Controller
             return back()->withErrors(['message' => 'Este desafio já expirou e não aceita mais check-ins']);
         }
 
+        // Data alvo para o check-in (retroativo)
+        $checkedDate = today();
+        if (is_string($request->checked_date) && $request->checked_date !== '') {
+            try {
+                $checkedDate = Carbon::createFromFormat('Y-m-d', $request->checked_date)->startOfDay();
+            } catch (\Throwable $e) {
+                // deixa como hoje (validação já cobre)
+            }
+        }
+
+        // Regras: precisa estar dentro do período global do desafio e não pode ser no futuro
+        $challengeStart = $userChallenge->getChallengeStartDate()->startOfDay();
+        $challengeEnd = $userChallenge->getChallengeEndDate()->startOfDay();
+        $maxAllowed = now()->startOfDay()->min($challengeEnd);
+        if (! $checkedDate->betweenIncluded($challengeStart, $maxAllowed)) {
+            $msg = 'Data inválida para este desafio. Selecione uma data entre ' . $challengeStart->toDateString() . ' e ' . $maxAllowed->toDateString() . '.';
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $msg], 422);
+            }
+            return back()->withErrors(['checked_date' => $msg])->withInput();
+        }
+
+        $challengeDay = (int) ($challengeStart->diffInDays($checkedDate, false) + 1);
+        $challengeDay = max(1, min($challengeDay, (int) $userChallenge->challenge->duration_days));
+
         // Verificar se já fez check-in hoje para esta task (com lock para evitar race condition)
         // Verifica apenas a data real (checked_at) para evitar duplicatas
         // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
         $existingCheckin = Checkin::where('user_challenge_id', $userChallenge->id)
             ->where('task_id', $task->id)
-            ->whereDate('checked_at', today())
+            ->whereDate('checked_at', $checkedDate)
             ->whereNull('deleted_at')
             ->lockForUpdate()
             ->first();
@@ -208,7 +235,8 @@ class CheckinController extends Controller
             }
 
             // Criar check-in dentro de transação
-            $checkin = DB::transaction(function () use ($userChallenge, $task, $currentDay, $request, $imagePath, $imageUrl) {
+            $checkinAt = $checkedDate->copy()->setTimeFrom(now());
+            $checkin = DB::transaction(function () use ($userChallenge, $task, $challengeDay, $request, $imagePath, $imageUrl, $checkinAt) {
                 return Checkin::create([
                     'user_challenge_id' => $userChallenge->id,
                     'task_id' => $task->id,
@@ -217,8 +245,8 @@ class CheckinController extends Controller
                     'message' => $request->message,
                     'source' => $request->source,
                     'status' => 'approved', // Auto-approve por enquanto
-                    'challenge_day' => $currentDay,
-                    'checked_at' => now()
+                    'challenge_day' => $challengeDay,
+                    'checked_at' => $checkinAt
                 ]);
             });
 
@@ -314,6 +342,7 @@ class CheckinController extends Controller
         $validator = Validator::make($request->all(), [
             'task_id' => ['required', 'exists:challenge_tasks,id'],
             'user_challenge_id' => ['required', 'exists:user_challenges,id'],
+            'checked_date' => ['nullable', 'date_format:Y-m-d'],
             'source' => ['required', Rule::in(['web', 'whatsapp'])]
         ]);
 
@@ -360,12 +389,38 @@ class CheckinController extends Controller
             return response()->json(['message' => 'Este desafio já expirou e não aceita mais check-ins'], 403);
         }
 
+        // Data alvo para o check-in (retroativo)
+        $checkedDate = today();
+        if (is_string($request->checked_date) && $request->checked_date !== '') {
+            try {
+                $checkedDate = Carbon::createFromFormat('Y-m-d', $request->checked_date)->startOfDay();
+            } catch (\Throwable $e) {
+                // deixa como hoje
+            }
+        }
+
+        $challengeStart = $userChallenge->getChallengeStartDate()->startOfDay();
+        $challengeEnd = $userChallenge->getChallengeEndDate()->startOfDay();
+        $maxAllowed = now()->startOfDay()->min($challengeEnd);
+        if (! $checkedDate->betweenIncluded($challengeStart, $maxAllowed)) {
+            return response()->json([
+                'message' => 'Data inválida para este desafio.',
+                'allowed' => [
+                    'min' => $challengeStart->toDateString(),
+                    'max' => $maxAllowed->toDateString(),
+                ],
+            ], 422);
+        }
+
+        $challengeDay = (int) ($challengeStart->diffInDays($checkedDate, false) + 1);
+        $challengeDay = max(1, min($challengeDay, (int) $userChallenge->challenge->duration_days));
+
         // Verificar se já fez check-in hoje para esta task (com lock para evitar race condition)
         // Verifica apenas a data real (checked_at) para evitar duplicatas
         // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
         $existingCheckin = Checkin::where('user_challenge_id', $userChallenge->id)
             ->where('task_id', $task->id)
-            ->whereDate('checked_at', today())
+            ->whereDate('checked_at', $checkedDate)
             ->whereNull('deleted_at')
             ->lockForUpdate()
             ->first();
@@ -387,13 +442,14 @@ class CheckinController extends Controller
 
         try {
             // Criar check-in rápido
+            $checkedAt = $checkedDate->copy()->setTimeFrom(now());
             $checkin = Checkin::create([
                 'user_challenge_id' => $userChallenge->id,
                 'task_id' => $task->id,
                 'source' => $request->source,
                 'status' => 'approved',
-                'challenge_day' => $currentDay,
-                'checked_at' => now()
+                'challenge_day' => $challengeDay,
+                'checked_at' => $checkedAt
             ]);
 
             // Recarregar o check-in para garantir que está atualizado

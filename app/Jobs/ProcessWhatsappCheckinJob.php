@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\UserChallenge;
 use App\Services\EvolutionApiService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -222,10 +223,20 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
         }
 
         // Idempotência: se já existe check-in hoje para essa task, considera sucesso e só reage ✅
+        // Também checa por challenge_day do "hoje" (unique) para evitar crash quando existir check-in retroativo
+        // que ocupe o mesmo day index.
+        $challengeStart = $userChallenge->getChallengeStartDate()->startOfDay();
+        $today = today()->startOfDay();
+        $challengeDayToday = (int) ($challengeStart->diffInDays($today, false) + 1);
+        $challengeDayToday = max(1, min($challengeDayToday, (int) $userChallenge->challenge->duration_days));
+
         $already = Checkin::query()
             ->where('user_challenge_id', $userChallenge->id)
             ->where('task_id', $task->id)
-            ->whereDate('checked_at', today())
+            ->where(function ($q) use ($challengeDayToday) {
+                $q->whereDate('checked_at', today())
+                    ->orWhere('challenge_day', $challengeDayToday);
+            })
             ->whereNull('deleted_at')
             ->exists();
 
@@ -265,6 +276,11 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
             });
 
             $react('✅');
+        } catch (UniqueConstraintViolationException $e) {
+            // Duplicata (unique por day) -> trata como idempotente
+            $react('✅');
+            $this->safeDeleteImage($imagePath);
+            return;
         } catch (\Throwable $e) {
             Log::error('WhatsApp checkin: erro ao criar check-in', [
                 'error' => $e->getMessage(),

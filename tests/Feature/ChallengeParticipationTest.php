@@ -129,4 +129,29 @@ class ChallengeParticipationTest extends TestCase
                 ->missing('challenges.data.0.user_is_participating')
         );
     }
+
+    public function test_user_cannot_join_expired_challenge(): void
+    {
+        $user = User::factory()->create([
+            'plan' => 'free',
+            'username' => 'testuser',
+        ]);
+
+        $challenge = Challenge::factory()->create([
+            'visibility' => Challenge::VISIBILITY_GLOBAL,
+            'is_featured' => false,
+            'start_date' => now()->subDays(10)->toDateString(),
+            'end_date' => now()->subDay()->toDateString(),
+            'duration_days' => 10,
+        ]);
+
+        $response = $this->actingAs($user)->post("/challenges/{$challenge->id}/join");
+        $response->assertRedirect();
+
+        $this->assertDatabaseMissing('user_challenges', [
+            'user_id' => $user->id,
+            'challenge_id' => $challenge->id,
+            'status' => 'active',
+        ]);
+    }
 } 

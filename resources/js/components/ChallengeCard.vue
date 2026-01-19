@@ -13,12 +13,12 @@
             </div>
 
             <!-- Challenge Image/Icon -->
-            <div class="flex-shrink-0 ml-4">
+            <div class="shrink-0 ml-4">
                 <div v-if="challenge.image_url" class="w-16 h-16 rounded-lg overflow-hidden">
                     <img :src="challenge.image_url" :alt="challenge.title" class="w-full h-full object-cover">
                 </div>
                 <div v-else
-                    class="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
+                    class="w-16 h-16 bg-linear-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
                     <span class="text-2xl">{{ getCategoryIcon(challenge.category) }}</span>
                 </div>
             </div>
@@ -26,6 +26,26 @@
 
         <!-- Challenge Meta -->
         <div class="flex flex-wrap gap-2 mb-4">
+            <!-- Status (período global) -->
+            <span
+              v-if="challenge.is_expired"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700"
+            >
+              ⛔ Encerrado
+            </span>
+            <span
+              v-else-if="challenge.is_future"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+            >
+              🗓️ Em breve
+            </span>
+            <span
+              v-else-if="challenge.is_active"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+            >
+              ✅ Ativo
+            </span>
+
             <!-- Visibility Indicator -->
             <span
               v-if="challenge.visibility === 'private'"
@@ -91,14 +111,17 @@
             </button>
 
             <button v-if="!isParticipating" @click="handleJoin" :disabled="joining"
-                class="cursor-pointer flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2">
+                class="cursor-pointer flex-1 px-4 py-2.5 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
+                :class="challenge.is_expired ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'"
+            >
                 <svg v-if="joining" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                     </path>
                 </svg>
-                <span>{{ joining ? 'Entrando...' : 'Participar' }}</span>
+                <span v-if="challenge.is_expired">Encerrado</span>
+                <span v-else>{{ joining ? 'Entrando...' : 'Participar' }}</span>
             </button>
 
             <div v-else
@@ -145,6 +168,7 @@ const isParticipating = computed(() => {
 // Methods
 const handleJoin = async () => {
     if (joining.value) return
+    if (props.challenge?.is_expired) return
 
     joining.value = true
     try {

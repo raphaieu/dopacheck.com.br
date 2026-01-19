@@ -10,6 +10,7 @@ use App\Models\ChallengeTask;
 use App\Models\Checkin;
 use App\Models\UserChallenge;
 use App\Helpers\CacheHelper;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -107,6 +108,18 @@ class ChallengeController extends Controller
             $query->search($request->search);
         }
         
+        // Ordenação primária: desafios ativos primeiro, depois futuros, depois encerrados.
+        // (Mantém expirados visíveis como histórico, mas mais abaixo na lista.)
+        $today = now()->toDateString();
+        $query->orderByRaw(
+            "CASE
+                WHEN start_date <= ? AND end_date >= ? THEN 0
+                WHEN start_date > ? THEN 1
+                ELSE 2
+            END",
+            [$today, $today, $today]
+        );
+
         // Sort
         $sort = $request->sort ?? 'newest';
         match ($sort) {
@@ -129,6 +142,20 @@ class ChallengeController extends Controller
             
             // Add user participation info and completion rate to each challenge
             $challenges->getCollection()->transform(function ($challenge) use ($userChallengeIds) {
+                $today = Carbon::now()->startOfDay();
+                $startDate = $challenge->start_date
+                    ? Carbon::parse($challenge->start_date)->startOfDay()
+                    : Carbon::parse($challenge->created_at)->startOfDay();
+                $endDate = $challenge->end_date
+                    ? Carbon::parse($challenge->end_date)->startOfDay()
+                    : $startDate->copy()->addDays(((int) $challenge->duration_days) - 1)->startOfDay();
+
+                $challenge->setAttribute('start_date', $startDate->toDateString());
+                $challenge->setAttribute('end_date', $endDate->toDateString());
+                $challenge->setAttribute('is_expired', $endDate->lt($today));
+                $challenge->setAttribute('is_active', $startDate->lte($today) && $endDate->gte($today));
+                $challenge->setAttribute('is_future', $startDate->gt($today));
+
                 // Calcular participantes reais (active + completed) ANTES de adicionar atributos dinâmicos
                 $totalParticipants = $challenge->userChallenges()
                     ->whereIn('status', ['active', 'completed', 'expired'])
@@ -161,6 +188,20 @@ class ChallengeController extends Controller
         } else {
             // For non-authenticated users, still calculate completion rate
             $challenges->getCollection()->transform(function ($challenge) {
+                $today = Carbon::now()->startOfDay();
+                $startDate = $challenge->start_date
+                    ? Carbon::parse($challenge->start_date)->startOfDay()
+                    : Carbon::parse($challenge->created_at)->startOfDay();
+                $endDate = $challenge->end_date
+                    ? Carbon::parse($challenge->end_date)->startOfDay()
+                    : $startDate->copy()->addDays(((int) $challenge->duration_days) - 1)->startOfDay();
+
+                $challenge->setAttribute('start_date', $startDate->toDateString());
+                $challenge->setAttribute('end_date', $endDate->toDateString());
+                $challenge->setAttribute('is_expired', $endDate->lt($today));
+                $challenge->setAttribute('is_active', $startDate->lte($today) && $endDate->gte($today));
+                $challenge->setAttribute('is_future', $startDate->gt($today));
+
                 // Calcular participantes reais (active + completed) ANTES de adicionar atributos dinâmicos
                 $totalParticipants = $challenge->userChallenges()
                     ->whereIn('status', ['active', 'completed', 'expired'])
@@ -206,6 +247,20 @@ class ChallengeController extends Controller
                 ->toArray();
             
             $featuredChallenges->transform(function ($challenge) use ($featuredUserChallengeIds) {
+                $today = Carbon::now()->startOfDay();
+                $startDate = $challenge->start_date
+                    ? Carbon::parse($challenge->start_date)->startOfDay()
+                    : Carbon::parse($challenge->created_at)->startOfDay();
+                $endDate = $challenge->end_date
+                    ? Carbon::parse($challenge->end_date)->startOfDay()
+                    : $startDate->copy()->addDays(((int) $challenge->duration_days) - 1)->startOfDay();
+
+                $challenge->setAttribute('start_date', $startDate->toDateString());
+                $challenge->setAttribute('end_date', $endDate->toDateString());
+                $challenge->setAttribute('is_expired', $endDate->lt($today));
+                $challenge->setAttribute('is_active', $startDate->lte($today) && $endDate->gte($today));
+                $challenge->setAttribute('is_future', $startDate->gt($today));
+
                 // Calcular participantes reais (active + completed) ANTES de adicionar atributos dinâmicos
                 $totalParticipants = $challenge->userChallenges()
                     ->whereIn('status', ['active', 'completed', 'expired'])
@@ -247,6 +302,20 @@ class ChallengeController extends Controller
         } else {
             // For non-authenticated users, still calculate completion rate and trending
             $featuredChallenges->transform(function ($challenge) {
+                $today = Carbon::now()->startOfDay();
+                $startDate = $challenge->start_date
+                    ? Carbon::parse($challenge->start_date)->startOfDay()
+                    : Carbon::parse($challenge->created_at)->startOfDay();
+                $endDate = $challenge->end_date
+                    ? Carbon::parse($challenge->end_date)->startOfDay()
+                    : $startDate->copy()->addDays(((int) $challenge->duration_days) - 1)->startOfDay();
+
+                $challenge->setAttribute('start_date', $startDate->toDateString());
+                $challenge->setAttribute('end_date', $endDate->toDateString());
+                $challenge->setAttribute('is_expired', $endDate->lt($today));
+                $challenge->setAttribute('is_active', $startDate->lte($today) && $endDate->gte($today));
+                $challenge->setAttribute('is_future', $startDate->gt($today));
+
                 // Calcular participantes reais (active + completed) ANTES de adicionar atributos dinâmicos
                 $totalParticipants = $challenge->userChallenges()
                     ->whereIn('status', ['active', 'completed', 'expired'])
@@ -311,6 +380,21 @@ class ChallengeController extends Controller
         $this->ensureChallengeVisibleToUser($request->user(), $challenge);
 
         $challenge->load(['creator', 'tasks', 'team', 'activeParticipants.user']);
+
+        // Status do período global (para UI bloquear join quando encerrado)
+        $today = Carbon::now()->startOfDay();
+        $startDate = $challenge->start_date
+            ? Carbon::parse($challenge->start_date)->startOfDay()
+            : Carbon::parse($challenge->created_at)->startOfDay();
+        $endDate = $challenge->end_date
+            ? Carbon::parse($challenge->end_date)->startOfDay()
+            : $startDate->copy()->addDays(((int) $challenge->duration_days) - 1)->startOfDay();
+
+        $challenge->setAttribute('start_date', $startDate->toDateString());
+        $challenge->setAttribute('end_date', $endDate->toDateString());
+        $challenge->setAttribute('is_expired', $endDate->lt($today));
+        $challenge->setAttribute('is_active', $startDate->lte($today) && $endDate->gte($today));
+        $challenge->setAttribute('is_future', $startDate->gt($today));
         
         $user = $request->user();
         $userChallenge = null;
@@ -322,7 +406,7 @@ class ChallengeController extends Controller
                 ->where('status', 'active')
                 ->first();
             
-            $canJoin = !$userChallenge && $user->canCreateChallenge();
+            $canJoin = !$userChallenge && $user->canCreateChallenge() && !((bool) $challenge->getAttribute('is_expired'));
         }
         
         // Get challenge stats
@@ -487,6 +571,14 @@ class ChallengeController extends Controller
                 'title' => $challenge->title,
                 'description' => $challenge->description,
                 'duration_days' => $challenge->duration_days,
+                'start_date' => ($challenge->start_date
+                    ? Carbon::parse($challenge->start_date)->toDateString()
+                    : Carbon::parse($challenge->created_at)->toDateString()
+                ),
+                'end_date' => ($challenge->end_date
+                    ? Carbon::parse($challenge->end_date)->toDateString()
+                    : Carbon::parse($challenge->start_date ?? $challenge->created_at)->startOfDay()->addDays(((int) $challenge->duration_days) - 1)->toDateString()
+                ),
                 'category' => $challenge->category,
                 'difficulty' => $challenge->difficulty,
                 'visibility' => $challenge->visibility,
@@ -521,6 +613,8 @@ class ChallengeController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:1000'],
             'duration_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'category' => ['required', 'string', 'max:50'],
             'difficulty' => ['required', 'string', Rule::in(['beginner', 'intermediate', 'advanced'])],
             'visibility' => ['required', 'string', Rule::in([
@@ -537,6 +631,33 @@ class ChallengeController extends Controller
             'tasks.*.icon' => ['nullable', 'string', 'max:10'],
             'tasks.*.color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
+
+        // Normaliza período global do desafio (se não vier, mantém comportamento atual: inicia hoje)
+        $startDate = ! empty($validated['start_date'])
+            ? Carbon::parse($validated['start_date'])->startOfDay()
+            : now()->startOfDay();
+
+        $endDate = ! empty($validated['end_date'])
+            ? Carbon::parse($validated['end_date'])->startOfDay()
+            : $startDate->copy()->addDays(((int) $validated['duration_days']) - 1);
+
+        if ($endDate->lt($startDate)) {
+            return redirect()->back()
+                ->withErrors(['end_date' => 'A data fim deve ser maior ou igual à data de início.'])
+                ->withInput();
+        }
+
+        $durationDays = (int) ($startDate->diffInDays($endDate) + 1);
+        if ($durationDays < 1 || $durationDays > 365) {
+            return redirect()->back()
+                ->withErrors(['duration_days' => 'Duração deve ser entre 1 e 365 dias (com base nas datas).'])
+                ->withInput();
+        }
+
+        // Usa as datas como fonte da verdade para evitar inconsistência
+        $validated['duration_days'] = $durationDays;
+        $validated['start_date'] = $startDate->toDateString();
+        $validated['end_date'] = $endDate->toDateString();
 
         // Regras de visibilidade:
         // - private: team_id deve ser null
@@ -609,6 +730,8 @@ class ChallengeController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'],
             'duration_days' => $validated['duration_days'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
             'category' => $validated['category'],
             'difficulty' => $validated['difficulty'],
             // Legado (compat):
@@ -670,6 +793,8 @@ class ChallengeController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:1000'],
             'duration_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'category' => ['required', 'string', 'max:50'],
             'difficulty' => ['required', 'string', Rule::in(['beginner', 'intermediate', 'advanced'])],
             'visibility' => ['required', 'string', Rule::in([
@@ -687,6 +812,35 @@ class ChallengeController extends Controller
             'tasks.*.icon' => ['nullable', 'string', 'max:10'],
             'tasks.*.color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
+
+        // Normaliza período global do desafio
+        $startDate = ! empty($validated['start_date'])
+            ? Carbon::parse($validated['start_date'])->startOfDay()
+            : ($challenge->start_date ? Carbon::parse($challenge->start_date)->startOfDay() : now()->startOfDay());
+
+        $endDate = ! empty($validated['end_date'])
+            ? Carbon::parse($validated['end_date'])->startOfDay()
+            : ($challenge->end_date
+                ? Carbon::parse($challenge->end_date)->startOfDay()
+                : $startDate->copy()->addDays(((int) $validated['duration_days']) - 1)
+            );
+
+        if ($endDate->lt($startDate)) {
+            return redirect()->back()
+                ->withErrors(['end_date' => 'A data fim deve ser maior ou igual à data de início.'])
+                ->withInput();
+        }
+
+        $durationDays = (int) ($startDate->diffInDays($endDate) + 1);
+        if ($durationDays < 1 || $durationDays > 365) {
+            return redirect()->back()
+                ->withErrors(['duration_days' => 'Duração deve ser entre 1 e 365 dias (com base nas datas).'])
+                ->withInput();
+        }
+
+        $validated['duration_days'] = $durationDays;
+        $validated['start_date'] = $startDate->toDateString();
+        $validated['end_date'] = $endDate->toDateString();
 
         // Regras de visibilidade:
         // - private/global: team_id null
@@ -790,6 +944,8 @@ class ChallengeController extends Controller
                 'title' => $validated['title'],
                 'description' => $validated['description'],
                 'duration_days' => $validated['duration_days'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
                 'category' => $validated['category'],
                 'difficulty' => $validated['difficulty'],
                 // Legado (compat):
@@ -846,6 +1002,14 @@ class ChallengeController extends Controller
         $user = $request->user();
 
         $this->ensureChallengeVisibleToUser($user, $challenge);
+
+        // Bloqueia entrada em desafios encerrados (mantém visíveis como histórico)
+        $endDate = $challenge->end_date
+            ? Carbon::parse($challenge->end_date)->startOfDay()
+            : null;
+        if ($endDate && $endDate->lt(now()->startOfDay())) {
+            return redirect()->back()->with('error', 'Este desafio já encerrou e não aceita novas participações.');
+        }
         
         // Check if user can join
         if (!$user->canCreateChallenge()) {

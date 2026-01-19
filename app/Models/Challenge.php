@@ -25,6 +25,8 @@ class Challenge extends Model
         'title',
         'description',
         'duration_days',
+        'start_date',
+        'end_date',
         'is_template',
         'is_public', // legado: será substituído por visibility
         'visibility',
@@ -48,6 +50,8 @@ class Challenge extends Model
             'is_public' => 'boolean',
             'is_featured' => 'boolean',
             'tags' => 'array',
+            'start_date' => 'date',
+            'end_date' => 'date',
         ];
     }
 

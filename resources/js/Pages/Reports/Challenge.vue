@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+  <div class="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
     <!-- Header -->
     <DopaHeader subtitle="Relatório Detalhado" max-width="4xl" home-link="/dopa" :show-back-button="true" back-link="/reports" />
 
@@ -82,6 +82,7 @@ import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import DopaHeader from '@/components/DopaHeader.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
+import { formatUserChallengeStatus } from '@/utils/userChallengeStatus.js'
 
 const props = defineProps({
   userChallenge: Object,
@@ -92,15 +93,7 @@ useSeoMetaTags({
   title: computed(() => props.userChallenge?.challenge?.title ? `Relatório - ${props.userChallenge.challenge.title}` : 'Relatório Detalhado'),
 })
 
-const formatStatus = (status) => {
-  const statusMap = {
-    'active': 'Ativo',
-    'completed': 'Completo',
-    'paused': 'Pausado',
-    'abandoned': 'Abandonado',
-  }
-  return statusMap[status] || status
-}
+const formatStatus = (status) => formatUserChallengeStatus(status)
 
 const formatDate = (dateString) => {
   if (!dateString) return ''

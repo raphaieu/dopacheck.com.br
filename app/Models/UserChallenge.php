@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class UserChallenge extends Model
 {
@@ -45,6 +46,48 @@ class UserChallenge extends Model
             'stats' => 'array',
             'completion_rate' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Início global do desafio (base para day index).
+     * Fallback para started_at por segurança (dados legados).
+     */
+    public function getChallengeStartDate(): CarbonInterface
+    {
+        $start = $this->challenge?->start_date;
+        if ($start) {
+            return Carbon::parse($start)->startOfDay();
+        }
+
+        return $this->started_at instanceof CarbonInterface
+            ? $this->started_at->copy()->startOfDay()
+            : Carbon::parse($this->started_at)->startOfDay();
+    }
+
+    /**
+     * Fim global do desafio (base para janela válida).
+     * Fallback: start + duration - 1.
+     */
+    public function getChallengeEndDate(): CarbonInterface
+    {
+        $end = $this->challenge?->end_date;
+        if ($end) {
+            return Carbon::parse($end)->endOfDay();
+        }
+
+        $start = $this->getChallengeStartDate();
+        $duration = (int) ($this->challenge?->duration_days ?? 1);
+        $duration = max(1, $duration);
+
+        return $start->copy()->addDays($duration - 1)->endOfDay();
+    }
+
+    /**
+     * Data âncora para stats (nunca no futuro; respeita fim do desafio).
+     */
+    public function getStatsAnchorDate(): CarbonInterface
+    {
+        return now()->endOfDay()->min($this->getChallengeEndDate());
     }
 
     /**
@@ -140,7 +183,10 @@ class UserChallenge extends Model
     public function getDaysElapsedAttribute(): int
     {
         if ($this->status === 'active') {
-            return (int) ($this->started_at->diffInDays(now()) + 1);
+            $start = $this->getChallengeStartDate();
+            $anchor = $this->getStatsAnchorDate()->startOfDay();
+            $daysSinceStart = $start->diffInDays($anchor, false) + 1; // signed
+            return max(0, (int) $daysSinceStart);
         }
 
         return $this->current_day;
@@ -186,8 +232,8 @@ class UserChallenge extends Model
             return min($this->current_day, $this->challenge->duration_days);
         }
         
-        $startDate = $this->started_at->copy()->startOfDay();
-        $endDate = $startDate->copy()->addDays($this->challenge->duration_days - 1)->endOfDay();
+        $startDate = $this->getChallengeStartDate();
+        $endDate = $this->getChallengeEndDate();
         
         // Buscar todos os check-ins obrigatórios do desafio
         $allCheckins = $this->checkins()
@@ -238,14 +284,14 @@ class UserChallenge extends Model
         // Tarefas obrigatórias do desafio
         $requiredTasksCount = $this->challenge->tasks()->where('is_required', true)->count();
 
-        // Dias desde o início do desafio até hoje (ou até o fim do desafio)
-        $startDate = $this->started_at->copy()->startOfDay();
-        $today = now()->startOfDay();
-        $duration = $this->challenge->duration_days;
+        // Dias desde o início global do desafio até hoje (ou até o fim do desafio)
+        $startDate = $this->getChallengeStartDate();
+        $anchorDay = $this->getStatsAnchorDate()->startOfDay(); // min(today, end_date)
+        $duration = (int) $this->challenge->duration_days;
 
         // Calcula o número de dias válidos (não pode passar do duration_days)
-        $daysSinceStart = $startDate->diffInDays($today) + 1;
-        $validDays = min($daysSinceStart, $duration);
+        $daysSinceStart = $startDate->diffInDays($anchorDay, false) + 1; // signed
+        $validDays = max(0, min($daysSinceStart, $duration));
 
         // Check-ins esperados
         $expected = $requiredTasksCount * $validDays;
@@ -254,7 +300,7 @@ class UserChallenge extends Model
         // Considera apenas check-ins até a data de hoje para evitar contar check-ins futuros
         $actual = $this->checkins()
             ->whereIn('task_id', $this->challenge->tasks()->where('is_required', true)->pluck('id'))
-            ->whereDate('checked_at', '<=', $today)
+            ->whereDate('checked_at', '<=', $anchorDay)
             ->count();
 
         $this->completion_rate = $expected > 0 ? round(($actual / $expected) * 100, 2) : 0;
@@ -271,17 +317,22 @@ class UserChallenge extends Model
             return;
         }
 
-        // Usar copy() para não modificar o original e garantir timezone correto
-        $startDate = $this->started_at->copy()->startOfDay();
+        // Usa período global do desafio como referência
+        $startDate = $this->getChallengeStartDate();
         $today = now()->startOfDay();
-        
+        $endDay = $this->getChallengeEndDate()->startOfDay();
+        $anchorDay = $today->copy()->min($endDay); // clamp para cálculo do current_day
+
         // Calcular diferença em dias (diffInDays retorna o número de dias completos)
         // Se começou hoje, diffInDays = 0, então current_day = 1
         // Se começou ontem, diffInDays = 1, então current_day = 2
-        $daysSinceStart = $startDate->diffInDays($today) + 1;
+        $daysSinceStartClamped = $startDate->diffInDays($anchorDay, false) + 1; // signed
+        if ($daysSinceStartClamped < 1) {
+            $daysSinceStartClamped = 1; // desafio ainda não começou (start_date no futuro)
+        }
         
         // Limita ao duration_days do desafio
-        $newCurrentDay = min($daysSinceStart, $this->challenge->duration_days);
+        $newCurrentDay = min($daysSinceStartClamped, $this->challenge->duration_days);
         
         // Garante que seja pelo menos 1
         $this->current_day = max(1, $newCurrentDay);
@@ -293,7 +344,8 @@ class UserChallenge extends Model
         // (ou seja, quando já passou do último dia)
         // O método complete() verifica se completou todos os check-ins obrigatórios
         // Se sim, marca como 'completed', se não, marca como 'expired'
-        if ($daysSinceStart > $this->challenge->duration_days) {
+        $daysSinceStartReal = $startDate->diffInDays($today, false) + 1; // signed (não clamped)
+        if ($daysSinceStartReal > $this->challenge->duration_days) {
             $this->complete(); // Verifica se completou tudo, senão marca como expired
         } else {
             $this->save();
@@ -316,8 +368,8 @@ class UserChallenge extends Model
         }
         
         // Verificar se completou todos os check-ins obrigatórios para todos os dias
-        $startDate = $this->started_at->copy()->startOfDay();
-        $endDate = $startDate->copy()->addDays($this->challenge->duration_days - 1)->endOfDay();
+        $startDate = $this->getChallengeStartDate();
+        $endDate = $this->getChallengeEndDate();
         
         // Contar check-ins obrigatórios realizados
         $actualCheckins = $this->checkins()
@@ -418,10 +470,24 @@ class UserChallenge extends Model
      */
     public function addCheckin(ChallengeTask $task, array $data = []): Checkin
     {
+        // Baseia challenge_day na data real do check-in (checked_at) e no start_date global do desafio,
+        // para evitar conflitos quando existem check-ins retroativos.
+        $checkedAt = $data['checked_at'] ?? now();
+        $checkedAtCarbon = $checkedAt instanceof \Carbon\CarbonInterface
+            ? $checkedAt
+            : \Carbon\Carbon::parse($checkedAt);
+
+        $challengeStart = $this->getChallengeStartDate()->startOfDay();
+        $checkedDay = $checkedAtCarbon->copy()->startOfDay();
+        $day = (int) ($challengeStart->diffInDays($checkedDay, false) + 1);
+        $duration = (int) ($this->challenge?->duration_days ?? 1);
+        $duration = max(1, $duration);
+        $day = max(1, min($day, $duration));
+
         $checkin = $this->checkins()->create(array_merge([
             'task_id' => $task->id,
-            'challenge_day' => $this->current_day,
-            'checked_at' => now(),
+            'challenge_day' => $day,
+            'checked_at' => $checkedAtCarbon,
         ], $data));
 
         $this->updateStats();
@@ -437,19 +503,64 @@ class UserChallenge extends Model
         // Update total check-ins
         $this->total_checkins = $this->checkins()->count();
 
-        // Update current streak
+        // Streaks:
+        // - streak_days: sequência atual (terminando hoje/anchor)
+        // - best_streak: melhor sequência histórica (importante para retroativos)
         $this->streak_days = $this->calculateCurrentStreak();
-
-        // Update best streak
-        if ($this->streak_days > $this->best_streak) {
-            $this->best_streak = $this->streak_days;
-        }
+        $best = $this->calculateBestStreak();
+        $this->best_streak = max((int) $this->best_streak, (int) $best);
 
         // Update completion rate
         $this->updateCompletionRate();
 
         // Update current day
         $this->updateCurrentDay();
+    }
+
+    /**
+     * Calcula a melhor sequência (máximo) dentro da janela do desafio até o anchor.
+     * Necessário para retroativos, pois a sequência atual pode ser 0 mesmo com histórico consistente.
+     */
+    private function calculateBestStreak(): int
+    {
+        $tasksPerDay = (int) $this->challenge->tasks()->required()->count();
+        if ($tasksPerDay === 0) {
+            return 0;
+        }
+
+        $startDate = $this->getChallengeStartDate()->startOfDay();
+        $anchor = $this->getStatsAnchorDate()->startOfDay();
+
+        $checkinsByDate = $this->checkins()
+            ->whereDate('checked_at', '>=', $startDate)
+            ->whereDate('checked_at', '<=', $anchor)
+            ->selectRaw('DATE(checked_at) as check_date, COUNT(*) as check_count')
+            ->groupByRaw('DATE(checked_at)')
+            ->reorder()
+            ->get()
+            ->keyBy('check_date');
+
+        $best = 0;
+        $current = 0;
+        $date = $startDate->copy();
+
+        while ($date->lessThanOrEqualTo($anchor)) {
+            $dateString = $date->format('Y-m-d');
+            $checkinsForDay = $checkinsByDate->get($dateString)?->check_count ?? 0;
+
+            if ($checkinsForDay >= $tasksPerDay) {
+                $current++;
+                if ($current > $best) {
+                    $best = $current;
+                }
+            } else {
+                $current = 0;
+            }
+
+            $date->addDay();
+        }
+
+        return $best;
     }
 
     /**
@@ -467,9 +578,12 @@ class UserChallenge extends Model
         // Buscar todos os check-ins desde o início do desafio até hoje
         // Agrupar por data e contar quantos check-ins por dia
         // Usar reorder() para remover o orderBy padrão do relacionamento
+        $startDate = $this->getChallengeStartDate();
+        $anchor = $this->getStatsAnchorDate()->endOfDay();
+
         $checkinsByDate = $this->checkins()
-            ->whereDate('checked_at', '>=', $this->started_at->startOfDay())
-            ->whereDate('checked_at', '<=', now()->endOfDay())
+            ->whereDate('checked_at', '>=', $startDate)
+            ->whereDate('checked_at', '<=', $anchor)
             ->selectRaw('DATE(checked_at) as check_date, COUNT(*) as check_count')
             ->groupByRaw('DATE(checked_at)')
             ->reorder() // Remove qualquer orderBy padrão do relacionamento
@@ -478,13 +592,13 @@ class UserChallenge extends Model
             ->keyBy('check_date');
 
         $streak = 0;
-        $date = today();
+        $date = $anchor->copy()->startOfDay();
 
         // Iterar apenas pelos dias que têm check-ins, começando de hoje
-        while ($date->greaterThanOrEqualTo($this->started_at->toDateString())) {
-            $dayNumber = $this->started_at->diffInDays($date) + 1;
+        while ($date->greaterThanOrEqualTo($startDate->toDateString())) {
+            $dayNumber = $startDate->diffInDays($date, false) + 1;
             
-            if ($dayNumber > $this->current_day) {
+            if ($dayNumber > (int) $this->current_day) {
                 break;
             }
 

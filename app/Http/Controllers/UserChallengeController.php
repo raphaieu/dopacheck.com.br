@@ -131,14 +131,22 @@ class UserChallengeController extends Controller
         // Buscar todos os check-ins do desafio
         $checkins = $userChallenge->checkins()
             ->with('task')
-            ->orderBy('challenge_day')
             ->orderBy('checked_at')
             ->get();
+
+        // Agrupar check-ins por data real (checked_at) para suportar retroativos
+        $checkinsByDate = $checkins->groupBy(function ($checkin) {
+            return $checkin->checked_at instanceof \Carbon\Carbon
+                ? $checkin->checked_at->toDateString()
+                : \Carbon\Carbon::parse($checkin->checked_at)->toDateString();
+        });
+        $challengeStart = $userChallenge->getChallengeStartDate()->startOfDay();
         
         // Organizar progresso por dia
         $progressByDay = [];
         for ($day = 1; $day <= $currentDay; $day++) {
-            $dayCheckins = $checkins->where('challenge_day', $day);
+            $dayDate = $challengeStart->copy()->addDays($day - 1)->toDateString();
+            $dayCheckins = $checkinsByDate->get($dayDate, collect());
             $dayTasks = $tasks->map(function ($task) use ($dayCheckins) {
                 $checkin = $dayCheckins->where('task_id', $task->id)->first();
                 return [
@@ -165,8 +173,8 @@ class UserChallengeController extends Controller
             
             $progressByDay[] = [
                 'day' => $day,
-                'date' => $userChallenge->started_at->addDays($day - 1)->format('Y-m-d'),
-                'day_name' => $userChallenge->started_at->addDays($day - 1)->format('D'),
+                'date' => $dayDate,
+                'day_name' => $challengeStart->copy()->addDays($day - 1)->format('D'),
                 'tasks' => $dayTasks->values(),
                 'completed_count' => $completedCount,
                 'total_count' => $tasks->count(),
@@ -195,7 +203,7 @@ class UserChallengeController extends Controller
                 'days_remaining' => $userChallenge->days_remaining, // Usa o accessor que considera se hoje está completo
                 'status' => $userChallenge->status,
                 'started_at' => $userChallenge->started_at,
-                'expected_end_date' => $userChallenge->started_at->addDays($userChallenge->challenge->duration_days - 1)
+                'expected_end_date' => $userChallenge->getChallengeEndDate()
             ]
         ]);
     }

@@ -8,6 +8,7 @@ use App\Models\Challenge;
 use App\Models\ChallengeTask;
 use App\Models\Checkin;
 use App\Models\UserChallenge;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -39,9 +40,9 @@ class DopaController extends Controller
             ->with(['challenge.tasks'])
             ->get()
             ->filter(function ($userChallenge) {
-                $startDate = $userChallenge->started_at->copy()->startOfDay();
+                $startDate = $userChallenge->getChallengeStartDate();
                 $today = now()->startOfDay();
-                $daysSinceStart = $startDate->diffInDays($today) + 1;
+                $daysSinceStart = $startDate->diffInDays($today, false) + 1; // signed
                 // Se ainda não passou do último dia, deveria estar ativo
                 return $daysSinceStart <= $userChallenge->challenge->duration_days;
             });
@@ -119,6 +120,12 @@ class DopaController extends Controller
                     'title' => $userChallenge->challenge->title,
                     'description' => $userChallenge->challenge->description,
                     'duration_days' => $userChallenge->challenge->duration_days,
+                    'start_date' => $userChallenge->challenge->start_date
+                        ? Carbon::parse($userChallenge->challenge->start_date)->toDateString()
+                        : null,
+                    'end_date' => $userChallenge->challenge->end_date
+                        ? Carbon::parse($userChallenge->challenge->end_date)->toDateString()
+                        : null,
                     'category' => $userChallenge->challenge->category,
                     'difficulty' => $userChallenge->challenge->difficulty,
                     'image_url' => $userChallenge->challenge->image_url,
@@ -227,6 +234,7 @@ class DopaController extends Controller
     {
         $user = $request->user();
         $challengeId = $request->get('challenge_id');
+        $dateParam = $request->get('date'); // YYYY-MM-DD (opcional)
         $currentChallenge = $user->activeChallenges()->with('challenge.tasks');
         if ($challengeId) {
             $currentChallenge = $currentChallenge->where('id', $challengeId);
@@ -239,15 +247,33 @@ class DopaController extends Controller
                 'challenge' => null
             ]);
         }
+
+        $challengeStart = $currentChallenge->getChallengeStartDate()->startOfDay();
+        $challengeEnd = $currentChallenge->getChallengeEndDate()->startOfDay();
+        $maxAllowedDate = now()->startOfDay()->min($challengeEnd); // past_only + dentro do período
+
+        $targetDate = $maxAllowedDate->copy();
+        if (is_string($dateParam) && $dateParam !== '') {
+            try {
+                $parsed = Carbon::createFromFormat('Y-m-d', $dateParam)->startOfDay();
+                if ($parsed->betweenIncluded($challengeStart, $maxAllowedDate)) {
+                    $targetDate = $parsed;
+                }
+            } catch (\Throwable $e) {
+                // ignora e mantém default
+            }
+        }
+
         $currentDay = $this->calculateCurrentDay($currentChallenge);
+        $selectedDay = max(1, (int) ($challengeStart->diffInDays($targetDate, false) + 1));
         $tasks = $currentChallenge->challenge->tasks;
         $todayTasks = [];
         foreach ($tasks as $task) {
-            // Busca check-ins de hoje independentemente do challenge_day
+            // Busca check-ins da data alvo independentemente do challenge_day
             // O challenge_day pode variar se o dia mudou, mas o checked_at é sempre a data real
             $todayCheckin = Checkin::where('user_challenge_id', $currentChallenge->id)
                 ->where('task_id', $task->id)
-                ->whereDate('checked_at', today())
+                ->whereDate('checked_at', $targetDate)
                 ->whereNull('deleted_at')
                 ->first();
             $todayTasks[] = [
@@ -278,12 +304,21 @@ class DopaController extends Controller
         return response()->json([
             'tasks' => $todayTasks,
             'current_day' => $currentDay,
+            'selected_date' => $targetDate->toDateString(),
+            'selected_day' => $selectedDay,
             'challenge' => [
                 'id' => $currentChallenge->id,
                 'title' => $currentChallenge->challenge->title,
                 'total_checkins' => $currentChallenge->total_checkins,
                 'streak_days' => $currentChallenge->streak_days,
-                'completion_rate' => $currentChallenge->completion_rate
+                'completion_rate' => $currentChallenge->completion_rate,
+                'start_date' => $currentChallenge->challenge->start_date
+                    ? Carbon::parse($currentChallenge->challenge->start_date)->toDateString()
+                    : null,
+                'end_date' => $currentChallenge->challenge->end_date
+                    ? Carbon::parse($currentChallenge->challenge->end_date)->toDateString()
+                    : null,
+                'max_date' => $maxAllowedDate->toDateString(),
             ]
         ]);
     }
@@ -367,15 +402,19 @@ class DopaController extends Controller
             return min($userChallenge->current_day, $userChallenge->challenge->duration_days);
         }
         
-        $startDate = $userChallenge->started_at;
+        $startDate = $userChallenge->getChallengeStartDate();
         $today = now();
-        
+
         if ($onlyDate) {
-            $startDate = $userChallenge->started_at->startOfDay();
+            $startDate = $startDate->copy()->startOfDay();
             $today = now()->startOfDay();
         }
 
-        $diffDays = $startDate->diffInDays($today) + 1;
+        // Clamp: nunca passa do fim global do desafio
+        $endDate = $userChallenge->getChallengeEndDate();
+        $anchor = $today->copy()->min($endDate);
+
+        $diffDays = $startDate->diffInDays($anchor, false) + 1; // signed
         
         // Limita ao duration_days do desafio
         $currentDay = min($diffDays, $userChallenge->challenge->duration_days);
