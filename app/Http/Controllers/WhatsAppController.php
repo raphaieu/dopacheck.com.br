@@ -170,6 +170,17 @@ class WhatsAppController extends Controller
                     'has_image_url' => !empty($item['image_url']),
                 ]);
 
+                $len = strlen((string)$item['image_base64']);
+                $head = substr((string)$item['image_base64'], 0, 30);
+                $tail = substr((string)$item['image_base64'], -30);
+
+                Log::info('WhatsApp base64 stats', [
+                    'len' => $len,
+                    'head' => $head,
+                    'tail' => $tail,
+                    'content_length' => request()->server('CONTENT_LENGTH'),
+                ]);
+
                 // Para imagem com hashtag: processa check-in (mesmo sem base64)
                 if (($item['type'] ?? null) === 'image' && !empty($item['hashtags'])) {
                     try {
