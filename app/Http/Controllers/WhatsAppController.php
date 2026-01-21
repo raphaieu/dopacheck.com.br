@@ -139,6 +139,13 @@ class WhatsAppController extends Controller
 
         $event = $data['event'] ?? null;
         $payload = $data['data'] ?? null;
+        // Alguns ambientes/builds encapsulam o payload em "data.data"
+        if (is_array($payload) && isset($payload['data']) && is_array($payload['data'])) {
+            $inner = $payload['data'];
+            if (isset($inner['key']) || isset($inner['messages']) || isset($inner['message'])) {
+                $payload = $inner;
+            }
+        }
 
         // Exemplo para EvolutionAPI: $data['event'] == 'messages.upsert'
         if ($event === 'messages.upsert' && is_array($payload)) {
@@ -172,51 +179,59 @@ class WhatsAppController extends Controller
 
                 // Para imagem com hashtag: processa check-in (mesmo sem base64)
                 if (($item['type'] ?? null) === 'image' && !empty($item['hashtags'])) {
-                    try {
-                        $stored = null;
-                        // Se já existe check-in hoje pra essa task, evita salvar a imagem (storage)
-                        // e deixa o job apenas reagir ✅ (idempotência).
-                        $shouldSkipStorage = $this->shouldSkipStorageBecauseAlreadyCheckedIn($item);
+                    $stored = null;
+                    $storageError = null;
 
-                        if (!$shouldSkipStorage && !empty($item['image_base64'])) {
+                    // Se já existe check-in hoje pra essa task, evita salvar a imagem (storage)
+                    // e deixa o job apenas reagir ✅ (idempotência).
+                    $shouldSkipStorage = $this->shouldSkipStorageBecauseAlreadyCheckedIn($item);
+
+                    if (!$shouldSkipStorage && !empty($item['image_base64'])) {
+                        try {
                             $stored = $this->storeIncomingWhatsappImage(
                                 base64: (string) $item['image_base64'],
                                 mimeType: $item['image_mime'] ?? null,
                                 senderPhone: $item['sender_phone'] ?? 'unknown'
                             );
+                        } catch (\Throwable $e) {
+                            // Não aborta: o Job ainda consegue baixar via image_url (quando existir)
+                            $storageError = $e->getMessage();
+                            Log::warning('Falha ao persistir imagem do WhatsApp (tentando fallback por URL)', [
+                                'error' => $storageError,
+                                'remote_jid' => $item['remote_jid'] ?? null,
+                                'message_id' => $item['message_id'] ?? null,
+                                'sender_phone' => $item['sender_phone'] ?? null,
+                                'has_image_url' => !empty($item['image_url']),
+                            ]);
                         }
-
-                        ProcessWhatsappCheckinJob::dispatch([
-                            'instance' => $data['instance'] ?? null,
-                            'remote_jid' => $item['remote_jid'] ?? null,
-                            'message_id' => $item['message_id'] ?? null,
-                            'sender_phone' => $item['sender_phone'] ?? null,
-                            'participant_jid' => $item['participant_jid'] ?? null,
-                            'caption' => $item['content'] ?? null,
-                            'hashtags' => $item['hashtags'] ?? [],
-                            'has_image' => true,
-                            'image_path' => $stored['path'] ?? null,
-                            'image_mime' => $stored['mime'] ?? ($item['image_mime'] ?? null),
-                            'image_url' => $item['image_url'] ?? null,
-                        ]);
-
-                        Log::info('WhatsApp check-in job enfileirado', [
-                            'instance' => $data['instance'] ?? null,
-                            'remote_jid' => $item['remote_jid'] ?? null,
-                            'message_id' => $item['message_id'] ?? null,
-                            'sender_phone' => $item['sender_phone'] ?? null,
-                            'hashtags' => $item['hashtags'] ?? [],
-                            'has_base64' => !empty($item['image_base64']),
-                            'has_image_url' => !empty($item['image_url']),
-                        ]);
-                    } catch (\Throwable $e) {
-                        Log::error('Falha ao persistir/processar imagem do WhatsApp', [
-                            'error' => $e->getMessage(),
-                            'remote_jid' => $item['remote_jid'] ?? null,
-                            'message_id' => $item['message_id'] ?? null,
-                            'sender_phone' => $item['sender_phone'] ?? null,
-                        ]);
                     }
+
+                    ProcessWhatsappCheckinJob::dispatch([
+                        'instance' => $data['instance'] ?? null,
+                        'remote_jid' => $item['remote_jid'] ?? null,
+                        'message_id' => $item['message_id'] ?? null,
+                        'sender_phone' => $item['sender_phone'] ?? null,
+                        'participant_jid' => $item['participant_jid'] ?? null,
+                        'caption' => $item['content'] ?? null,
+                        'hashtags' => $item['hashtags'] ?? [],
+                        'has_image' => true,
+                        'image_path' => $stored['path'] ?? null,
+                        'image_mime' => $stored['mime'] ?? ($item['image_mime'] ?? null),
+                        'image_url' => $item['image_url'] ?? null,
+                        'storage_error' => $storageError,
+                    ]);
+
+                    Log::info('WhatsApp check-in job enfileirado', [
+                        'instance' => $data['instance'] ?? null,
+                        'remote_jid' => $item['remote_jid'] ?? null,
+                        'message_id' => $item['message_id'] ?? null,
+                        'sender_phone' => $item['sender_phone'] ?? null,
+                        'hashtags' => $item['hashtags'] ?? [],
+                        'has_base64' => !empty($item['image_base64']),
+                        'has_image_url' => !empty($item['image_url']),
+                        'stored_path' => $stored['path'] ?? null,
+                        'storage_error' => $storageError,
+                    ]);
 
                     continue;
                 }
@@ -298,8 +313,9 @@ class WhatsAppController extends Controller
             $participantJid = null;
             if (str_contains($remoteJid, '@g.us')) {
                 $senderCandidate = $msg['key']['participantAlt'] ?? $msg['key']['participant'] ?? null;
-                // Algumas builds mandam apenas participantAlt; para reaction em grupo precisamos do JID do autor.
-                $participantJid = $msg['key']['participant'] ?? $msg['key']['participantAlt'] ?? null;
+                // Em modo "lid", participant pode vir como *@lid e não serve para reaction.
+                // Preferimos participantAlt (ex: 55...@s.whatsapp.net) quando existir.
+                $participantJid = $msg['key']['participantAlt'] ?? $msg['key']['participant'] ?? null;
             } else {
                 $senderCandidate = $remoteJid;
             }
@@ -319,6 +335,7 @@ class WhatsAppController extends Controller
             $imageBase64 = null;
             $imageMime = null;
             $messageId = $msg['key']['id'] ?? null;
+            $imageUrl = null;
 
             $m = $msg['message'] ?? [];
             if (is_array($m)) {
@@ -334,15 +351,24 @@ class WhatsAppController extends Controller
                 elseif (isset($m['imageMessage']['caption']) && is_string($m['imageMessage']['caption'])) {
                     $type = 'image';
                     $content = $m['imageMessage']['caption'];
+                    // Algumas builds enviam base64 no root do "message" e outras no root do "msg"
                     if (isset($m['base64']) && is_string($m['base64'])) {
                         $imageBase64 = $m['base64'];
+                    } elseif (isset($msg['base64']) && is_string($msg['base64'])) {
+                        $imageBase64 = $msg['base64'];
                     }
                     if (isset($m['imageMessage']['mimetype']) && is_string($m['imageMessage']['mimetype'])) {
                         $imageMime = $m['imageMessage']['mimetype'];
                     }
-                    $imageUrl = null;
                     if (isset($m['imageMessage']['url']) && is_string($m['imageMessage']['url'])) {
                         $imageUrl = $m['imageMessage']['url'];
+                        // Se vier URL relativa, prefixa com EVOLUTION_API_URL
+                        if ($imageUrl !== '' && str_starts_with($imageUrl, '/')) {
+                            $base = rtrim((string) env('EVOLUTION_API_URL', ''), '/');
+                            if ($base !== '') {
+                                $imageUrl = $base . $imageUrl;
+                            }
+                        }
                     }
                 }
                 // Vídeo com legenda
@@ -368,7 +394,7 @@ class WhatsAppController extends Controller
                     'hashtags' => $this->extractHashtags($content),
                     'image_base64' => $imageBase64,
                     'image_mime' => $imageMime,
-                    'image_url' => $imageUrl ?? null,
+                    'image_url' => $imageUrl,
                 ];
             }
         }
@@ -399,12 +425,28 @@ class WhatsAppController extends Controller
      */
     private function storeIncomingWhatsappImage(string $base64, ?string $mimeType, string $senderPhone): array
     {
-        $raw = base64_decode($base64, true);
+        $normalized = $this->normalizeBase64($base64);
+        $raw = base64_decode($normalized, true);
         if ($raw === false) {
             throw new \RuntimeException('Base64 inválido');
         }
 
-        $ext = match ($mimeType) {
+        $detectedMime = null;
+        try {
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $detectedMime = $finfo->buffer($raw) ?: null;
+        } catch (\Throwable) {
+            $detectedMime = null;
+        }
+
+        // Se o webhook não trouxe mimetype, tenta inferir do conteúdo.
+        $effectiveMime = $mimeType ?? $detectedMime;
+        // Se o conteúdo parece não ser imagem, provavelmente veio base64 "errado" (thumb/encriptado).
+        if ($effectiveMime !== null && !in_array($effectiveMime, ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'], true)) {
+            throw new \RuntimeException('Conteúdo base64 não parece ser imagem (mime=' . $effectiveMime . ')');
+        }
+
+        $ext = match ($effectiveMime) {
             'image/jpeg', 'image/jpg' => 'jpg',
             'image/png' => 'png',
             'image/webp' => 'webp',
@@ -415,6 +457,13 @@ class WhatsAppController extends Controller
         $filename = 'whatsapp_' . ($sender !== '' ? $sender : 'unknown') . '_' . now()->format('Ymd_His') . '_' . Str::uuid() . '.' . $ext;
         $path = 'checkins/whatsapp/' . now()->format('Y-m-d') . '/' . $filename;
 
+        // Garante diretório (best-effort). Se não conseguir, o put vai falhar e vamos reportar.
+        try {
+            Storage::disk('public')->makeDirectory(\dirname($path));
+        } catch (\Throwable) {
+            // best-effort
+        }
+
         $ok = Storage::disk('public')->put($path, $raw);
         if (!$ok) {
             throw new \RuntimeException('Falha ao salvar imagem no storage');
@@ -422,8 +471,24 @@ class WhatsAppController extends Controller
 
         return [
             'path' => $path,
-            'mime' => $mimeType,
+            'mime' => $effectiveMime,
         ];
+    }
+
+    /**
+     * Normaliza base64 vindo do webhook:
+     * - remove prefixo data URI (data:image/...;base64,)
+     * - remove whitespace/line breaks
+     */
+    private function normalizeBase64(string $base64): string
+    {
+        $b64 = trim($base64);
+        if (str_starts_with($b64, 'data:') && str_contains($b64, 'base64,')) {
+            $parts = explode('base64,', $b64, 2);
+            $b64 = $parts[1] ?? $b64;
+        }
+        $b64 = preg_replace('/\s+/', '', $b64) ?? $b64;
+        return $b64;
     }
 
     /**

@@ -56,6 +56,7 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
         $hasImage = (bool) ($this->payload['has_image'] ?? false);
         $imagePath = (string) ($this->payload['image_path'] ?? '');
         $imageUrl = (string) ($this->payload['image_url'] ?? '');
+        $storageError = (string) ($this->payload['storage_error'] ?? '');
 
         $react = function (string $emoji) use ($evolution, $instance, $remoteJid, $messageId, $senderPhoneRaw, $participantJid): void {
             if ($instance === '' || $remoteJid === '' || $messageId === '') {
@@ -85,6 +86,7 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
                 'has_image' => $hasImage,
                 'has_image_path' => $imagePath !== '',
                 'has_image_url' => $imageUrl !== '',
+                'storage_error' => $storageError !== '' ? $storageError : null,
             ]);
             $react('❌');
             return;
@@ -300,8 +302,15 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
     private function downloadImageToPublicDisk(string $url, string $senderPhone): string
     {
         try {
+            $apiKey = (string) env('EVOLUTION_API_KEY', '');
+            $request = Http::timeout(25);
+            // Alguns endpoints de mídia da Evolution pedem apikey; se não precisar, não atrapalha.
+            if ($apiKey !== '') {
+                $request = $request->withHeaders(['apikey' => $apiKey]);
+            }
+
             /** @var \Illuminate\Http\Client\Response $response */
-            $response = Http::timeout(25)->get($url);
+            $response = $request->get($url);
             if (!$response->successful()) {
                 throw new \RuntimeException('Falha ao baixar imagem: HTTP ' . $response->status());
             }
@@ -311,9 +320,32 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
                 throw new \RuntimeException('Resposta vazia ao baixar imagem');
             }
 
+            // Valida que parece imagem
+            $detectedMime = null;
+            try {
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $detectedMime = $finfo->buffer($bytes) ?: null;
+            } catch (\Throwable) {
+                $detectedMime = null;
+            }
+            if ($detectedMime !== null && !in_array($detectedMime, ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'], true)) {
+                throw new \RuntimeException('Conteúdo baixado não parece imagem (mime=' . $detectedMime . ')');
+            }
+
             $sender = preg_replace('/\D/', '', $senderPhone) ?: 'unknown';
-            $filename = 'whatsapp_' . $sender . '_' . now()->format('Ymd_His') . '_' . \Illuminate\Support\Str::uuid() . '.jpg';
+            $ext = match ($detectedMime) {
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+                default => 'jpg',
+            };
+            $filename = 'whatsapp_' . $sender . '_' . now()->format('Ymd_His') . '_' . \Illuminate\Support\Str::uuid() . '.' . $ext;
             $path = 'checkins/whatsapp/' . now()->format('Y-m-d') . '/' . $filename;
+
+            try {
+                Storage::disk('public')->makeDirectory(\dirname($path));
+            } catch (\Throwable) {
+                // best-effort
+            }
 
             $ok = Storage::disk('public')->put($path, $bytes);
             if (!$ok) {
