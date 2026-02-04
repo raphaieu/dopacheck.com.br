@@ -44,26 +44,27 @@ function onlyDigits(value) {
 }
 
 function formatBrPhoneFromDigits(digits) {
-  const clean = onlyDigits(digits).slice(0, 10)
+  const clean = onlyDigits(digits).slice(0, 11)
   if (clean === '') return ''
 
   const ddd = clean.slice(0, 2)
-  const rest = clean.slice(2) // 8 dígitos
+  const rest = clean.slice(2) // 8 ou 9 dígitos (fixo ou celular)
 
   let formatted = ''
   if (ddd.length > 0) formatted += `(${ddd}`
   if (ddd.length === 2) formatted += ') '
 
-  if (rest.length > 5) formatted += `${rest.slice(0, 5)}-${rest.slice(5)}`
+  const firstBlockLen = rest.length > 8 ? 5 : 4
+  if (rest.length > firstBlockLen) formatted += `${rest.slice(0, firstBlockLen)}-${rest.slice(firstBlockLen)}`
   else formatted += rest
 
   return formatted.trim()
 }
 
 const whatsappDigits = computed({
-  get: () => onlyDigits(form.whatsapp_number).slice(0, 10),
+  get: () => onlyDigits(form.whatsapp_number).slice(0, 11),
   set: (value) => {
-    form.whatsapp_number = onlyDigits(value).slice(0, 10)
+    form.whatsapp_number = onlyDigits(value).slice(0, 11)
   },
 })
 
@@ -249,8 +250,8 @@ const showFormErrorAlert = computed(() => form.hasErrors && !flashError.value)
                     id="whatsapp_number"
                     v-model="whatsappMasked"
                     class="mt-1 w-full"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
+                    inputmode="tel"
+                    pattern="[(][0-9]{2}[)] ?[0-9]{4,5}-[0-9]{4}"
                     autocomplete="tel"
                     maxlength="15"
                     placeholder="Ex: (11) 98888-7777"
@@ -259,7 +260,7 @@ const showFormErrorAlert = computed(() => form.hasErrors && !flashError.value)
                     required
                   />
                   <p class="mt-2 text-xs text-gray-500">
-                    Dica: informe seu número com DDD (apenas números).
+                    Dica: informe seu número com DDD (a máscara é automática).
                   </p>
                   <InputError :message="form.errors.whatsapp_number" class="mt-2" />
                 </div>
