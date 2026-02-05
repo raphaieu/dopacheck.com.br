@@ -511,10 +511,9 @@ class WhatsAppController extends Controller
             $remoteJid = (string) ($item['remote_jid'] ?? '');
             $hashtags = is_array($item['hashtags'] ?? null) ? $item['hashtags'] : [];
 
-            $senderPhone = preg_replace('/\D/', '', $senderPhoneRaw) ?: '';
-            if (strlen($senderPhone) === 11 && !str_starts_with($senderPhone, '55')) {
-                $senderPhone = '55' . $senderPhone;
-            }
+            $phoneService = app(\App\Services\PhoneNumberService::class);
+            $senderPhone = $phoneService->normalize($senderPhoneRaw);
+            
             if ($senderPhone === '' || $remoteJid === '' || empty($hashtags)) {
                 return false;
             }
@@ -530,10 +529,8 @@ class WhatsAppController extends Controller
                 return false;
             }
 
-            $user = \App\Models\User::query()
-                ->where('whatsapp_number', $senderPhone)
-                ->orWhere('phone', $senderPhone)
-                ->first();
+            // Busca usando variações (com e sem o 9 após o DDD)
+            $user = $phoneService->findUserByPhone($senderPhoneRaw);
             if (!$user) {
                 return false;
             }

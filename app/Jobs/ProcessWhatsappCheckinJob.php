@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\UserChallenge;
 use App\Services\EvolutionApiService;
+use App\Services\PhoneNumberService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -93,10 +94,15 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
         }
 
         // Normaliza telefone (Brasil)
-        $senderPhone = preg_replace('/\D/', '', $senderPhoneRaw) ?: '';
-        if (strlen($senderPhone) === 11 && !str_starts_with($senderPhone, '55')) {
-            $senderPhone = '55' . $senderPhone;
-        }
+        $phoneService = app(PhoneNumberService::class);
+        $senderPhone = $phoneService->normalize($senderPhoneRaw);
+
+        // Log cirúrgico: telefone original + normalizado
+        Log::info('WhatsApp checkin: normalização de telefone', [
+            'phone_original' => $senderPhoneRaw,
+            'phone_normalized' => $senderPhone,
+            'message_id' => $messageId,
+        ]);
 
         if ($senderPhone === '') {
             $react('❌');
@@ -122,16 +128,28 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
             return;
         }
 
-        // Usuário
-        $user = User::query()
-            ->where('whatsapp_number', $senderPhone)
-            ->orWhere('phone', $senderPhone)
-            ->first();
+        // Usuário - busca usando variações (com e sem o 9 após o DDD)
+        $userResult = $phoneService->findUserByPhoneWithInfo($senderPhoneRaw);
+        $user = $userResult['user'];
+        $queryInfo = $userResult['query_info'];
+
+        // Log cirúrgico: query usada e contagem de matches
+        Log::info('WhatsApp checkin: busca de usuário', [
+            'phone_original' => $senderPhoneRaw,
+            'phone_normalized' => $senderPhone,
+            'user_matches' => $user ? 1 : 0,
+            'whatsapp_matches' => $queryInfo['whatsapp_matches'],
+            'phone_matches' => $queryInfo['phone_matches'],
+            'total_variations' => $queryInfo['total_variations'],
+            'message_id' => $messageId,
+        ]);
 
         if (!$user) {
             Log::info('WhatsApp checkin: usuário não encontrado', [
                 'sender_phone' => $senderPhone,
                 'hashtag' => $hashtag,
+                'whatsapp_matches' => $queryInfo['whatsapp_matches'],
+                'phone_matches' => $queryInfo['phone_matches'],
             ]);
             $react('❌');
             $this->safeDeleteImage($imagePath);
@@ -224,6 +242,24 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
             return;
         }
 
+        // Idempotência por message_id: se já existe check-in com esse message_id, considera sucesso
+        if ($messageId !== '') {
+            $existingByMessageId = Checkin::query()
+                ->where('whatsapp_message_id', $messageId)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if ($existingByMessageId) {
+                Log::info('WhatsApp checkin: check-in já processado (idempotência por message_id)', [
+                    'message_id' => $messageId,
+                    'user_id' => $user->id,
+                ]);
+                $react('✅');
+                $this->safeDeleteImage($imagePath);
+                return;
+            }
+        }
+
         // Idempotência: se já existe check-in hoje para essa task, considera sucesso e só reage ✅
         // Também checa por challenge_day do "hoje" (unique) para evitar crash quando existir check-in retroativo
         // que ocupe o mesmo day index.
@@ -266,13 +302,14 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
         $imageUrl = Storage::url($imagePath);
 
         try {
-            DB::transaction(function () use ($userChallenge, $task, $caption, $imagePath, $imageUrl): void {
+            DB::transaction(function () use ($userChallenge, $task, $caption, $imagePath, $imageUrl, $messageId): void {
                 // addCheckin já atualiza stats + current day
                 $userChallenge->addCheckin($task, [
                     'image_path' => $imagePath,
                     'image_url' => $imageUrl,
                     'message' => $caption !== '' ? $caption : null,
                     'source' => 'whatsapp',
+                    'whatsapp_message_id' => $messageId !== '' ? $messageId : null,
                     'status' => 'approved',
                 ]);
             });

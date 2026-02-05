@@ -25,6 +25,7 @@ class Checkin extends Model
         'image_url',
         'message',
         'source',
+        'whatsapp_message_id',
         'status',
         'ai_analysis',
         'confidence_score',
