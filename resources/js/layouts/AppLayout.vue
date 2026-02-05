@@ -13,6 +13,7 @@ import SidebarMenuItem from '@/components/ui/sidebar/SidebarMenuItem.vue'
 import SidebarProvider from '@/components/ui/sidebar/SidebarProvider.vue'
 import SidebarTrigger from '@/components/ui/sidebar/SidebarTrigger.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
+import PWAInstallButton from '@/components/PWAInstallButton.vue'
 
 const props = defineProps({
   title: String,
@@ -69,5 +70,8 @@ useSeoMetaTags({
         </main>
       </SidebarInset>
     </SidebarProvider>
+    
+    <!-- Botão de instalação do PWA -->
+    <PWAInstallButton />
   </div>
 </template>
