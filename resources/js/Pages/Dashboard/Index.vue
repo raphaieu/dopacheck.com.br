@@ -176,7 +176,7 @@
                 class="w-full sm:max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
               />
               <p class="mt-1 text-xs text-gray-500">
-                Disponível de {{ dateBounds.min }} até {{ dateBounds.max }}.
+                Disponível de {{ formatDateBR(dateBounds.min) }} até {{ formatDateBR(dateBounds.max) }}.
               </p>
             </div>
             <div class="text-sm text-gray-600 text-center sm:text-right">
@@ -335,6 +335,13 @@ const toLocalIsoDate = (dateObj) => {
 }
 
 const todayIso = () => toLocalIsoDate(new Date())
+
+/** Formata data ISO (YYYY-MM-DD) para DD/MM/AAAA (Brasil) */
+const formatDateBR = (iso) => {
+  if (!iso) return ''
+  const [y, m, d] = String(iso).split('-')
+  return `${d}/${m}/${y}`
+}
 
 const dateBounds = computed(() => {
   const ch = currentChallenge.value?.challenge

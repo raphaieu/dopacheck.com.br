@@ -366,9 +366,8 @@ const isParticipating = computed(() => !!props.userChallenge)
 const canEdit = computed(() => {
     const page = usePage()
     const userId = page?.props?.auth?.user?.id
-    return false
-    // TODO: descomentar quando decidir se realmente os desafios serão EDITÁVEIS pelo criador.
-    // return !!userId && Number(props.challenge?.created_by) === Number(userId)
+    // Só o criador pode editar e apenas desafios privados (públicos/grupo não podem ser editados)
+    return !!userId && Number(props.challenge?.created_by) === Number(userId) && props.challenge?.visibility === 'private'
 })
 
 const visibilityBadgeText = computed(() => {

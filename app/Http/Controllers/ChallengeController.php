@@ -26,9 +26,12 @@ class ChallengeController extends Controller
 {
     private function ensureChallengeEditableByUser(?\App\Models\User $user, Challenge $challenge): void
     {
-        // Segurança por obscuridade: não expõe existência.
         abort_unless($user && $challenge->created_by === $user->id, 404);
         abort_if((bool) ($challenge->is_template ?? false), 404);
+        // Apenas desafios privados podem ser editados; públicos e de grupo não.
+        if ($challenge->visibility !== Challenge::VISIBILITY_PRIVATE) {
+            abort(403, 'Desafios públicos ou de grupo não podem ser editados.');
+        }
     }
 
     private function userVisibleTeamIds(?\App\Models\User $user): array
@@ -68,7 +71,7 @@ class ChallengeController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $showPrivate = $request->boolean('show_private', false);
+        $showPrivate = $request->boolean('show_private', true);
 
         $teamIds = $user ? $this->userVisibleTeamIds($user) : [];
 
@@ -811,6 +814,7 @@ class ChallengeController extends Controller
             'tasks.*.is_required' => ['boolean'],
             'tasks.*.icon' => ['nullable', 'string', 'max:10'],
             'tasks.*.color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'confirm_reset_progress' => ['sometimes', 'boolean'],
         ]);
 
         // Normaliza período global do desafio
@@ -910,6 +914,26 @@ class ChallengeController extends Controller
             }
         }
 
+        // Alterações sensíveis: datas ou novas tasks — exigem confirmação para zerar progresso
+        $sensitiveDateChange = ($challenge->start_date?->format('Y-m-d') !== $validated['start_date'])
+            || ($challenge->end_date?->format('Y-m-d') !== $validated['end_date'])
+            || ((int) $challenge->duration_days !== (int) $validated['duration_days']);
+        $newTasksAdded = count($validated['tasks']) > count($existingTaskIds)
+            || count(array_filter($validated['tasks'], fn ($t) => empty($t['id'] ?? null))) > 0;
+        $sensitiveChanges = $sensitiveDateChange || $newTasksAdded;
+
+        $hasProgress = Checkin::query()
+            ->whereHas('userChallenge', fn ($q) => $q->where('challenge_id', $challenge->id))
+            ->exists();
+
+        if ($sensitiveChanges && $hasProgress && ! ($validated['confirm_reset_progress'] ?? false)) {
+            return redirect()->back()
+                ->withErrors([
+                    'confirm_reset_progress' => 'Alterações em data ou em tasks zeram todo o progresso (check-ins, sequência). Marque a opção de confirmação e salve novamente.',
+                ])
+                ->withInput();
+        }
+
         // Calcula o scope_team_id alvo com base na nova visibilidade
         $taskScopeTeamId = match ($validated['visibility']) {
             Challenge::VISIBILITY_TEAM => (int) ($validated['team_id'] ?? 0),
@@ -938,7 +962,25 @@ class ChallengeController extends Controller
             }
         }
 
-        DB::transaction(function () use ($challenge, $validated, $existingTaskIds, $incomingTaskIds, $removedIds, $taskScopeTeamId): void {
+        DB::transaction(function () use ($challenge, $validated, $existingTaskIds, $incomingTaskIds, $removedIds, $taskScopeTeamId, $sensitiveChanges, $hasProgress): void {
+            // Se houve alterações sensíveis e o usuário confirmou (ou não havia progresso), zera progresso para relatórios limpos
+            if ($sensitiveChanges && ($hasProgress && ($validated['confirm_reset_progress'] ?? false))) {
+                $userChallengeIds = UserChallenge::query()
+                    ->where('challenge_id', $challenge->id)
+                    ->pluck('id');
+                Checkin::query()->whereIn('user_challenge_id', $userChallengeIds)->forceDelete();
+                UserChallenge::query()
+                    ->where('challenge_id', $challenge->id)
+                    ->update([
+                        'current_day' => 1,
+                        'total_checkins' => 0,
+                        'streak_days' => 0,
+                        'best_streak' => 0,
+                        'completion_rate' => 0,
+                        'stats' => null,
+                    ]);
+            }
+
             // Atualiza challenge
             $challenge->forceFill([
                 'title' => $validated['title'],

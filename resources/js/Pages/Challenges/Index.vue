@@ -271,7 +271,7 @@ const handleFilter = () => {
         category: selectedCategory.value || undefined,
         difficulty: selectedDifficulty.value || undefined,
         sort: selectedSort.value || undefined,
-        show_private: showPrivateChallenges.value || undefined,
+        show_private: user.value ? showPrivateChallenges.value : undefined,
     }
 
     Object.keys(params).forEach(key => {
@@ -293,7 +293,7 @@ const handlePageChange = (page) => {
         category: selectedCategory.value || undefined,
         difficulty: selectedDifficulty.value || undefined,
         sort: selectedSort.value || undefined,
-        show_private: showPrivateChallenges.value || undefined,
+        show_private: user.value ? showPrivateChallenges.value : undefined,
     }
 
     router.get('/challenges', params, {

@@ -149,14 +149,14 @@
           <span class="mt-1">Perfil</span>
         </Link>
 
-        <button
-          type="button"
-          @click="handleLogout"
-          class="flex flex-col items-center justify-center rounded-lg px-2 py-2 text-xs text-gray-600 transition-colors hover:bg-gray-50"
+        <Link
+          href="/profile/settings"
+          class="flex flex-col items-center justify-center rounded-lg px-2 py-2 text-xs transition-colors"
+          :class="isActive('/profile/settings') ? 'text-gray-700 bg-gray-100' : 'text-gray-600 hover:bg-gray-50'"
         >
-          <Icon icon="lucide:log-out" class="size-5" />
-          <span class="mt-1">Sair</span>
-        </button>
+          <Icon icon="lucide:settings" class="size-5" />
+          <span class="mt-1">Config</span>
+        </Link>
       </div>
     </nav>
   </div>

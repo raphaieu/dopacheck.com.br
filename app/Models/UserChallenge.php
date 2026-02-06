@@ -210,14 +210,50 @@ class UserChallenge extends Model
 
     /**
      * Get progress percentage based on completed days (not just current_day)
-     * Calcula quantos dias foram 100% completados (todas tarefas obrigatórias)
+     * Progresso geral do desafio: quantos dias foram 100% completados.
+     * Se o desafio ainda não começou (start_date no futuro), retorna 0.
      */
     public function getProgressPercentageAttribute(): float
     {
+        $startDate = $this->getChallengeStartDate()->startOfDay();
+        $today = now()->startOfDay();
+        if ($today->lt($startDate)) {
+            return 0;
+        }
+
         $durationDays = $this->challenge->duration_days;
         $completedDays = $this->getCompletedDaysCount();
-        
         return round(($completedDays / $durationDays) * 100, 2);
+    }
+
+    /**
+     * Progresso do dia: % de tarefas obrigatórias feitas hoje (0-100).
+     * Usado no spinner da lista de relatórios. Fora do período do desafio retorna 0.
+     */
+    public function getTodayProgressPercentageAttribute(): float
+    {
+        $startDate = $this->getChallengeStartDate()->startOfDay();
+        $endDate = $this->getChallengeEndDate()->startOfDay();
+        $today = now()->startOfDay();
+        if ($today->lt($startDate) || $today->gt($endDate)) {
+            return 0;
+        }
+
+        $requiredTasks = $this->challenge->tasks()->where('is_required', true)->get();
+        if ($requiredTasks->isEmpty()) {
+            return 100; // sem obrigatórias = dia considerado completo
+        }
+
+        $requiredCount = $requiredTasks->count();
+        $doneToday = $this->checkins()
+            ->whereIn('task_id', $requiredTasks->pluck('id'))
+            ->whereDate('checked_at', $today)
+            ->whereNull('deleted_at')
+            ->pluck('task_id')
+            ->unique()
+            ->count();
+
+        return $requiredCount > 0 ? round(($doneToday / $requiredCount) * 100, 2) : 0;
     }
 
     /**
@@ -225,14 +261,21 @@ class UserChallenge extends Model
      */
     public function getCompletedDaysCount(): int
     {
-        $requiredTasksCount = $this->challenge->tasks()->where('is_required', true)->count();
-        
-        if ($requiredTasksCount === 0) {
-            // Se não há tarefas obrigatórias, considera todos os dias até current_day como completos
-            return min($this->current_day, $this->challenge->duration_days);
+        $startDate = $this->getChallengeStartDate()->startOfDay();
+        $today = now()->startOfDay();
+        if ($today->lt($startDate)) {
+            return 0;
         }
-        
-        $startDate = $this->getChallengeStartDate();
+
+        $requiredTasksCount = $this->challenge->tasks()->where('is_required', true)->count();
+        if ($requiredTasksCount === 0) {
+            $endDate = $this->getChallengeEndDate()->startOfDay();
+            $anchorDay = $today->copy()->min($endDate);
+            $daysElapsed = $startDate->diffInDays($anchorDay, false) + 1;
+            $daysElapsed = max(0, min($daysElapsed, $this->challenge->duration_days));
+            return $daysElapsed;
+        }
+
         $endDate = $this->getChallengeEndDate();
         
         // Buscar todos os check-ins obrigatórios do desafio

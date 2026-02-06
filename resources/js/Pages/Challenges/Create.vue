@@ -421,6 +421,19 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Aviso ao editar: alterações sensíveis zeram o progresso -->
+                    <div v-if="isEditMode && hasSensitiveChanges" class="mt-6 p-4 rounded-xl border-2 border-amber-200 bg-amber-50">
+                        <p class="font-semibold text-amber-800 mb-2">⚠️ Atenção</p>
+                        <p class="text-sm text-amber-800 mb-4">
+                            Você alterou a <strong>data de início/fim</strong> ou <strong>adicionou novas tasks</strong>. Ao salvar, todo o progresso já feito (check-ins, sequência de dias) será perdido e o desafio recomeçará do zero, para manter os relatórios consistentes.
+                        </p>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input v-model="confirmResetProgress" type="checkbox" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                            <span class="text-sm font-medium text-amber-900">Confirmo que entendo que todo o progresso será perdido ao salvar</span>
+                        </label>
+                        <p v-if="errors.confirm_reset_progress" class="mt-2 text-sm text-red-600">{{ errors.confirm_reset_progress }}</p>
+                    </div>
                 </div>
 
                 <!-- Navigation Buttons -->
@@ -520,6 +533,18 @@ const visibilityPreview = computed(() => {
     return `👥 Time: ${team?.name ?? 'Selecionado'}`
 })
 
+// Edição: confirmação de perda de progresso quando há alterações sensíveis
+const confirmResetProgress = ref(false)
+
+const hasSensitiveChanges = computed(() => {
+    if (!isEditMode.value || !props.challenge) return false
+    const ch = props.challenge
+    const dateChanged = form.start_date !== (ch.start_date ?? '') || form.end_date !== (ch.end_date ?? '') || Number(form.duration_days) !== Number(ch.duration_days ?? 0)
+    const originalTaskCount = Array.isArray(ch.tasks) ? ch.tasks.length : 0
+    const newTasksAdded = form.tasks.length > originalTaskCount || form.tasks.some(t => !t.id)
+    return dateChanged || newTasksAdded
+})
+
 // Computed
 const canProceed = computed(() => {
     switch (currentStep.value) {
@@ -528,6 +553,7 @@ const canProceed = computed(() => {
         case 2:
             return form.tasks.length > 0 && form.tasks.every(task => task.name && task.hashtag)
         case 3:
+            if (isEditMode.value && hasSensitiveChanges.value && !confirmResetProgress.value) return false
             return true
         default:
             return false
@@ -656,7 +682,7 @@ watch(
 
 const showServerErrorsToast = (serverErrors = {}) => {
     // Prioriza mensagens "globais" mais úteis pro usuário
-    const priorityKeys = ['message', 'tasks', 'title', 'description', 'category', 'difficulty', 'duration_days']
+    const priorityKeys = ['message', 'confirm_reset_progress', 'tasks', 'title', 'description', 'category', 'difficulty', 'duration_days']
     for (const key of priorityKeys) {
         const value = serverErrors?.[key]
         if (typeof value === 'string' && value.trim()) {
@@ -692,10 +718,14 @@ const handleSubmit = async () => {
             visibility: visibility.value,
             team_id: visibility.value === 'team' ? Number(shareScope.value) : null,
         }
+        if (isEditMode.value && hasSensitiveChanges.value) {
+            payload.confirm_reset_progress = confirmResetProgress.value
+        }
 
         // Limpa erros do server antigos relacionados à visibilidade
         delete errors.team_id
         delete errors.visibility
+        delete errors.confirm_reset_progress
 
         const url = isEditMode.value ? `/challenges/${props.challenge.id}` : '/challenges'
         const method = isEditMode.value ? 'put' : 'post'
@@ -709,11 +739,13 @@ const handleSubmit = async () => {
             onError: (serverErrors) => {
                 Object.assign(errors, serverErrors)
                 showServerErrorsToast(serverErrors)
-                // Go back to first step if there are basic info errors
+                // Go to step with error
                 if (serverErrors.title || serverErrors.description || serverErrors.category || serverErrors.difficulty) {
                     currentStep.value = 1
-                } else if (serverErrors.tasks) {
+                } else if (serverErrors.tasks && !serverErrors.confirm_reset_progress) {
                     currentStep.value = 2
+                } else if (serverErrors.confirm_reset_progress) {
+                    currentStep.value = 3
                 }
             },
             onFinish: () => {

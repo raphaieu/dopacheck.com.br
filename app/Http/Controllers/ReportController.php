@@ -42,6 +42,7 @@ class ReportController extends Controller
                     'best_streak' => $userChallenge->best_streak,
                     'completion_rate' => $userChallenge->completion_rate,
                     'progress_percentage' => $userChallenge->progress_percentage,
+                    'today_progress_percentage' => $userChallenge->today_progress_percentage,
                 ];
             });
         

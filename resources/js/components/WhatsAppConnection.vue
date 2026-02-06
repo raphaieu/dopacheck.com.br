@@ -51,19 +51,16 @@
             <p>2. Envie com a hashtag da task (ex: #leitura)</p>
             <p>3. Receba confirmação automática ✅</p>
           </div>
+          <p class="text-sm text-green-700 mt-3 pt-3 border-t border-green-200">
+            <strong>Onde enviar:</strong> Se o desafio for de <strong>grupo/comunidade</strong>, faça o check-in (foto + legenda com #hashtag) dentro do grupo. Se for <strong>desafio privado/particular</strong>, pode enviar no inbox (conversa privada) do número do bot.
+          </p>
         </div>
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-2 gap-4">
-        <div class="p-3 bg-gray-50 rounded-lg text-center">
-          <div class="text-xl font-bold text-gray-900">{{ whatsappSession.checkin_count || 0 }}</div>
-          <div class="text-xs text-gray-500">Check-ins via WhatsApp</div>
-        </div>
-        <div class="p-3 bg-gray-50 rounded-lg text-center">
-          <div class="text-xl font-bold text-gray-900">{{ whatsappSession.message_count || 0 }}</div>
-          <div class="text-xs text-gray-500">Mensagens trocadas</div>
-        </div>
+      <div class="p-3 bg-gray-50 rounded-lg text-center">
+        <div class="text-xl font-bold text-gray-900">{{ whatsappSession.checkin_count ?? 0 }}</div>
+        <div class="text-xs text-gray-500">Check-ins via WhatsApp</div>
       </div>
 
       <!-- Last Activity -->
@@ -73,7 +70,7 @@
 
       <!-- Disconnect Button -->
       <Button @click="handleDisconnect" :disabled="disconnecting" variant="destructive" size="lg"
-        class="w-full cursor-pointer hover:bg-red-700 text-gray-600 hover:shadow-md transition-all duration-200">
+        class="w-full cursor-pointer hover:bg-red-700 text-white hover:shadow-md transition-all duration-200">
         <svg v-if="disconnecting" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor"

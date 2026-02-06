@@ -49,7 +49,7 @@
                 <div class="flex flex-wrap gap-4 text-sm text-gray-600">
                   <span>{{ userChallenge.challenge.duration_days }} dias</span>
                   <span>{{ userChallenge.total_checkins }} check-ins</span>
-                  <span>{{ Math.round(userChallenge.completion_rate) }}% concluído</span>
+                  <span>{{ Math.round(userChallenge.progress_percentage) }}% do desafio</span>
                 </div>
               </div>
               <div class="flex items-center gap-3">
@@ -61,12 +61,15 @@
                 ]">
                   {{ formatStatus(userChallenge.status) }}
                 </span>
-                <ProgressRing 
-                  :progress="userChallenge.progress_percentage" 
-                  :size="50" 
-                  :stroke-width="6" 
-                  color="blue"
-                />
+                <div class="flex flex-col items-center gap-0.5">
+                  <span class="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Hoje</span>
+                  <ProgressRing 
+                    :progress="userChallenge.today_progress_percentage ?? 0" 
+                    :size="50" 
+                    :stroke-width="6" 
+                    color="blue"
+                  />
+                </div>
               </div>
             </div>
           </div>

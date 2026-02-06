@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Checkin;
 use App\Models\WhatsAppSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -101,11 +102,14 @@ class WhatsAppController extends Controller
                 'whatsapp_link' => null,
                 'last_activity' => null,
                 'stats' => [
-                    'message_count' => 0,
                     'checkin_count' => 0
                 ]
             ]);
         }
+
+        $checkinCount = Checkin::whereHas('userChallenge', fn ($q) => $q->where('user_id', $user->id))
+            ->fromWhatsapp()
+            ->count();
 
         return response()->json([
             'connected' => true,
@@ -115,16 +119,14 @@ class WhatsAppController extends Controller
                 'bot_number' => $sessionData['bot_number'] ?? null,
                 'is_active' => $sessionData['is_active'] ?? true,
                 'last_activity' => $sessionData['last_activity'] ?? null,
-                'message_count' => $sessionData['message_count'] ?? 0,
-                'checkin_count' => $sessionData['checkin_count'] ?? 0,
+                'checkin_count' => $checkinCount,
                 'connected_at' => $sessionData['connected_at'] ?? null,
             ],
             'bot_number' => $sessionData['bot_number'] ?? null,
             'whatsapp_link' => isset($sessionData['bot_number']) ? "https://wa.me/{$sessionData['bot_number']}" : null,
             'last_activity' => $sessionData['last_activity'] ?? null,
             'stats' => [
-                'message_count' => $sessionData['message_count'] ?? 0,
-                'checkin_count' => $sessionData['checkin_count'] ?? 0
+                'checkin_count' => $checkinCount
             ]
         ]);
     }

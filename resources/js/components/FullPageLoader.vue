@@ -12,8 +12,8 @@
             <div class="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
           <div class="flex-1">
-            <div class="text-base font-semibold text-gray-900">Carregando…</div>
-            <div class="text-sm text-gray-600">Aguarde um instante. Estamos preparando tudo pra você.</div>
+            <div class="text-base font-semibold text-gray-900">Carregando...</div>
+            <div class="text-sm text-gray-600">Aguarde...</div>
           </div>
         </div>
       </div>

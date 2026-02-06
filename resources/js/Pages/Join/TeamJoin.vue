@@ -280,13 +280,13 @@ const showFormErrorAlert = computed(() => form.hasErrors && !flashError.value)
                 </div>
 
                 <div>
-                  <Label for="circle_url">Link do seu perfil na Jugular (Circle) ou do seu Parinho(a)</Label>
+                  <Label for="circle_url">Link do seu perfil na Jugular (Circle) ou do seu Padrinho(a)</Label>
                   <Input
                     id="circle_url"
                     v-model="form.circle_url"
                     class="mt-1 w-full"
                     type="url"
-                    placeholder="https://.../u/seu-perfil"
+                    placeholder="https://comunidade.reservatoriodedopamina.com.br/u/..."
                     required
                   />
                   <InputError :message="form.errors.circle_url" class="mt-2" />
