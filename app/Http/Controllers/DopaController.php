@@ -392,14 +392,17 @@ class DopaController extends Controller
      */
     private function calculateCurrentDay(UserChallenge $userChallenge, $onlyDate = false): int
     {
+        $durationDays = (int) ($userChallenge->challenge?->duration_days ?? 0);
+        $durationDays = max(0, $durationDays);
+
         // Se o desafio já está completo, retorna o último dia
         if ($userChallenge->status === 'completed') {
-            return $userChallenge->challenge->duration_days;
+            return $durationDays;
         }
         
         // Se está pausado, retorna o dia atual salvo
         if ($userChallenge->status === 'paused') {
-            return min($userChallenge->current_day, $userChallenge->challenge->duration_days);
+            return min((int) $userChallenge->current_day, $durationDays);
         }
         
         $startDate = $userChallenge->getChallengeStartDate();
@@ -417,7 +420,7 @@ class DopaController extends Controller
         $diffDays = $startDate->diffInDays($anchor, false) + 1; // signed
         
         // Limita ao duration_days do desafio
-        $currentDay = min($diffDays, $userChallenge->challenge->duration_days);
+        $currentDay = min((int) $diffDays, $durationDays);
         
         // Garante que seja pelo menos 1
         return max(1, (int) $currentDay);

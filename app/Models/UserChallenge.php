@@ -167,7 +167,11 @@ class UserChallenge extends Model
             return 0;
         }
 
-        $baseRemaining = max(0, $this->challenge->duration_days - $this->current_day + 1);
+        $durationDays = (int) ($this->challenge?->duration_days ?? 0);
+        $durationDays = max(0, $durationDays);
+        $currentDay = (int) ($this->current_day ?? 0);
+
+        $baseRemaining = max(0, $durationDays - $currentDay + 1);
         
         // Se o dia atual está completo, diminui 1 dia dos restantes
         if ($this->hasCompletedToday()) {
@@ -221,7 +225,10 @@ class UserChallenge extends Model
             return 0;
         }
 
-        $durationDays = $this->challenge->duration_days;
+        $durationDays = (int) ($this->challenge?->duration_days ?? 0);
+        if ($durationDays <= 0) {
+            return 0;
+        }
         $completedDays = $this->getCompletedDaysCount();
         return round(($completedDays / $durationDays) * 100, 2);
     }
@@ -267,13 +274,19 @@ class UserChallenge extends Model
             return 0;
         }
 
+        // Blindagem: em alguns ambientes o duration_days pode vir como float (ex.: schema decimal)
+        // e min()/max() preservam o tipo do argumento retornado. Como este método retorna int,
+        // normalizamos aqui para evitar TypeError em produção.
+        $durationDays = (int) ($this->challenge?->duration_days ?? 0);
+        $durationDays = max(0, $durationDays);
+
         $requiredTasksCount = $this->challenge->tasks()->where('is_required', true)->count();
         if ($requiredTasksCount === 0) {
             $endDate = $this->getChallengeEndDate()->startOfDay();
             $anchorDay = $today->copy()->min($endDate);
             $daysElapsed = $startDate->diffInDays($anchorDay, false) + 1;
-            $daysElapsed = max(0, min($daysElapsed, $this->challenge->duration_days));
-            return $daysElapsed;
+            $daysElapsed = max(0, min((int) $daysElapsed, $durationDays));
+            return (int) $daysElapsed;
         }
 
         $endDate = $this->getChallengeEndDate();
@@ -307,7 +320,7 @@ class UserChallenge extends Model
             }
         }
         
-        return min($completedDays, $this->challenge->duration_days);
+        return min($completedDays, $durationDays);
     }
 
     /**
@@ -365,6 +378,8 @@ class UserChallenge extends Model
         $today = now()->startOfDay();
         $endDay = $this->getChallengeEndDate()->startOfDay();
         $anchorDay = $today->copy()->min($endDay); // clamp para cálculo do current_day
+        $durationDays = (int) ($this->challenge?->duration_days ?? 0);
+        $durationDays = max(0, $durationDays);
 
         // Calcular diferença em dias (diffInDays retorna o número de dias completos)
         // Se começou hoje, diffInDays = 0, então current_day = 1
@@ -375,10 +390,10 @@ class UserChallenge extends Model
         }
         
         // Limita ao duration_days do desafio
-        $newCurrentDay = min($daysSinceStartClamped, $this->challenge->duration_days);
+        $newCurrentDay = min((int) $daysSinceStartClamped, $durationDays);
         
         // Garante que seja pelo menos 1
-        $this->current_day = max(1, $newCurrentDay);
+        $this->current_day = max(1, (int) $newCurrentDay);
 
         // Check if challenge should be finalized (completed or expired)
         // O desafio só é finalizado quando JÁ PASSOU do último dia válido
@@ -388,7 +403,7 @@ class UserChallenge extends Model
         // O método complete() verifica se completou todos os check-ins obrigatórios
         // Se sim, marca como 'completed', se não, marca como 'expired'
         $daysSinceStartReal = $startDate->diffInDays($today, false) + 1; // signed (não clamped)
-        if ($daysSinceStartReal > $this->challenge->duration_days) {
+        if ($daysSinceStartReal > $durationDays) {
             $this->complete(); // Verifica se completou tudo, senão marca como expired
         } else {
             $this->save();
@@ -423,7 +438,9 @@ class UserChallenge extends Model
             ->count();
         
         // Check-ins esperados = tarefas obrigatórias × dias do desafio
-        $expectedCheckins = $requiredTasksCount * $this->challenge->duration_days;
+        $durationDays = (int) ($this->challenge?->duration_days ?? 0);
+        $durationDays = max(0, $durationDays);
+        $expectedCheckins = $requiredTasksCount * $durationDays;
         
         return $actualCheckins >= $expectedCheckins;
     }
@@ -442,7 +459,7 @@ class UserChallenge extends Model
         
         $this->status = 'completed';
         $this->completed_at = now();
-        $this->current_day = $this->challenge->duration_days;
+        $this->current_day = (int) ($this->challenge?->duration_days ?? $this->current_day);
         $this->updateCompletionRate();
         $this->save();
 
@@ -457,7 +474,7 @@ class UserChallenge extends Model
     {
         $this->status = 'expired';
         $this->completed_at = now(); // Mantém completed_at para rastreabilidade
-        $this->current_day = $this->challenge->duration_days;
+        $this->current_day = (int) ($this->challenge?->duration_days ?? $this->current_day);
         $this->updateCompletionRate();
         $this->save();
 

@@ -246,10 +246,13 @@ class UserChallengeController extends Controller
             $userChallenge->updateCurrentDay();
             $userChallenge->refresh();
         }
+
+        $durationDays = (int) ($userChallenge->challenge?->duration_days ?? 0);
+        $durationDays = max(0, $durationDays);
         
         // Se o desafio está completo, retorna o último dia
         if ($userChallenge->status === 'completed') {
-            return $userChallenge->challenge->duration_days;
+            return $durationDays;
         }
         
         // Retorna o current_day que já foi atualizado pelo updateCurrentDay()

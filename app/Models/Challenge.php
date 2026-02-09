@@ -46,6 +46,8 @@ class Challenge extends Model
     protected function casts(): array
     {
         return [
+            'duration_days' => 'integer',
+            'participant_count' => 'integer',
             'is_template' => 'boolean',
             'is_public' => 'boolean',
             'is_featured' => 'boolean',
