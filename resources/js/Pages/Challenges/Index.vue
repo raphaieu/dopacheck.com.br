@@ -1,11 +1,11 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div class="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
         <!-- Header -->
         <DopaHeaderWrapper subtitle="Desafios" max-width="7xl" />
 
         <main class="max-w-7xl mx-auto px-4 pt-8">
             <!-- Create Challenge Button -->
-            <div class="mb-6 flex justify-end">
+            <div v-if="user" class="mb-6 flex justify-end">
                 <Link href="/challenges/create"
                     class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,7 +112,7 @@
                             </svg>
                         </button>
 
-                        <button v-if="showPrivateChallenges" @click="clearFilter('private')"
+                        <button v-if="user && showPrivateChallenges" @click="clearFilter('private')"
                             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors">
                             🔒 Desafio Privado
                             <svg class="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,12 +249,12 @@ const searchQuery = ref(props.filters.search || '')
 const selectedCategory = ref(props.filters.category || '')
 const selectedDifficulty = ref(props.filters.difficulty || '')
 const selectedSort = ref(props.filters.sort || 'newest')
-const showPrivateChallenges = ref(props.filters.show_private !== undefined ? props.filters.show_private : true)
+const showPrivateChallenges = ref(user.value ? (props.filters.show_private !== undefined ? props.filters.show_private : true) : false)
 const searchTimeout = ref(null)
 
 // Computed
 const hasActiveFilters = computed(() => {
-    return selectedCategory.value || selectedDifficulty.value || searchQuery.value || showPrivateChallenges.value
+    return selectedCategory.value || selectedDifficulty.value || searchQuery.value || (user.value && showPrivateChallenges.value)
 })
 
 // Methods
@@ -313,7 +313,7 @@ const clearFilter = (filterType) => {
             searchQuery.value = ''
             break
         case 'private':
-            showPrivateChallenges.value = true
+            showPrivateChallenges.value = false
             break
     }
     handleFilter()
@@ -324,7 +324,7 @@ const clearAllFilters = () => {
     selectedCategory.value = ''
     selectedDifficulty.value = ''
     selectedSort.value = 'newest'
-    showPrivateChallenges.value = true
+    showPrivateChallenges.value = !!user.value
     handleFilter()
 }
 
@@ -365,7 +365,7 @@ watch(() => props.filters, (newFilters) => {
     selectedCategory.value = newFilters.category || ''
     selectedDifficulty.value = newFilters.difficulty || ''
     selectedSort.value = newFilters.sort || 'newest'
-    showPrivateChallenges.value = newFilters.show_private !== undefined ? newFilters.show_private : true
+    showPrivateChallenges.value = user.value ? (newFilters.show_private !== undefined ? newFilters.show_private : true) : false
 }, { immediate: true })
 </script>
 

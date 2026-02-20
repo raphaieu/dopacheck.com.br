@@ -43,6 +43,7 @@ Route::get('/health', function () {
 // PUBLIC ROUTES
 // ========================================
 Route::get('/', [WelcomeController::class, 'home'])->name('home');
+Route::get('/sobre', [WelcomeController::class, 'about'])->name('about');
 
 // ========================================
 // PUBLIC TEAM ONBOARDING (Join by slug)

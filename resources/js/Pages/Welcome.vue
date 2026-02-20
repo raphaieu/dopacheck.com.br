@@ -1,23 +1,18 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
-import FeaturesCard from '@/components/FeaturesCard.vue'
+import { Icon } from '@iconify/vue'
 import Accordion from '@/components/ui/accordion/Accordion.vue'
 import AccordionContent from '@/components/ui/accordion/AccordionContent.vue'
 import AccordionItem from '@/components/ui/accordion/AccordionItem.vue'
 import AccordionTrigger from '@/components/ui/accordion/AccordionTrigger.vue'
-import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 import WebLayout from '@/layouts/WebLayout.vue'
 
 const props = defineProps({
-  canLogin: {
-    type: Boolean,
-  },
-  canRegister: {
-    type: Boolean,
-  },
+  canLogin: { type: Boolean },
+  canRegister: { type: Boolean },
   stats: {
     type: Object,
     default: () => ({
@@ -40,429 +35,556 @@ const isLoggedIn = computed(() => !!page.props.auth?.user)
 const registerHref = computed(() => (isLoggedIn.value ? '/dopa' : route('register')))
 const proCtaHref = computed(() => (isLoggedIn.value ? route('subscriptions.create') : route('register')))
 
-const features = [
-  {
-    icon: '🎯',
-    title: 'Desafios que viram rotina',
-    description: 'Crie seu desafio (ou entre em um) e transforme intenção em hábito com metas simples e claras.',
-  },
-  {
-    icon: '✅',
-    title: 'Check-in em segundos',
-    description: 'Registre seu progresso diariamente sem fricção - rápido, simples e direto ao ponto.',
-  },
-  {
-    icon: '🔥',
-    title: 'Streak que motiva',
-    description: 'Acompanhe sua sequência e mantenha consistência. Um dia de cada vez, com foco no longo prazo.',
-  },
-  {
-    icon: '📊',
-    title: 'Evolução visível',
-    description: 'Dashboard com taxa de conclusão, histórico e progresso do desafio. Saiba exatamente onde você está.',
-  },
-  {
-    icon: '🌎',
-    title: 'Perfil público compartilhável',
-    description: 'Mostre sua jornada (se quiser). Um perfil público para inspirar e criar compromisso.',
-  },
-  {
-    icon: '🏆',
-    title: 'Desafios em comunidade',
-    description: 'Entre em desafios, veja participantes e ganhe motivação extra com o efeito “vamos juntos”.',
-  },
+const avatars = [
+  { initials: 'A', color: 'bg-violet-500' },
+  { initials: 'C', color: 'bg-emerald-500' },
+  { initials: 'M', color: 'bg-amber-500' },
+  { initials: 'R', color: 'bg-blue-500' },
+  { initials: 'L', color: 'bg-rose-500' },
 ]
 
-const pricingFeatures = [
+const flowSteps = [
+  { icon: 'lucide:camera', title: 'Participante envia foto', description: 'Com a #hashtag da tarefa, no grupo. Como já faz.' },
+  { icon: 'lucide:bot', title: 'Sistema reconhece', description: 'Identifica grupo, hashtag e participante.' },
+  { icon: 'lucide:circle-check-big', title: 'Check-in registrado', description: 'Progresso atualizado. Confirmação no grupo.' },
+  { icon: 'lucide:bar-chart-3', title: 'Dashboard atualizado', description: 'Streak e evolução individual e coletiva.' },
+]
+
+const structureReasons = [
+  { icon: 'lucide:eye', text: 'Visibilidade gera comprometimento' },
+  { icon: 'lucide:activity', text: 'Acompanhamento coletivo em tempo real' },
+  { icon: 'lucide:gauge', text: 'Consistência vira cultura quando é mensurável' },
+  { icon: 'lucide:users', text: 'Progresso individual visível para o grupo' },
+]
+
+const freeFeatures = [
   '1 desafio ativo',
-  'Check-ins manuais',
-  'Histórico de 90 dias',
+  'Check-in via WhatsApp',
   'Dashboard básico',
-  'Perfil público básico',
-  'Suporte por email',
+  'Histórico de 90 dias',
 ]
 
 const proFeatures = [
   'Desafios ilimitados',
-  'Check-ins ilimitados',
+  'Check-ins via WhatsApp',
+  'Dashboard completo',
   'Histórico completo',
-  'Dashboard avançado',
-  'Perfil público completo',
   'Relatórios e exportação',
+  'Perfil público completo',
   'Suporte prioritário',
-  'Acesso antecipado a novidades',
 ]
 
 const faqItems = [
   {
     value: 'item-1',
-    title: 'O que é um desafio no DOPA Check?',
-    content: 'É uma meta com duração e rotina (ex: “21 dias de leitura”). Você faz check-in diariamente e acompanha sua evolução no dashboard.',
+    title: 'Como funciona no WhatsApp?',
+    content: 'O bot é adicionado ao grupo. Participantes enviam foto com a #hashtag da tarefa. O sistema identifica, registra e confirma — tudo automático.',
   },
   {
     value: 'item-2',
-    title: 'Posso cancelar o PRO quando quiser?',
-    content: 'Sim. Você pode cancelar a assinatura a qualquer momento e continuar usando o plano gratuito.',
+    title: 'Preciso instalar algum aplicativo?',
+    content: 'Não. A interação acontece no WhatsApp. O dashboard de gestão e acompanhamento fica na web.',
   },
   {
     value: 'item-3',
-    title: 'Posso criar meus próprios desafios?',
-    content: 'Claro! Você pode criar desafios personalizados ou participar dos templates oficiais. Compartilhe com amigos e construa sua comunidade de hábitos saudáveis.',
+    title: 'Funciona sem grupo?',
+    content: 'Sim. O mesmo fluxo opera no privado com o bot. Para tracking individual, funciona da mesma forma.',
   },
   {
     value: 'item-4',
-    title: 'O que acontece se eu perder um dia?',
-    content: 'Não tem problema! O sistema calcula sua taxa de conclusão e você pode retomar a qualquer momento. O importante é a consistência, não a perfeição.',
+    title: 'Posso cancelar o plano PRO?',
+    content: 'A qualquer momento. Sem fidelidade.',
   },
 ]
 
-const billingCycle = ref('monthly') // 'monthly' | 'yearly'
+const billingCycle = ref('monthly')
 const proMonthlyPrice = 11.9
 const proYearlyPrice = 99
 
-const formatBRL = (value) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+const formatBRL = (v) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
 
 const proPrice = computed(() => (billingCycle.value === 'monthly' ? proMonthlyPrice : proYearlyPrice))
-const proPeriodLabel = computed(() => (billingCycle.value === 'monthly' ? 'por mês' : 'por ano'))
+const proPeriodLabel = computed(() => (billingCycle.value === 'monthly' ? '/mês' : '/ano'))
 const yearlySavings = computed(() => (proMonthlyPrice * 12) - proYearlyPrice)
 const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
-
-// Formatar números para exibição
-const formatNumber = (num) => {
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k'
-  }
-  return num.toString()
-}
-
-// Estatísticas calculadas a partir dos dados do backend
-const stats = computed(() => [
-  { 
-    number: `${props.stats.completion_rate}%`, 
-    label: 'Taxa de conclusão' 
-  },
-  { 
-    number: formatNumber(props.stats.total_checkins), 
-    label: 'Check-ins processados' 
-  },
-  { 
-    number: formatNumber(props.stats.total_users), 
-    label: 'Usuários ativos' 
-  },
-  { 
-    number: `${props.stats.total_challenges}+`, 
-    label: 'Desafios criados' 
-  },
-])
-
-const testimonials = [
-  {
-    name: 'Ana Silva',
-    role: 'Desenvolvedora',
-    content: 'Finalmente consegui manter consistência na leitura! O WhatsApp é genial, não preciso de mais um app.',
-    avatar: '👩‍💻',
-  },
-  {
-    name: 'Carlos Santos',
-    role: 'Personal Trainer',
-    content: 'Uso para acompanhar meus clientes. A IA analisa as fotos dos treinos automaticamente. Incrível!',
-    avatar: '💪',
-  },
-  {
-    name: 'Marina Costa',
-    role: 'Estudante',
-    content: '21 dias de meditação completados! A comunidade me manteve motivada até o final.',
-    avatar: '🧘',
-  },
-]
 </script>
 
 <template>
   <WebLayout :can-login="canLogin" :can-register="canRegister">
-    <!-- Hero Section -->
-    <section class="relative overflow-hidden border-b bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20 sm:py-32">
-      <div class="container mx-auto px-4 text-center">
-        <!-- Badge -->
-        <div class="mb-8 inline-flex justify-center">
-          <Badge variant="outline" class="rounded-full border bg-blue-100 px-4 py-1 text-xs sm:text-sm">
-            ✨ Desafios + check-ins + streak = consistência de verdade
-          </Badge>
-        </div>
 
-        <!-- Main Heading -->
-        <div class="mx-auto max-w-4xl">
-          <h1
-            class="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
-            :style="{ contain: 'layout paint' }"
-          >
-            <span class="block text-gray-900">Transforme seus</span>
-            <span
-              class="mt-2 block bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent"
+    <!-- ===== HERO ===== -->
+    <section class="relative overflow-hidden py-24 md:py-32">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="lg:grid lg:grid-cols-12 lg:items-center lg:gap-16">
+
+          <div class="lg:col-span-6">
+            <div
+              class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-[13px] font-medium text-emerald-700"
             >
-              hábitos em conquistas
-            </span>
-          </h1>
-        </div>
-
-        <!-- Subtitle -->
-        <p
-          class="mx-auto mt-6 max-w-2xl text-center text-base text-gray-600 sm:text-lg md:text-xl"
-          :style="{ contain: 'layout paint' }"
-          fetchpriority="high"
-        >
-          Crie desafios, faça check-in em segundos e acompanhe sua evolução com streak e dashboard.
-          Um jeito simples (e gostoso) de manter constância.
-        </p>
-
-        <div class="mx-auto mt-8 max-w-2xl">
-          <ul class="grid gap-3 text-left text-sm text-gray-700 sm:grid-cols-3">
-            <li class="flex items-start gap-2">
-              <span class="mt-0.5">✅</span>
-              <span>Check-in rápido e sem complicação</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="mt-0.5">🔥</span>
-              <span>Streak e motivação todos os dias</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="mt-0.5">🌎</span>
-              <span>Perfil público para compartilhar (opcional)</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- CTA Buttons -->
-        <div class="mt-10 flex items-center justify-center gap-4 flex-col sm:flex-row">
-          <Button
-            :as="Link" :href="registerHref" size="lg"
-            class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Começar Gratuitamente
-          </Button>
-          <Button
-            :as="Link" :href="route('challenges.index')" size="lg" variant="outline"
-            class="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Ver Desafios
-          </Button>
-        </div>
-
-        <!-- Stats -->
-        <div class="mt-16 grid grid-cols-2 gap-8 sm:grid-cols-4">
-          <div v-for="stat in stats" :key="stat.label" class="text-center">
-            <div class="text-2xl font-bold text-blue-600 sm:text-3xl">{{ stat.number }}</div>
-            <div class="text-sm text-gray-600">{{ stat.label }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Background Effects -->
-      <div
-        class="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]"
-      />
-      <div
-        class="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-blue-500/20 opacity-20 blur-[100px]"
-      />
-    </section>
-
-    <!-- How It Works Section -->
-    <section class="py-16 bg-white">
-      <div class="container mx-auto px-4">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">Como funciona em 30 segundos</h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            Sem planilha, sem fricção. É só escolher um desafio e fazer check-in todo dia.
-          </p>
-        </div>
-
-        <div class="grid md:grid-cols-4 gap-8">
-          <div class="text-center">
-            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="text-2xl">1️⃣</span>
+              <Icon icon="lucide:message-circle" class="h-3.5 w-3.5" />
+              Infraestrutura de disciplina via WhatsApp
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Escolha um desafio</h3>
-            <p class="text-gray-600 text-sm">21 dias de leitura, 30 dias de treino ou crie o seu</p>
-          </div>
-          
-          <div class="text-center">
-            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="text-2xl">2️⃣</span>
-            </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Faça o check-in</h3>
-            <p class="text-gray-600 text-sm">Registre seu progresso em segundos e siga a rotina</p>
-          </div>
-          
-          <div class="text-center">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="text-2xl">3️⃣</span>
-            </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Veja sua evolução</h3>
-            <p class="text-gray-600 text-sm">Streak, taxa de conclusão e histórico sempre à mão</p>
-          </div>
-          
-          <div class="text-center">
-            <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="text-2xl">4️⃣</span>
-            </div>
-            <h3 class="font-semibold text-gray-900 mb-2">Compartilhe (opcional)</h3>
-            <p class="text-gray-600 text-sm">Deixe público para ganhar motivação e compromisso</p>
-          </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- Features Grid -->
-    <section id="features" class="container mx-auto px-4 py-16 sm:px-6 lg:px-8 bg-gray-50">
-      <h2 class="text-center text-2xl font-bold tracking-tight sm:text-4xl text-gray-900">
-        Por que escolher o DOPA Check? ✨
-      </h2>
-      <p class="mx-auto mt-4 max-w-2xl text-center text-gray-600">
-        Combinação única de simplicidade, tecnologia e comunidade para transformar seus hábitos.
-      </p>
+            <h1 class="mt-8 text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-6xl">
+              Seu grupo já tem disciplina.
+              <br>
+              Agora ela tem
+              <span class="text-violet-600">estrutura</span>.
+            </h1>
 
-      <div class="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        <FeaturesCard
-          v-for="feature in features" :key="feature.title" :icon="feature.icon"
-          :title="feature.title" :description="feature.description"
-        />
-      </div>
-    </section>
+            <p class="mt-6 max-w-lg text-lg leading-relaxed text-slate-700">
+              Seu grupo já posta foto. Já usa hashtag. Já cobra presença.
+              O DOPA Check transforma isso em progresso visível
+              — direto pelo WhatsApp, sem fricção.
+            </p>
 
-    <!-- Testimonials -->
-    <section class="py-16 bg-white">
-      <div class="container mx-auto px-4">
-        <h2 class="text-center text-3xl font-bold text-gray-900 mb-12">O que nossos usuários dizem</h2>
-        
-        <div class="grid md:grid-cols-3 gap-8">
-          <div v-for="testimonial in testimonials" :key="testimonial.name" 
-               class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-            <div class="flex items-center mb-4">
-              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                <span class="text-xl">{{ testimonial.avatar }}</span>
-              </div>
-              <div>
-                <h4 class="font-semibold text-gray-900">{{ testimonial.name }}</h4>
-                <p class="text-sm text-gray-600">{{ testimonial.role }}</p>
-              </div>
-            </div>
-            <p class="text-gray-700">{{ testimonial.content }}</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="border-t bg-gray-50">
-      <div class="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mx-auto max-w-3xl text-center">
-          <h2 class="text-center text-2xl font-bold tracking-tight sm:text-4xl text-gray-900">
-            Escolha seu plano 🚀
-          </h2>
-          <p class="mx-auto mt-4 max-w-2xl text-center text-gray-600">
-            Comece grátis e evolua conforme suas necessidades. Sem surpresas, sem contratos longos.
-          </p>
-        </div>
-
-        <div class="mt-16 grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <!-- Free Plan -->
-          <div class="bg-white rounded-2xl p-8 border border-gray-200">
-            <div class="text-center mb-8">
-              <h3 class="text-2xl font-bold text-gray-900 mb-2">Gratuito</h3>
-              <div class="text-4xl font-bold text-gray-900 mb-2">R$ 0</div>
-              <p class="text-gray-600">Para sempre</p>
-            </div>
-            
-            <ul class="space-y-4 mb-8">
-              <li v-for="feature in pricingFeatures" :key="feature" class="flex items-center">
-                <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-                {{ feature }}
-              </li>
-            </ul>
-            
-            <Button :as="Link" :href="registerHref" class="w-full  bg-blue-600 hover:bg-blue-700">
-              Começar Grátis
-            </Button>
-          </div>
-
-          <!-- Pro Plan -->
-          <div class="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white relative">
-            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-              <Badge class="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-medium">
-                Mais Popular
-              </Badge>
-            </div>
-            
-            <div class="text-center mb-8">
-              <h3 class="text-2xl font-bold mb-2">PRO</h3>
-              <div class="mx-auto mt-4 inline-flex rounded-full bg-white/10 p-1 text-sm">
-                <button
-                  type="button"
-                  class="rounded-full px-4 py-2 transition"
-                  :class="billingCycle === 'monthly' ? 'bg-white text-blue-700' : 'text-white/90 hover:text-white'"
-                  @click="billingCycle = 'monthly'"
+            <div class="mt-8 flex items-center gap-3">
+              <div class="flex -space-x-2">
+                <div
+                  v-for="a in avatars"
+                  :key="a.initials"
+                  class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white text-xs font-bold text-white"
+                  :class="a.color"
                 >
-                  Mensal
-                </button>
-                <button
-                  type="button"
-                  class="rounded-full px-4 py-2 transition"
-                  :class="billingCycle === 'yearly' ? 'bg-white text-blue-700' : 'text-white/90 hover:text-white'"
-                  @click="billingCycle = 'yearly'"
-                >
-                  Anual
-                  <span class="ml-2 rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-semibold text-yellow-900">
-                    economize
-                  </span>
-                </button>
-              </div>
-
-              <div class="mt-6">
-                <div class="text-4xl font-bold leading-none">
-                  {{ formatBRL(proPrice) }}
+                  {{ a.initials }}
                 </div>
-                <p class="mt-2 text-blue-100">
-                  {{ proPeriodLabel }}
-                </p>
-                <p v-if="billingCycle === 'yearly'" class="mt-3 text-sm text-blue-100">
-                  Economize {{ formatBRL(yearlySavings) }} no ano (equivale a {{ formatBRL(yearlyEquivalentMonthly) }}/mês).
-                </p>
+              </div>
+              <p class="text-sm text-slate-600">
+                Comunidades em beta ativo
+              </p>
+            </div>
+
+            <div class="mt-10 flex flex-wrap items-center gap-4">
+              <Button
+                :as="Link"
+                :href="registerHref"
+                size="lg"
+                class="rounded-xl bg-violet-600 px-7 text-white shadow-[0_20px_60px_-15px_rgba(124,58,237,0.35)] transition-all duration-200 hover:bg-violet-700 hover:shadow-[0_20px_60px_-15px_rgba(124,58,237,0.5)]"
+              >
+                Criar desafio para meu grupo
+                <Icon icon="lucide:arrow-right" class="ml-1 h-4 w-4" />
+              </Button>
+
+              <a
+                href="#como-funciona"
+                class="text-sm font-medium text-slate-600 transition-colors hover:text-violet-600"
+              >
+                Entenda o fluxo →
+              </a>
+            </div>
+
+            <p class="mt-4 text-sm text-slate-500">
+              Beta aberto. Gratuito por enquanto.
+            </p>
+          </div>
+
+          <!-- WhatsApp Group Mock -->
+          <div class="mt-16 lg:col-span-6 lg:mt-0">
+            <div class="relative mx-auto max-w-sm lg:max-w-none">
+              <div class="absolute -inset-6 rounded-4xl bg-emerald-500/6 blur-3xl" />
+
+              <div
+                class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)]"
+              >
+                <div class="flex items-center gap-3 bg-emerald-700 px-4 py-3">
+                  <Icon icon="lucide:arrow-left" class="h-5 w-5 text-white/60" />
+                  <div class="flex -space-x-1.5">
+                    <div
+                      v-for="a in avatars.slice(0, 3)"
+                      :key="a.initials"
+                      class="flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] border-emerald-700 text-[9px] font-bold text-white"
+                      :class="a.color"
+                    >
+                      {{ a.initials }}
+                    </div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-white">Disciplina 6AM</p>
+                    <p class="text-[11px] text-emerald-200">12 participantes</p>
+                  </div>
+                </div>
+
+                <div class="space-y-3 bg-[#f0f2f5] p-4">
+                  <div>
+                    <p class="mb-1 text-[11px] font-semibold text-violet-600">Ana</p>
+                    <div class="inline-block max-w-[85%] rounded-lg rounded-tl-sm bg-white p-2.5 shadow-sm">
+                      <div
+                        class="flex h-28 w-44 items-center justify-center rounded bg-slate-100"
+                      >
+                        <Icon icon="lucide:image" class="h-8 w-8 text-slate-300" />
+                      </div>
+                      <div class="mt-1.5 flex items-end justify-between gap-6">
+                        <span class="text-sm text-slate-800">#gymtime</span>
+                        <span class="text-[10px] text-slate-400">9:14</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p class="mb-1 text-[11px] font-semibold text-emerald-700">🧠 DOPA Check</p>
+                    <div class="inline-block max-w-[85%] rounded-lg rounded-tl-sm bg-emerald-50 p-2.5 shadow-sm">
+                      <p class="text-[13px] leading-relaxed text-slate-800">
+                        ✅ Check-in:
+                        <span class="font-semibold">Ana</span>
+                        <br>
+                        🔥 Streak:
+                        <span class="font-semibold text-amber-600">14 dias</span>
+                        <br>
+                        📊 Dia 14 de 21 · 67%
+                      </p>
+                      <p class="mt-1 text-right text-[10px] text-slate-400">9:14</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p class="mb-1 text-[11px] font-semibold text-blue-600">Carlos</p>
+                    <div class="inline-block max-w-[85%] rounded-lg rounded-tl-sm bg-white p-2.5 shadow-sm">
+                      <div
+                        class="flex h-28 w-44 items-center justify-center rounded bg-slate-100"
+                      >
+                        <Icon icon="lucide:image" class="h-8 w-8 text-slate-300" />
+                      </div>
+                      <div class="mt-1.5 flex items-end justify-between gap-6">
+                        <span class="text-sm text-slate-800">#gymtime</span>
+                        <span class="text-[10px] text-slate-400">9:18</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-100 bg-white px-4 py-2.5">
+                  <div class="flex -space-x-1.5">
+                    <div
+                      v-for="a in avatars.slice(0, 4)"
+                      :key="a.initials"
+                      class="flex h-5 w-5 items-center justify-center rounded-full border-[1.5px] border-white text-[8px] font-bold text-white"
+                      :class="a.color"
+                    >
+                      {{ a.initials }}
+                    </div>
+                  </div>
+                  <span class="text-[11px] text-slate-500">5 de 12 check-ins hoje</span>
+                </div>
               </div>
             </div>
-            
-            <ul class="space-y-4 mb-8">
-              <li v-for="feature in proFeatures" :key="feature" class="flex items-center">
-                <svg class="w-5 h-5 text-green-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-                {{ feature }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== COMO FUNCIONA ===== -->
+    <section id="como-funciona" class="border-t border-slate-100 bg-slate-50/60 py-20">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-[13px] font-semibold uppercase tracking-widest text-emerald-600">
+            Como funciona
+          </p>
+          <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Nada muda na rotina do grupo.
+          </h2>
+          <p class="mt-3 text-lg text-slate-600">
+            A disciplina já existe. O DOPA Check só organiza.
+          </p>
+        </div>
+
+        <div class="mx-auto mt-16 max-w-3xl">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-0">
+            <template v-for="(step, i) in flowSteps" :key="i">
+              <div
+                v-if="i > 0"
+                class="flex items-center justify-center py-1 sm:px-3 sm:py-0 sm:pt-5"
+              >
+                <Icon icon="lucide:chevron-down" class="h-4 w-4 text-slate-300 sm:hidden" />
+                <Icon icon="lucide:chevron-right" class="hidden h-4 w-4 text-slate-300 sm:block" />
+              </div>
+
+              <div class="flex-1 text-center">
+                <div
+                  class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"
+                >
+                  <Icon :icon="step.icon" class="h-5 w-5" />
+                </div>
+                <p class="mt-3 text-sm font-semibold text-slate-900">{{ step.title }}</p>
+                <p class="mt-1 text-[13px] leading-relaxed text-slate-600">{{ step.description }}</p>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <p class="mx-auto mt-14 max-w-2xl text-center text-sm leading-relaxed text-slate-600">
+          O bot opera dentro do grupo. Funciona para qualquer comunidade
+          — fitness, estudo, fé, trabalho, família.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== POR QUE FUNCIONA ===== -->
+    <section class="py-20">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="items-center gap-16 lg:grid lg:grid-cols-2">
+          <div>
+            <p class="text-[13px] font-semibold uppercase tracking-widest text-violet-600">
+              Por que funciona
+            </p>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              Disciplina não escala sozinha.
+              <br>
+              <span class="text-violet-600">Estrutura</span> sim.
+            </h2>
+          </div>
+
+          <div class="mt-10 space-y-6 lg:mt-0">
+            <div
+              v-for="reason in structureReasons"
+              :key="reason.text"
+              class="flex items-start gap-4"
+            >
+              <div
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"
+              >
+                <Icon :icon="reason.icon" class="h-5 w-5" />
+              </div>
+              <p class="pt-2 text-lg text-slate-700">{{ reason.text }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SOCIAL PROOF ===== -->
+    <section class="border-t border-slate-100 bg-slate-50/60 py-20">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="grid gap-6 sm:grid-cols-3">
+          <div class="rounded-2xl border border-slate-100 bg-white p-6">
+            <div class="flex items-center gap-2">
+              <span class="relative flex h-2 w-2">
+                <span
+                  class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+                />
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              <span class="text-xs font-medium text-emerald-600">Agora</span>
+            </div>
+            <p class="mt-4 text-lg font-semibold text-slate-900">
+              Comunidades organizadas.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-slate-100 bg-white p-6">
+            <div class="flex -space-x-1.5">
+              <div
+                v-for="a in avatars"
+                :key="a.initials"
+                class="flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] border-white text-[9px] font-bold text-white"
+                :class="a.color"
+              >
+                {{ a.initials }}
+              </div>
+            </div>
+            <p class="mt-4 text-lg font-semibold text-slate-900">
+              Progresso coletivo visível.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-slate-100 bg-white p-6">
+            <Icon icon="lucide:trending-up" class="h-5 w-5 text-violet-500" />
+            <p class="mt-4 text-lg font-semibold text-slate-900">
+              Sem overhead operacional.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PRIVADO ===== -->
+    <section class="py-20">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="mx-auto max-w-2xl">
+          <div class="flex items-start gap-4">
+            <div
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500"
+            >
+              <Icon icon="lucide:user" class="h-5 w-5" />
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold tracking-tight text-slate-900">
+                Funciona no privado também.
+              </h2>
+              <p class="mt-3 leading-relaxed text-slate-700">
+                Mesmo fluxo. Mesma automação.
+                Foto&nbsp;+&nbsp;#hashtag direto para o bot.
+                Dashboard pessoal com streak e histórico.
+              </p>
+              <p class="mt-3 text-sm font-medium text-slate-500">
+                Para tracking individual sem grupo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PRICING ===== -->
+    <section id="pricing" class="border-t border-slate-100 bg-slate-50/60 py-20">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-[13px] font-semibold uppercase tracking-widest text-violet-600">
+            Planos
+          </p>
+          <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Um plano para cada estágio da sua comunidade.
+          </h2>
+        </div>
+
+        <div class="mt-10 flex justify-center">
+          <div class="inline-flex items-center rounded-full border border-slate-200 bg-white p-1">
+            <button
+              type="button"
+              class="rounded-full px-5 py-2 text-sm font-medium transition-all"
+              :class="
+                billingCycle === 'monthly'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              "
+              @click="billingCycle = 'monthly'"
+            >
+              Mensal
+            </button>
+            <button
+              type="button"
+              class="rounded-full px-5 py-2 text-sm font-medium transition-all"
+              :class="
+                billingCycle === 'yearly'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              "
+              @click="billingCycle = 'yearly'"
+            >
+              Anual
+              <span class="ml-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                −30%
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mx-auto mt-12 grid max-w-4xl gap-8 sm:grid-cols-2">
+          <div
+            class="rounded-2xl border border-slate-200 bg-white p-8 transition-shadow hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)]"
+          >
+            <h3 class="text-lg font-semibold text-slate-900">Gratuito</h3>
+            <p class="mt-1 text-sm text-slate-500">Para validar com seu grupo.</p>
+
+            <div class="mt-6 flex items-baseline gap-1">
+              <span class="text-4xl font-bold tracking-tight text-slate-900">R$&nbsp;0</span>
+              <span class="text-sm text-slate-500">para sempre</span>
+            </div>
+
+            <Button
+              :as="Link"
+              :href="registerHref"
+              variant="outline"
+              class="mt-8 w-full rounded-xl border-slate-200 text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+            >
+              Começar grátis
+            </Button>
+
+            <ul class="mt-8 space-y-3.5">
+              <li
+                v-for="f in freeFeatures"
+                :key="f"
+                class="flex items-center gap-3 text-sm text-slate-700"
+              >
+                <Icon icon="lucide:check" class="h-4 w-4 shrink-0 text-slate-400" />
+                {{ f }}
               </li>
             </ul>
-            
-            <Button :as="Link" :href="proCtaHref" class="w-full">
+          </div>
+
+          <div
+            class="relative rounded-2xl bg-slate-900 p-8 transition-shadow hover:shadow-[0_20px_60px_-15px_rgba(124,58,237,0.2)]"
+          >
+            <div class="absolute -top-3 left-6">
+              <span
+                class="rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-violet-600/30"
+              >
+                Para líderes de comunidade
+              </span>
+            </div>
+
+            <h3 class="text-lg font-semibold text-white">PRO</h3>
+            <p class="mt-1 text-sm text-slate-400">Para comunidades que levam consistência a sério.</p>
+
+            <div class="mt-6 flex items-baseline gap-1">
+              <span class="text-4xl font-bold tracking-tight text-white">
+                {{ formatBRL(proPrice) }}
+              </span>
+              <span class="text-sm text-slate-400">{{ proPeriodLabel }}</span>
+            </div>
+
+            <p
+              v-if="billingCycle === 'yearly'"
+              class="mt-2 text-sm text-emerald-400"
+            >
+              Economize {{ formatBRL(yearlySavings) }}/ano
+              · {{ formatBRL(yearlyEquivalentMonthly) }}/mês
+            </p>
+
+            <Button
+              :as="Link"
+              :href="proCtaHref"
+              class="mt-8 w-full rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-600/25 transition-all hover:bg-violet-500 hover:shadow-xl hover:shadow-violet-600/30"
+            >
               Assinar PRO
             </Button>
+
+            <p class="mt-3 text-center text-xs text-slate-500">Sem fidelidade. Cancele quando quiser.</p>
+
+            <ul class="mt-6 space-y-3.5">
+              <li
+                v-for="f in proFeatures"
+                :key="f"
+                class="flex items-center gap-3 text-sm text-slate-300"
+              >
+                <Icon icon="lucide:check" class="h-4 w-4 shrink-0 text-violet-400" />
+                {{ f }}
+              </li>
+            </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- FAQ Section -->
-    <section class="py-16 bg-white">
-      <div class="container mx-auto px-4">
-        <div class="mx-auto max-w-3xl text-center">
-          <h2 class="text-2xl font-bold text-gray-900 mb-8">
-            Perguntas Frequentes
+    <!-- ===== FAQ ===== -->
+    <section class="py-20">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="mx-auto max-w-2xl">
+          <p class="text-[13px] font-semibold uppercase tracking-widest text-violet-600">
+            FAQ
+          </p>
+          <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Perguntas frequentes
           </h2>
-          <Accordion type="single" class="w-full text-left" collapsible default-value="item-1">
-            <AccordionItem v-for="item in faqItems" :key="item.value" :value="item.value">
-              <AccordionTrigger class="text-lg">
+
+          <Accordion
+            type="single"
+            class="mt-12 w-full"
+            collapsible
+            default-value="item-1"
+          >
+            <AccordionItem
+              v-for="item in faqItems"
+              :key="item.value"
+              :value="item.value"
+              class="border-slate-200"
+            >
+              <AccordionTrigger
+                class="text-left text-base font-medium text-slate-900 transition-colors hover:text-violet-600 data-[state=open]:text-violet-600"
+              >
                 {{ item.title }}
               </AccordionTrigger>
-              <AccordionContent>
+              <AccordionContent class="leading-relaxed text-slate-600">
                 {{ item.content }}
               </AccordionContent>
             </AccordionItem>
@@ -471,50 +593,62 @@ const testimonials = [
       </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="border-t bg-gradient-to-br from-blue-600 to-purple-600 text-white">
-      <div class="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div class="rounded-2xl px-6 py-12 sm:p-16">
-          <div class="mx-auto max-w-2xl text-center">
-            <h2 class="text-3xl font-bold tracking-tight sm:text-6xl">
-              Pronto para transformar seus hábitos?
-            </h2>
-            <p class="mx-auto mt-4 max-w-xl text-lg text-blue-100">
-              Junte-se a milhares de pessoas que já transformaram suas rotinas com o DOPA Check.
-            </p>
-            <div class="mt-8 flex justify-center gap-4">
-              <Button :as="Link" :href="registerHref" size="lg" variant="secondary">
-                Começar Agora
-              </Button>
-              <Button :as="Link" :href="route('challenges.index')" size="lg" variant="outline" class="bg-white/10 text-white border-white hover:bg-white hover:text-blue-600">
-                Ver Desafios
-              </Button>
-            </div>
-          </div>
-        </div>
+    <!-- ===== CTA FINAL ===== -->
+    <section class="border-t border-slate-100 bg-slate-50/60 py-20">
+      <div class="mx-auto max-w-2xl px-6 text-center">
+        <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          Dê estrutura ao próximo desafio do seu grupo.
+        </h2>
+        <p class="mt-4 text-lg text-slate-700">
+          Gratuito. 30 segundos para começar. Sem cartão.
+        </p>
+        <Button
+          :as="Link"
+          :href="registerHref"
+          size="lg"
+          class="mt-10 rounded-xl bg-violet-600 px-8 text-white shadow-[0_20px_60px_-15px_rgba(124,58,237,0.35)] transition-all duration-200 hover:bg-violet-700 hover:shadow-[0_20px_60px_-15px_rgba(124,58,237,0.5)]"
+        >
+          Criar desafio para meu grupo
+          <Icon icon="lucide:arrow-right" class="ml-1 h-4 w-4" />
+        </Button>
+        <p class="mt-4 text-sm text-slate-500">
+          Beta aberto. Feedback direto com o time.
+        </p>
+        <Link
+          href="/challenges"
+          class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-violet-600"
+        >
+          Ver desafios ativos
+          <Icon icon="lucide:arrow-right" class="h-3.5 w-3.5" />
+        </Link>
       </div>
     </section>
 
-    <!-- Footer (necessário para validação do Google OAuth) -->
-    <footer class="border-t bg-white">
-      <div class="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <!-- ===== FOOTER ===== -->
+    <footer class="border-t border-slate-100">
+      <div class="mx-auto max-w-6xl px-6 py-8">
         <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <div class="text-sm text-gray-600">
-            © {{ new Date().getFullYear() }} DOPA Check. Todos os direitos reservados.
-          </div>
-
+          <p class="text-sm text-slate-500">
+            © {{ new Date().getFullYear() }} DOPA Check
+          </p>
           <div class="flex items-center gap-6 text-sm">
             <Link
-              :href="route('policy.show')"
-              class="text-gray-600 hover:text-gray-900 hover:underline underline-offset-4"
+              :href="route('about')"
+              class="font-medium text-slate-600 transition-colors hover:text-slate-800"
             >
-              Política de Privacidade
+              Sobre
+            </Link>
+            <Link
+              :href="route('policy.show')"
+              class="text-slate-500 transition-colors hover:text-slate-800"
+            >
+              Privacidade
             </Link>
             <Link
               :href="route('terms.show')"
-              class="text-gray-600 hover:text-gray-900 hover:underline underline-offset-4"
+              class="text-slate-500 transition-colors hover:text-slate-800"
             >
-              Termos de Serviço
+              Termos
             </Link>
           </div>
         </div>

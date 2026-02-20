@@ -18,278 +18,73 @@
 
 ---
 
-## 🧩 O Problema que Resolve
+# 🧠 DOPA Check
 
-> **"Tentei vários apps (Strava, Notion, planilhas), mas nenhum centralizava meu progresso real de hábitos de forma simples. O DOPA Check nasceu para resolver isso com check-ins rápidos e um dashboard que dá vontade de voltar."**
+Infraestrutura de disciplina via WhatsApp.
 
-**DOPA Check** nasceu da comunidade [Reservatório de Dopamina](https://t.me/reservatoriodedopamina), onde desafios como *"21 dias de leitura"* e *"30 dias sem açúcar"* são comuns, mas o acompanhamento era fragmentado entre múltiplos apps.
+## O que é
 
-### 💡 A Solução
-- ✅ **Zero fricção** - Check-ins rápidos pelo navegador (com ou sem imagem)
-- ✅ **Check-in visual** - Uma foto vale mais que mil planilhas
-- ✅ **Dashboard centralizado** - Veja tudo em um lugar
-- ✅ **Compartilhamento automático** - Cards gerados para stories
-- ✅ **Desafios comunitários** - Participe com outras pessoas
+O DOPA Check transforma grupos comuns de WhatsApp em ambientes estruturados de disciplina.
 
----
+Você já posta foto.
+Você já usa hashtag.
+Agora isso vira progresso real.
 
-## 🚀 Status Atual - Beta Funcional
+📸 + #hashtag = Check-in automático
 
-### ✅ **Já Funcionando**
-- **🔐 Autenticação** completa (login/senha)
-- **🔐 Login Social (Google OAuth)** end-to-end
-- **📱 Dashboard mobile-first** responsivo e moderno
-- **🏆 Sistema de desafios** completo (criar, participar, filtrar)
-- **✅ Check-ins web** com ou sem imagem
-- **👥 Participantes** e detalhes de desafios
-- **🎯 Progresso visual** com anéis e estatísticas
-- **📊 Estados dinâmicos** (ativo, concluído, pausado)
-- **🎨 Interface polida** seguindo design system
-- **💳 Assinatura PRO (Stripe + Cashier)** com planos mensal/anual configurados
-- **🖼️ Geração de cards** para compartilhamento (download/uso em redes)
 
-### 🚧 **Em Desenvolvimento**
-- **👤 Páginas de perfil** e configurações
-- **📈 Relatórios detalhados** com métricas
-- **🎨 Compartilhamento nativo** mobile
-- **🤖 Integração WhatsApp (EvolutionAPI)** (adiada; fora do escopo do MVP atual)
+## Como funciona
+
+1. Crie um time
+2. Compartilhe o link de onboarding
+3. Adicione o bot ao grupo
+4. Crie um desafio
+5. Grupo faz o resto
 
 ---
 
-## 🎯 Como Funciona
+## Diferencial
 
-### 🚀 **Fluxo Principal (3 cliques)**
-
-```mermaid
-flowchart TD
-    A[Acessa dopacheck.com.br] --> B[Login]
-    B --> C[Escolhe ou cria desafio]
-    C --> D[Define tasks diarias]
-    D --> E[Dashboard com tasks]
-    E --> F[Check-in web - com ou sem imagem]
-    F --> G[Progresso atualizado]
-    G --> H[Compartilha card gerado]
-```
-
-### 📱 **Interface Atual**
-
-#### **1. Dashboard Principal**
-- **Progresso visual** com anel de completude
-- **Tasks do dia** com status e check-ins
-- **Estatísticas rápidas** (sequência, dias restantes)
-- **Estado de celebração** quando completa o dia
-- **Conexão WhatsApp** (planejada; pode existir UI/estrutura no código, mas não é o foco do MVP atual)
-
-#### **2. Sistema de Desafios**
-- **Catálogo completo** com filtros e categorias
-- **Criação personalizada** com tasks customizadas
-- **Detalhes ricos** (participantes, progresso, dificuldade)
-- **Templates populares** (21 dias leitura, 30 dias exercício)
-
-#### **3. Check-ins Inteligentes**
-- **Upload de imagem** com drag & drop
-- **Check-in rápido** sem imagem
-- **Validação automática** (um por task/dia)
-- **Fonte rastreada** (web/whatsapp)
+- Zero fricção
+- Não precisa abrir app
+- Progresso visível
+- Streak automático
+- Comunidade como motor
 
 ---
 
-## 🆓 Modelo Freemium
+## Modelo
 
-### **Versão Gratuita**
-- ✅ **1 desafio ativo** simultâneo
-- ✅ **Check-ins manuais** via web
-- ✅ **Dashboard completo** com progresso
-- ✅ **Participação** em desafios públicos
-- ✅ **Compartilhamento básico** de progresso
-- ✅ **Storage 90 dias** para imagens
+Free:
+- 1 desafio ativo
+- Check-in manual
 
-### 🤖 **DOPA Check PRO** (Em breve)
-- 🚀 **Desafios ilimitados** simultâneos
-- 💳 **Assinatura PRO** via Stripe (Cashier)
-- 🧠 **Recursos PRO** (IA/WhatsApp) entram após a base de pagamentos estar sólida
-- 📊 **Relatórios avançados** com insights
-- 💾 **Storage permanente** de todas as imagens
-- 🎨 **Templates personalizados** de compartilhamento
-- 📈 **Integração Strava/Nike** (futuro)
+PRO:
+- Desafios ilimitados
+- Check-in via WhatsApp
+- Relatórios avançados
 
 ---
 
-## 🛠️ Instalação e Setup
+## Status
 
-### Pré-requisitos
-- PHP 8.3+
-- Node.js 18+
-- MySQL 8.0+
-- Redis 6.0+
-- Composer 2.0+
-- Bun ou npm
-
-### 🚀 Setup Rápido (Local, sem Docker)
-
-```bash
-# 1. Clone o repositório
-git clone https://github.com/raphaieu/dopacheck.com.br.git
-cd dopacheck.com.br
-
-# 2. Instale dependências
-composer install
-bun install
-
-# 3. Configure ambiente
-cp env.example.dopacheck .env
-php artisan key:generate
-
-# 4. Configure banco de dados (.env)
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=dopacheck
-DB_USERNAME=root
-DB_PASSWORD=
-
-# 5. Configure Redis (.env)
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-
-# 6. Execute migrations e seeders
-php artisan migrate --seed
-
-# 7. Build assets
-bun run build
-
-# 8. Inicie servidores (dev)
-# Opção A (recomendado): tudo junto (serve + queue + logs + vite)
-composer run dev
-#
-# Opção B (manual):
-# php artisan serve        # Backend (http://localhost:8000)
-# bun run dev              # Vite (http://localhost:5173)
-# php artisan horizon      # Queue worker
-```
-
-### 🐳 Setup com Docker (recomendado para ambiente consistente)
-
-```bash
-# 1. Subir core web (app + mysql + redis + horizon)
-docker compose up -d
-
-# 2. Rodar migrations/seed dentro do container
-docker compose exec app php artisan migrate --seed
-
-# 3. Acessar
-# App: http://localhost:8000
-# phpMyAdmin (opcional): docker compose --profile tools up -d  -> http://localhost:8082
-```
-
-## 🧭 Rotas principais (Web)
-
-- **Dashboard principal (pós-login)**: `/dopa`
-- **Compatibilidade**: `/dashboard` existe apenas por legado e **redireciona para `/dopa`**
-- **Desafios**: `/challenges`
-- **Perfil público**: `/u/{username}`
-- **Páginas legais**: Termos de Uso e Política de Privacidade (Jetstream) - `route('terms.show')` e `route('policy.show')`
-
-### ⚙️ Configuração WhatsApp (Opcional)
-
-```env
-# Número do bot (formato: 5511999998888)
-WHATSAPP_BOT_NUMBER=5511999998888
-```
-
-> Nota: existe um `docker-compose.whatsapp.yml` (EvolutionAPI + Postgres) para testes/experimentos. O webhook do DOPA fica em `POST /webhook/whatsapp` e hoje **apenas bufferiza eventos** (a criação automática de check-ins ainda não está fechada no MVP).
+Beta funcional.
+Lançamento comunitário em andamento.
 
 ---
 
-## 🧪 Dados de Teste
+## Stack
 
-Após executar `php artisan migrate --seed`, você terá:
-
-### **👤 Usuários de Teste**
-```
-🆓 Free User
-Email: free@test.com
-Senha: password
-
-💎 PRO User  
-Email: rapha@raphael-martins.com
-Senha: password
-```
-
-### **🏆 Desafios Templates**
-- 📚 **21 Dias de Leitura** (847 participantes)
-- 🏃 **30 Dias de Movimento** (623 participantes)  
-- 🧘 **14 Dias de Mindfulness** (412 participantes)
-- 📱 **7 Dias Detox Digital** (289 participantes)
-- 🙏 **21 Dias de Gratidão** (334 participantes)
+Laravel 12  
+Vue 3  
+MySQL  
+Redis  
+Stripe  
 
 ---
 
-## 📊 Stack Tecnológico
-
-### **Backend**
-- **Framework**: Laravel 12 (PHP 8.3+)
-- **Database**: MySQL 8.0 com Redis para cache
-- **Queue**: Laravel Horizon + Redis
-- **Authentication**: Laravel Fortify + Jetstream
-- **Storage**: Local (futuro: Cloudflare R2)
-
-### **Frontend**
-- **Framework**: Vue 3 + Composition API + TypeScript
-- **Build**: Vite + Bun
-- **Styling**: TailwindCSS + ShadCN components
-- **Routing**: Inertia.js (SSR + SPA)
-- **State**: Composables pattern
-
-### **Integrações**
-- **OAuth**: Socialite (Google)
-- **Payments**: Stripe (Cashier) - em andamento
-- **WhatsApp**: EvolutionAPI - adiado (infra/estrutura existe, mas sem fluxo end-to-end no MVP)
-- **Analytics**: Implementação própria
-
----
-
-## 📱 Features Técnicas
-
-### **Performance**
-- ⚡ **SSR + SPA** com Inertia.js
-- 🔄 **Auto-refresh** inteligente das tasks
-- 💾 **Cache estratégico** (Redis + Laravel)
-- 📱 **Mobile-first** responsivo
-- 🎯 **Optimistic updates** para UX fluida
-
-### **Segurança**
-- 🔐 **Autenticação robusta** com rate limiting
-- 🛡️ **Validação completa** de uploads e dados
-- 🔑 **CSRF protection** em todas as requests
-- 📸 **Upload seguro** com validação de tipo/tamanho
-
-### **Arquitetura**
-- 🏗️ **Clean Architecture** com Services e Jobs
-- 🔄 **Queue processing** para operações pesadas
-- 📊 **Event-driven** para atualizações automáticas
-- 🧩 **Modular** com composables e componentes
-
----
-
-## 🤝 Como Contribuir
-
-### 🛠️ **Áreas que Precisam de Ajuda**
-- 🎨 **UI/UX**: Melhorias na interface mobile
-- 🔐 **Login Social (Google)**: ajustes de UX e regras de vínculo de conta
-- 💳 **Pagamentos (Stripe + Cashier)**: fluxo de upgrade/portal e sincronização de status
-- 📊 **Analytics**: Dashboard de métricas
-- 🧪 **Testing**: Testes automatizados
-- 📖 **Documentação**: Exemplos e tutoriais
-
-### 📋 **Process de Contribuição**
-1. Fork o repositório
-2. Crie uma branch: `git checkout -b feature/nova-feature`
-3. Faça suas mudanças e commit: `git commit -m 'Add: nova feature'`
-4. Push para a branch: `git push origin feature/nova-feature`
-5. Abra um Pull Request
-
+Produto privado.
+Todos os direitos reservados.
 ---
 
 ## 📞 Contato & Suporte

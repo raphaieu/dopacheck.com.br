@@ -15,6 +15,18 @@ use Illuminate\Support\Facades\Route;
 
 final class WelcomeController extends Controller
 {
+    public function about(): Response
+    {
+        return Inertia::render('About', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'seo' => [
+                'title' => 'Sobre — DOPA Check',
+                'description' => 'O DOPA Check é uma infraestrutura de disciplina via WhatsApp. Conheça a origem, os princípios e a visão por trás do produto.',
+            ],
+        ]);
+    }
+
     public function home(): Response
     {
         // Buscar estatísticas reais com cache (5 minutos)

@@ -1,68 +1,92 @@
 <template>
-  <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
-    <div class="container mx-auto px-4">
+  <header class="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-lg">
+    <div class="mx-auto max-w-6xl px-5 sm:px-6">
       <div class="flex h-16 items-center justify-between">
-        <!-- Left: Logo & Title -->
-        <div class="flex items-center">
-          <Link :href="homeLink" class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-            <div
-              class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <span class="text-white font-bold text-base sm:text-lg">🧠</span>
-            </div>
-            <div class="text-left">
-              <h1 class="text-lg sm:text-xl font-bold text-gray-900">DOPA Check</h1>
-              <p v-if="subtitle" class="text-xs sm:text-sm text-gray-500">{{ subtitle }}</p>
-            </div>
-          </Link>
-        </div>
-
-        <!-- Right: Desktop Buttons / Mobile Menu -->
-        <div class="flex items-center space-x-2 sm:space-x-4">
-          <!-- Desktop: Login/Register Buttons -->
-          <div class="hidden sm:flex space-x-2">
-            <Button variant="outline" :as="Link" :href="loginHref" prefetch="mount">
-              Entrar
-            </Button>
-            <Button variant="outline" :as="Link" :href="registerHref" prefetch="mount">
-              Cadastrar
-            </Button>
+        <!-- Logo -->
+        <Link :href="homeLink" class="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+          <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-linear-to-r from-blue-600 to-purple-600 sm:h-9 sm:w-9">
+            <span class="text-base sm:text-lg">🧠</span>
           </div>
+          <span class="text-lg font-bold tracking-tight text-slate-900">DOPA Check</span>
+        </Link>
 
-          <!-- Mobile: Hamburger Menu -->
-          <Button 
-            class="sm:hidden" 
-            variant="ghost" 
-            size="icon" 
-            aria-label="Toggle menu" 
-            @click="toggleMenu"
+        <!-- Desktop -->
+        <div class="hidden items-center gap-6 sm:flex">
+          <Link
+            href="/challenges"
+            class="text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
           >
-            <Icon :icon="isMenuOpen ? 'lucide:x' : 'lucide:menu'" class="h-6 w-6" aria-hidden="true" />
+            Desafios
+          </Link>
+          <Link
+            href="/sobre"
+            class="text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+          >
+            Sobre
+          </Link>
+          <Link
+            :href="loginHref"
+            class="text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+          >
+            Entrar
+          </Link>
+          <Button
+            :as="Link"
+            :href="registerHref"
+            size="sm"
+            class="rounded-lg bg-violet-600 text-white transition-colors hover:bg-violet-700"
+          >
+            Começar grátis
           </Button>
         </div>
+
+        <!-- Mobile toggle -->
+        <Button
+          class="sm:hidden"
+          variant="ghost"
+          size="icon"
+          aria-label="Abrir menu"
+          @click="toggleMenu"
+        >
+          <Icon
+            :icon="isMenuOpen ? 'lucide:x' : 'lucide:menu'"
+            class="h-5 w-5 text-slate-700"
+            aria-hidden="true"
+          />
+        </Button>
       </div>
 
-      <!-- Mobile Menu -->
-      <div v-show="isMenuOpen" class="sm:hidden border-t mt-2 pt-4">
-        <nav class="flex flex-row space-x-2">
-          <Button
-            variant="outline" 
-            :as="Link" 
-            :href="loginHref" 
-            class="flex-1" 
-            prefetch="mount"
+      <!-- Mobile menu -->
+      <div v-show="isMenuOpen" class="border-t border-slate-100 pb-4 pt-3 sm:hidden">
+        <nav class="flex flex-col gap-2">
+          <Link
+            href="/challenges"
+            class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+            @click="toggleMenu"
+          >
+            Desafios
+          </Link>
+          <Link
+            href="/sobre"
+            class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+            @click="toggleMenu"
+          >
+            Sobre
+          </Link>
+          <Link
+            :href="loginHref"
+            class="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
             @click="toggleMenu"
           >
             Entrar
-          </Button>
+          </Link>
           <Button
-            variant="outline" 
-            :as="Link" 
-            :href="registerHref" 
-            class="flex-1" 
-            prefetch="mount"
+            :as="Link"
+            :href="registerHref"
+            class="rounded-lg bg-violet-600 text-white transition-colors hover:bg-violet-700"
             @click="toggleMenu"
           >
-            Cadastrar
+            Começar grátis
           </Button>
         </nav>
       </div>
@@ -76,33 +100,17 @@ import { Link, usePage } from '@inertiajs/vue3'
 import { Icon } from '@iconify/vue'
 import Button from '@/components/ui/button/Button.vue'
 
-const props = defineProps({
-  subtitle: {
-    type: String,
-    default: null
-  },
-  homeLink: {
-    type: String,
-    default: '/'
-  },
-  maxWidth: {
-    type: String,
-    default: '7xl'
-  },
-  showBackButton: {
-    type: Boolean,
-    default: false
-  },
-  backLink: {
-    type: String,
-    default: '/'
-  }
+defineProps({
+  subtitle: { type: String, default: null },
+  homeLink: { type: String, default: '/' },
+  maxWidth: { type: String, default: '7xl' },
+  showBackButton: { type: Boolean, default: false },
+  backLink: { type: String, default: '/' },
 })
 
 const isMenuOpen = ref(false)
 const page = usePage()
 const isLoggedIn = computed(() => !!page.props.auth?.user)
-
 const loginHref = computed(() => (isLoggedIn.value ? '/dopa' : '/login'))
 const registerHref = computed(() => (isLoggedIn.value ? '/dopa' : '/register'))
 
@@ -110,4 +118,3 @@ function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
 }
 </script>
-

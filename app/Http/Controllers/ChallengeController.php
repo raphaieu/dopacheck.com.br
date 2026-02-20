@@ -71,7 +71,7 @@ class ChallengeController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $showPrivate = $request->boolean('show_private', true);
+        $showPrivate = $user ? $request->boolean('show_private', true) : false;
 
         $teamIds = $user ? $this->userVisibleTeamIds($user) : [];
 
