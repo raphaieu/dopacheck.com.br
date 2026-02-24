@@ -36,7 +36,7 @@
             size="sm"
             class="rounded-lg bg-violet-600 text-white transition-colors hover:bg-violet-700"
           >
-            Começar grátis
+            Criar desafio
           </Button>
         </div>
 
@@ -86,7 +86,7 @@
             class="rounded-lg bg-violet-600 text-white transition-colors hover:bg-violet-700"
             @click="toggleMenu"
           >
-            Começar grátis
+            Criar desafio
           </Button>
         </nav>
       </div>

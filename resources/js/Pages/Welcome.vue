@@ -44,29 +44,50 @@ const avatars = [
 ]
 
 const flowSteps = [
-  { icon: 'lucide:camera', title: 'Participante envia foto', description: 'Com a #hashtag da tarefa, no grupo. Como já faz.' },
-  { icon: 'lucide:bot', title: 'Sistema reconhece', description: 'Identifica grupo, hashtag e participante.' },
-  { icon: 'lucide:circle-check-big', title: 'Check-in registrado', description: 'Progresso atualizado. Confirmação no grupo.' },
-  { icon: 'lucide:bar-chart-3', title: 'Dashboard atualizado', description: 'Streak e evolução individual e coletiva.' },
+  { icon: 'lucide:target', title: 'Escolha um desafio (ou crie)', description: 'Defina o que conta como “feito” e por quantos dias.' },
+  { icon: 'lucide:circle-check-big', title: 'Faça check-in diário (web ou WhatsApp)', description: 'Rápido o suficiente pra você não negociar com você mesmo.' },
+  { icon: 'lucide:bar-chart-3', title: 'Veja seu progresso (e compartilhe se quiser)', description: 'Streak, histórico e taxa de conclusão — claros, sem achismo.' },
 ]
 
-const structureReasons = [
-  { icon: 'lucide:eye', text: 'Visibilidade gera comprometimento' },
-  { icon: 'lucide:activity', text: 'Acompanhamento coletivo em tempo real' },
-  { icon: 'lucide:gauge', text: 'Consistência vira cultura quando é mensurável' },
-  { icon: 'lucide:users', text: 'Progresso individual visível para o grupo' },
+const progressHighlights = [
+  { icon: 'lucide:flame', text: 'Streak (dias seguidos sem quebrar o ritmo)' },
+  { icon: 'lucide:percent', text: 'Taxa de conclusão (por desafio e no geral)' },
+  { icon: 'lucide:history', text: 'Histórico completo (sem “memória seletiva”)' },
+  { icon: 'lucide:file-chart-column', text: 'Relatório por desafio (e evolução no tempo)' },
+  { icon: 'lucide:globe', text: 'Perfil público opcional (quando fizer sentido)' },
+]
+
+const youVsGroup = [
+  {
+    title: 'Você',
+    icon: 'lucide:user',
+    items: [
+      'Autonomia: você decide o desafio e o ritmo',
+      'Rotina: check-in simples, todo dia',
+      'Progresso: streak, histórico e conclusão em um lugar',
+    ],
+  },
+  {
+    title: 'Grupo',
+    icon: 'lucide:users',
+    items: [
+      'Visibilidade: o progresso aparece (sem exposição obrigatória)',
+      'Compromisso: quando o grupo enxerga, você continua',
+      'Consistência: o combinado vira padrão — e fica mensurável',
+    ],
+  },
 ]
 
 const freeFeatures = [
   '1 desafio ativo',
-  'Check-in via WhatsApp',
+  'Check-in via web ou WhatsApp',
   'Dashboard básico',
   'Histórico de 90 dias',
 ]
 
 const proFeatures = [
   'Desafios ilimitados',
-  'Check-ins via WhatsApp',
+  'Check-ins via web ou WhatsApp',
   'Dashboard completo',
   'Histórico completo',
   'Relatórios e exportação',
@@ -78,17 +99,17 @@ const faqItems = [
   {
     value: 'item-1',
     title: 'Como funciona no WhatsApp?',
-    content: 'O bot é adicionado ao grupo. Participantes enviam foto com a #hashtag da tarefa. O sistema identifica, registra e confirma — tudo automático.',
+    content: 'Você faz check-in com foto + #hashtag. Pode ser no grupo (pra dar visibilidade) ou no privado com o bot (pra fazer sozinho). O DOPA Check registra, confirma e atualiza seu progresso.',
   },
   {
     value: 'item-2',
     title: 'Preciso instalar algum aplicativo?',
-    content: 'Não. A interação acontece no WhatsApp. O dashboard de gestão e acompanhamento fica na web.',
+    content: 'Não. Você usa pela web. Se preferir, pode fazer check-in pelo WhatsApp também — sem app extra.',
   },
   {
     value: 'item-3',
     title: 'Funciona sem grupo?',
-    content: 'Sim. O mesmo fluxo opera no privado com o bot. Para tracking individual, funciona da mesma forma.',
+    content: 'Sim. Dá pra usar 100% individual: check-in na web (ou no WhatsApp no privado) e o progresso fica no seu dashboard.',
   },
   {
     value: 'item-4',
@@ -108,6 +129,8 @@ const proPrice = computed(() => (billingCycle.value === 'monthly' ? proMonthlyPr
 const proPeriodLabel = computed(() => (billingCycle.value === 'monthly' ? '/mês' : '/ano'))
 const yearlySavings = computed(() => (proMonthlyPrice * 12) - proYearlyPrice)
 const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
+
+const formatInt = (v) => new Intl.NumberFormat('pt-BR').format(Number(v ?? 0))
 </script>
 
 <template>
@@ -123,20 +146,20 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
               class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-[13px] font-medium text-emerald-700"
             >
               <Icon icon="lucide:message-circle" class="h-3.5 w-3.5" />
-              Infraestrutura de disciplina via WhatsApp
+              Estrutura + mensuração + visibilidade
             </div>
 
             <h1 class="mt-8 text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-6xl">
-              Seu grupo já tem disciplina.
+              Disciplina funciona melhor
               <br>
-              Agora ela tem
-              <span class="text-violet-600">estrutura</span>.
+              quando é
+              <span class="text-violet-600">visível</span>.
             </h1>
 
             <p class="mt-6 max-w-lg text-lg leading-relaxed text-slate-700">
-              Seu grupo já posta foto. Já usa hashtag. Já cobra presença.
-              O DOPA Check transforma isso em progresso visível
-              — direto pelo WhatsApp, sem fricção.
+              Crie desafios, faça check-in diário e acompanhe sua evolução
+              — sozinho ou com seu grupo.
+              Sem motivação forçada: só estrutura e progresso registrado.
             </p>
 
             <div class="mt-8 flex items-center gap-3">
@@ -162,15 +185,25 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
                 size="lg"
                 class="rounded-xl bg-violet-600 px-7 text-white shadow-[0_20px_60px_-15px_rgba(124,58,237,0.35)] transition-all duration-200 hover:bg-violet-700 hover:shadow-[0_20px_60px_-15px_rgba(124,58,237,0.5)]"
               >
-                Criar desafio para meu grupo
+                Criar desafio
                 <Icon icon="lucide:arrow-right" class="ml-1 h-4 w-4" />
+              </Button>
+
+              <Button
+                :as="Link"
+                href="/challenges"
+                variant="outline"
+                size="lg"
+                class="rounded-xl border-slate-200 px-7 text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+              >
+                Ver desafios
               </Button>
 
               <a
                 href="#como-funciona"
-                class="text-sm font-medium text-slate-600 transition-colors hover:text-violet-600"
+                class="text-sm font-medium text-slate-500 transition-colors hover:text-violet-600"
               >
-                Entenda o fluxo →
+                Entenda o fluxo no WhatsApp
               </a>
             </div>
 
@@ -200,7 +233,7 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
                     </div>
                   </div>
                   <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-white">Disciplina 6AM</p>
+                    <p class="truncate text-sm font-semibold text-white">30 dias de Movimento</p>
                     <p class="text-[11px] text-emerald-200">12 participantes</p>
                   </div>
                 </div>
@@ -278,13 +311,13 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
       <div class="mx-auto max-w-6xl px-6">
         <div class="mx-auto max-w-2xl text-center">
           <p class="text-[13px] font-semibold uppercase tracking-widest text-emerald-600">
-            Como funciona
+            Como funciona (sem drama)
           </p>
           <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Nada muda na rotina do grupo.
+            Três passos. Todo dia.
           </h2>
           <p class="mt-3 text-lg text-slate-600">
-            A disciplina já existe. O DOPA Check só organiza.
+            Comece no individual. Se quiser, traga o grupo pra aumentar o compromisso.
           </p>
         </div>
 
@@ -313,113 +346,110 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
         </div>
 
         <p class="mx-auto mt-14 max-w-2xl text-center text-sm leading-relaxed text-slate-600">
-          O bot opera dentro do grupo. Funciona para qualquer comunidade
-          — fitness, estudo, fé, trabalho, família.
+          Você pode fazer check-in na web ou no WhatsApp.
+          No WhatsApp, é foto + #hashtag (no grupo ou no privado com o bot).
+          Funciona pra qualquer rotina — fitness, estudo, fé, trabalho, família.
         </p>
       </div>
     </section>
 
-    <!-- ===== POR QUE FUNCIONA ===== -->
+    <!-- ===== VOCÊ VS GRUPO ===== -->
     <section class="py-20">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="mx-auto max-w-3xl text-center">
+          <p class="text-[13px] font-semibold uppercase tracking-widest text-violet-600">
+            Onde entra o grupo
+          </p>
+          <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Sozinho funciona.
+            <span class="text-violet-600">Em grupo funciona melhor.</span>
+          </h2>
+          <p class="mt-3 text-lg text-slate-600">
+            Você é o protagonista. O grupo só acelera: dá visibilidade e aumenta o compromisso.
+          </p>
+        </div>
+
+        <div class="mx-auto mt-14 grid max-w-5xl gap-6 lg:grid-cols-2">
+          <div
+            v-for="col in youVsGroup"
+            :key="col.title"
+            class="rounded-2xl border border-slate-200 bg-white p-8"
+          >
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                <Icon :icon="col.icon" class="h-5 w-5" />
+              </div>
+              <h3 class="text-lg font-semibold text-slate-900">{{ col.title }}</h3>
+            </div>
+
+            <ul class="mt-6 space-y-3 text-sm text-slate-700">
+              <li v-for="item in col.items" :key="item" class="flex items-start gap-3">
+                <Icon icon="lucide:check" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <span>{{ item }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PROGRESSO VISÍVEL ===== -->
+    <section class="border-t border-slate-100 bg-slate-50/60 py-20">
       <div class="mx-auto max-w-6xl px-6">
         <div class="items-center gap-16 lg:grid lg:grid-cols-2">
           <div>
             <p class="text-[13px] font-semibold uppercase tracking-widest text-violet-600">
-              Por que funciona
+              Progresso visível
             </p>
             <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Disciplina não escala sozinha.
+              O que fica visível vira
               <br>
-              <span class="text-violet-600">Estrutura</span> sim.
+              <span class="text-violet-600">consistência</span>.
             </h2>
+            <p class="mt-4 max-w-lg text-lg text-slate-600">
+              Dashboard e relatórios pra você saber onde está — e ajustar o que precisa, sem drama.
+            </p>
           </div>
 
           <div class="mt-10 space-y-6 lg:mt-0">
             <div
-              v-for="reason in structureReasons"
-              :key="reason.text"
+              v-for="item in progressHighlights"
+              :key="item.text"
               class="flex items-start gap-4"
             >
               <div
                 class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"
               >
-                <Icon :icon="reason.icon" class="h-5 w-5" />
+                <Icon :icon="item.icon" class="h-5 w-5" />
               </div>
-              <p class="pt-2 text-lg text-slate-700">{{ reason.text }}</p>
+              <p class="pt-2 text-lg text-slate-700">{{ item.text }}</p>
             </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- ===== SOCIAL PROOF ===== -->
-    <section class="border-t border-slate-100 bg-slate-50/60 py-20">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="grid gap-6 sm:grid-cols-3">
-          <div class="rounded-2xl border border-slate-100 bg-white p-6">
-            <div class="flex items-center gap-2">
-              <span class="relative flex h-2 w-2">
-                <span
-                  class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
-                />
-                <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              <span class="text-xs font-medium text-emerald-600">Agora</span>
-            </div>
-            <p class="mt-4 text-lg font-semibold text-slate-900">
-              Comunidades organizadas.
+        <div class="mt-14 grid gap-4 sm:grid-cols-3">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <p class="text-xs font-medium text-slate-500">Atividade real</p>
+            <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              {{ formatInt(stats.total_checkins) }}
             </p>
+            <p class="mt-1 text-sm text-slate-600">check-ins registrados</p>
           </div>
 
-          <div class="rounded-2xl border border-slate-100 bg-white p-6">
-            <div class="flex -space-x-1.5">
-              <div
-                v-for="a in avatars"
-                :key="a.initials"
-                class="flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] border-white text-[9px] font-bold text-white"
-                :class="a.color"
-              >
-                {{ a.initials }}
-              </div>
-            </div>
-            <p class="mt-4 text-lg font-semibold text-slate-900">
-              Progresso coletivo visível.
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <p class="text-xs font-medium text-slate-500">Atividade real</p>
+            <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              {{ formatInt(stats.total_users) }}
             </p>
+            <p class="mt-1 text-sm text-slate-600">pessoas no beta</p>
           </div>
 
-          <div class="rounded-2xl border border-slate-100 bg-white p-6">
-            <Icon icon="lucide:trending-up" class="h-5 w-5 text-violet-500" />
-            <p class="mt-4 text-lg font-semibold text-slate-900">
-              Sem overhead operacional.
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <p class="text-xs font-medium text-slate-500">Atividade real</p>
+            <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              {{ formatInt(stats.total_challenges) }}
             </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== PRIVADO ===== -->
-    <section class="py-20">
-      <div class="mx-auto max-w-6xl px-6">
-        <div class="mx-auto max-w-2xl">
-          <div class="flex items-start gap-4">
-            <div
-              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500"
-            >
-              <Icon icon="lucide:user" class="h-5 w-5" />
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold tracking-tight text-slate-900">
-                Funciona no privado também.
-              </h2>
-              <p class="mt-3 leading-relaxed text-slate-700">
-                Mesmo fluxo. Mesma automação.
-                Foto&nbsp;+&nbsp;#hashtag direto para o bot.
-                Dashboard pessoal com streak e histórico.
-              </p>
-              <p class="mt-3 text-sm font-medium text-slate-500">
-                Para tracking individual sem grupo.
-              </p>
-            </div>
+            <p class="mt-1 text-sm text-slate-600">desafios criados</p>
           </div>
         </div>
       </div>
@@ -433,7 +463,7 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
             Planos
           </p>
           <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Um plano para cada estágio da sua comunidade.
+            Comece de graça. Evolua quando fizer sentido.
           </h2>
         </div>
 
@@ -487,7 +517,7 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
               variant="outline"
               class="mt-8 w-full rounded-xl border-slate-200 text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
-              Começar grátis
+              Criar desafio
             </Button>
 
             <ul class="mt-8 space-y-3.5">
@@ -597,10 +627,10 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
     <section class="border-t border-slate-100 bg-slate-50/60 py-20">
       <div class="mx-auto max-w-2xl px-6 text-center">
         <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-          Dê estrutura ao próximo desafio do seu grupo.
+          Transforme disciplina em progresso visível.
         </h2>
         <p class="mt-4 text-lg text-slate-700">
-          Gratuito. 30 segundos para começar. Sem cartão.
+          Comece sozinho ou com seu grupo. Gratuito pra começar. Sem cartão.
         </p>
         <Button
           :as="Link"
@@ -608,7 +638,7 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
           size="lg"
           class="mt-10 rounded-xl bg-violet-600 px-8 text-white shadow-[0_20px_60px_-15px_rgba(124,58,237,0.35)] transition-all duration-200 hover:bg-violet-700 hover:shadow-[0_20px_60px_-15px_rgba(124,58,237,0.5)]"
         >
-          Criar desafio para meu grupo
+          Criar desafio
           <Icon icon="lucide:arrow-right" class="ml-1 h-4 w-4" />
         </Button>
         <p class="mt-4 text-sm text-slate-500">
@@ -618,9 +648,15 @@ const yearlyEquivalentMonthly = computed(() => proYearlyPrice / 12)
           href="/challenges"
           class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-violet-600"
         >
-          Ver desafios ativos
+          Ver desafios
           <Icon icon="lucide:arrow-right" class="h-3.5 w-3.5" />
         </Link>
+        <a
+          href="#como-funciona"
+          class="mt-3 block text-xs font-medium text-slate-400 transition-colors hover:text-violet-600"
+        >
+          Entenda o fluxo no WhatsApp
+        </a>
       </div>
     </section>
 

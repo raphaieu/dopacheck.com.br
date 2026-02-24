@@ -55,3 +55,15 @@ Demonstrar capacidade **FullStack completa**:
 ---
 
 **TL;DR**: *Web app de hábitos com foco em UX e consistência; WhatsApp/IA ficam para depois do core e da monetização.*
+
+A sociedade contemporânea enfrenta uma crescente dificuldade na sustentação de hábitos saudáveis e consistentes, especialmente em um contexto de hiperestimulação digital. A exposição contínua a estímulos de recompensa imediata (redes sociais, notificações constantes e scroll infinito) tem reduzido níveis de foco, disciplina e adesão a rotinas relacionadas à saúde física, mental e desenvolvimento pessoal.
+
+Comunidades organizadas — grupos de prática esportiva, desenvolvimento pessoal, igrejas, coletivos educacionais e redes de apoio — buscam constantemente formas de estimular engajamento e consistência entre seus membros. Entretanto, enfrentam um problema recorrente: baixa adesão sustentável, ausência de mecanismos estruturados de mensuração e dificuldade em acompanhar o progresso individual e coletivo de forma organizada.
+
+Embora existam aplicativos individuais de hábitos e bem-estar, a maioria apresenta alta fricção de uso, baixa integração social estruturada e elevada taxa de abandono. Falta ao mercado uma solução que una engajamento comunitário, mensuração objetiva e redução de barreiras tecnológicas.
+
+Nesse contexto, surge a oportunidade de desenvolver uma infraestrutura digital híbrida para mudança comportamental em comunidades, integrando mensageria instantânea (WhatsApp) como canal de engajamento e check-in automatizado em grupos, com um WebApp complementar para gestão de desafios públicos e privados, consolidação de dados, geração de relatórios e acompanhamento longitudinal de métricas comportamentais.
+
+Ao combinar dinâmica social, validação pública e mensuração estruturada, a proposta cria um ambiente de reforço positivo e competição saudável, aumentando significativamente a probabilidade de adesão e consistência em mudanças comportamentais.
+
+A solução posiciona-se na interseção entre saúde digital, educação comportamental e tecnologia da informação, com potencial de expansão para famílias, escolas e programas institucionais voltados à promoção de saúde e bem-estar.

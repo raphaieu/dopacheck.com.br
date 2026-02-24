@@ -22,44 +22,38 @@ const isLoggedIn = computed(() => !!page.props.auth?.user)
 const registerHref = computed(() => (isLoggedIn.value ? '/dopa' : route('register')))
 
 const problems = [
-  'Onboarding manual via Google Forms',
-  'Aprovação feita no braço',
-  'Check-ins perdidos no feed do grupo',
-  'Histórico inexistente',
-  'Admin virando fiscal',
-  'Energia inicial forte — e depois queda',
+  'Check-ins perdidos no histórico',
+  'Planilhas paralelas',
+  'Aprovação manual',
+  'Sem visão clara de progresso',
+  'Energia forte no início, queda depois',
 ]
 
 const beliefs = [
-  'Ambiente certo',
-  'Pressão social saudável',
-  'Visibilidade',
-  'Sistema',
-  'Consistência mensurável',
+  'Visibilidade gera compromisso.',
+  'Mensuração gera consistência.',
+  'Consistência gera cultura.',
 ]
 
 const produces = [
-  'Check-in automático',
-  'Histórico organizado',
-  'Dashboard coletivo',
-  'Progresso visível',
+  'Check-in simples.',
+  'Histórico organizado.',
+  'Progresso mensurável.',
 ]
 
 const audiences = [
-  'Comunidades de desenvolvimento pessoal',
-  'Grupos de estudo',
-  'Times de trabalho',
-  'Igrejas',
-  'Famílias',
-  'Amigos',
-  'Desafios fitness',
-  'Rotinas acadêmicas',
+  'Para quem decidiu levar consistência a sério.',
+  'Para comunidades que querem estrutura.',
+  'Para líderes que querem organização.',
+  'Para indivíduos que querem progresso real.',
+  'Funciona sozinho.',
+  'Funciona melhor em grupo.',
 ]
 
 const visionItems = [
   'Relatórios inteligentes',
-  'Análises de consistência',
-  'Reconhecimento automático',
+  'Análise de consistência',
+  'Reconhecimento automático de padrões',
   'Insights coletivos',
 ]
 </script>
@@ -71,22 +65,21 @@ const visionItems = [
     <section class="py-24 md:py-32">
       <div class="mx-auto max-w-3xl px-6">
         <p class="text-[13px] font-semibold uppercase tracking-widest text-violet-600">
-          Sobre o DOPA Check
+          Sobre
         </p>
 
         <h1 class="mt-6 text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
           Disciplina não nasce sozinha.
           <br>
-          Ela nasce no
-          <span class="text-violet-600">grupo</span>.
+          Ela se sustenta quando vira
+          <span class="text-violet-600">sistema</span>.
         </h1>
 
         <p class="mt-8 text-xl leading-relaxed text-slate-700">
-          O DOPA Check é uma infraestrutura de disciplina via WhatsApp.
+          O DOPA Check transforma compromisso em progresso visível —
         </p>
         <p class="mt-4 text-lg leading-relaxed text-slate-600">
-          Não é um aplicativo de hábito tradicional.
-          É uma estrutura para comunidades que já decidiram evoluir.
+          no individual e no coletivo.
         </p>
       </div>
     </section>
@@ -95,20 +88,19 @@ const visionItems = [
     <section class="border-t border-slate-100 bg-slate-50/60 py-20">
       <div class="mx-auto max-w-3xl px-6">
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          De onde isso surgiu
+          De onde surgiu
         </h2>
 
         <div class="mt-8 space-y-4 text-lg leading-relaxed text-slate-700">
           <p>
-            O DOPA Check nasceu dentro de comunidades que já promoviam
-            desafios semanais de desenvolvimento pessoal.
+            O DOPA Check nasceu dentro de comunidades reais.
           </p>
           <p>
-            Jovens querendo ser 1% melhores por dia.
-            Grupos ativos. Desafios intensos. Gente comprometida.
+            Grupos que queriam evoluir juntos.
+            Desafios intensos. Energia alta. Compromisso público.
           </p>
           <p>
-            Mas havia um padrão recorrente:
+            Mas sempre o mesmo padrão:
           </p>
         </div>
 
@@ -129,18 +121,19 @@ const visionItems = [
           <p class="text-2xl font-bold tracking-tight text-slate-900">
             A disciplina existia.
             <br>
-            A estrutura não.
+            Faltava estrutura.
           </p>
         </div>
 
         <div class="mt-10 space-y-4 text-lg leading-relaxed text-slate-700">
-          <p>O DOPA Check nasceu para resolver isso.</p>
+          <p>
+            O DOPA Check nasceu para resolver isso —
+            sem mudar o comportamento do grupo.
+          </p>
           <p class="text-slate-600">
-            Sem mudar o comportamento do grupo.
+            Sem criar fricção.
             <br>
-            Sem criar mais fricção.
-            <br>
-            Sem obrigar ninguém a abrir mais um app.
+            Sem obrigar ninguém a instalar mais um app.
           </p>
         </div>
       </div>
@@ -154,10 +147,10 @@ const visionItems = [
         </h2>
 
         <p class="mt-6 text-lg leading-relaxed text-slate-700">
-          Não acreditamos em motivação eterna.
+          Motivação é volátil.
         </p>
 
-        <p class="mt-4 text-lg text-slate-700">Acreditamos em:</p>
+        <p class="mt-4 text-lg text-slate-700">Estrutura sustenta.</p>
 
         <ul class="mt-6 space-y-2.5">
           <li
@@ -173,13 +166,9 @@ const visionItems = [
         <div class="mt-12 space-y-3 text-lg leading-relaxed text-slate-700">
           <p>
             Disciplina individual é frágil.
-            <br>
-            Estrutura coletiva é forte.
           </p>
           <p class="text-slate-600">
-            Quando o progresso é visível, ele se sustenta.
-            <br>
-            Quando é mensurável, ele vira cultura.
+            Quando o progresso fica visível, ele se fortalece.
           </p>
         </div>
       </div>
@@ -193,15 +182,24 @@ const visionItems = [
         </h2>
 
         <p class="mt-6 text-lg leading-relaxed text-slate-700">
-          Não é mais um habit tracker.
+          Não é apenas um habit tracker.
         </p>
         <p class="mt-4 text-lg leading-relaxed text-slate-700">
-          É uma camada invisível que organiza o que já acontece
-          dentro do grupo. A pessoa já tira a foto. Já posta no grupo.
-          Já usa hashtag.
+          É uma camada que organiza disciplina.
+          <br>
+          <br>
+          Você assume um desafio.
+          <br>
+          Você registra o que faz.
+          <br>
+          Você acompanha sua evolução.
         </p>
 
-        <p class="mt-8 text-lg text-slate-700">O DOPA Check transforma isso em:</p>
+        <p class="mt-8 text-lg text-slate-700">
+          Se estiver em grupo, a visibilidade acelera.
+          <br>
+          Se estiver sozinho, o sistema sustenta.
+        </p>
 
         <ul class="mt-6 space-y-2.5">
           <li
@@ -215,9 +213,7 @@ const visionItems = [
         </ul>
 
         <p class="mt-8 text-lg leading-relaxed text-slate-600">
-          Tudo direto no WhatsApp.
-          <br>
-          Sem abrir app. Sem planilha. Sem fricção.
+          Sem drama. Sem planilha.
         </p>
       </div>
     </section>
@@ -226,13 +222,13 @@ const visionItems = [
     <section class="py-20">
       <div class="mx-auto max-w-3xl px-6">
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Para quem foi feito
+          Para quem é
         </h2>
 
         <div class="mt-6 space-y-2 text-lg leading-relaxed text-slate-700">
-          <p>Para comunidades que querem consistência.</p>
-          <p>Para líderes que querem estrutura.</p>
-          <p>Para grupos que querem crescer juntos.</p>
+          <p>Para quem decidiu levar consistência a sério.</p>
+          <p>Para comunidades que querem estrutura. Para líderes que querem organização.</p>
+          <p>Para indivíduos que querem progresso real.</p>
         </div>
 
         <div class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -247,9 +243,9 @@ const visionItems = [
 
         <div class="mt-10 border-l-2 border-violet-600 pl-6">
           <p class="text-lg font-medium text-slate-800">
-            Se existe grupo e existe disciplina,
+            Funciona sozinho.
             <br>
-            o DOPA Check organiza.
+            Funciona melhor em grupo.
           </p>
         </div>
       </div>
@@ -263,15 +259,16 @@ const visionItems = [
         </h2>
 
         <div class="mt-6 space-y-4 text-lg leading-relaxed text-slate-700">
-          <p>O DOPA Check nasceu inspirado em desafios reais.</p>
-          <p>Mas é um produto independente.</p>
+          <p>O DOPA Check nasceu inspirado em comunidades,</p>
+          <p>mas é um produto independente.</p>
           <p class="text-slate-600">
-            Não pertence a nenhuma comunidade específica.
+            Não pertence a nenhuma estrutura específica.
             <br>
-            Não depende de nenhuma estrutura externa.
+            Não depende de uma comunidade única.
           </p>
           <p class="font-medium text-slate-800">
-            É uma infraestrutura plugável para qualquer grupo de WhatsApp.
+            É uma infraestrutura plugável para qualquer grupo —
+            ou para você, individualmente.
           </p>
         </div>
       </div>
@@ -281,35 +278,34 @@ const visionItems = [
     <section class="py-20">
       <div class="mx-auto max-w-3xl px-6">
         <div class="grid gap-16 md:grid-cols-2">
-          <!-- Como construímos -->
-          <div>
-            <h2 class="text-2xl font-bold tracking-tight text-slate-900">
-              Como estamos construindo
-            </h2>
-            <div class="mt-6 space-y-4 text-lg leading-relaxed text-slate-700">
-              <p>Estamos em beta.</p>
-              <p>Estamos evoluindo junto com as comunidades.</p>
-              <p class="text-slate-600">
-                Feedback direto.
-                <br>
-                Iteração rápida.
-                <br>
-                Transparência total.
-              </p>
-              <p class="font-medium text-slate-800">
-                Primeiro estrutura. Depois escala.
-              </p>
-            </div>
-          </div>
-
           <!-- Visão -->
           <div>
             <h2 class="text-2xl font-bold tracking-tight text-slate-900">
               Visão
             </h2>
+            <div class="mt-6 space-y-4 text-lg leading-relaxed text-slate-700">
+              <p>O futuro da disciplina não está em motivação constante.</p>
+              <p>Está em sistemas que sustentam comportamento ao longo do tempo.</p>
+              <p class="text-slate-600">
+                Visibilidade gera compromisso.
+                <br>
+                Mensuração gera consistência.
+                <br>
+                Consistência gera cultura.
+              </p>
+              <p class="font-medium text-slate-800">
+                Estrutura sustenta.
+              </p>
+            </div>
+          </div>
+
+          <!-- Estamos construindo -->
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-slate-900">
+              Estamos construindo
+            </h2>
             <p class="mt-6 text-lg leading-relaxed text-slate-700">
-              O futuro da disciplina coletiva não está em mais motivação.
-              Está em sistemas que sustentam comportamento ao longo do tempo.
+              Estamos construindo:
             </p>
             <ul class="mt-6 space-y-2.5">
               <li
@@ -333,10 +329,10 @@ const visionItems = [
     <section class="border-t border-slate-100 bg-slate-50/60 py-20">
       <div class="mx-auto max-w-3xl px-6 text-center">
         <h2 class="text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-          Se o seu grupo já tem disciplina,
+          Funciona sozinho.
           <br>
-          talvez só falte
-          <span class="text-violet-600">estrutura</span>.
+          Funciona melhor em
+          <span class="text-violet-600">grupo</span>.
         </h2>
 
         <Button
@@ -345,12 +341,12 @@ const visionItems = [
           size="lg"
           class="mt-10 rounded-xl bg-violet-600 px-8 text-white shadow-[0_20px_60px_-15px_rgba(124,58,237,0.35)] transition-all duration-200 hover:bg-violet-700 hover:shadow-[0_20px_60px_-15px_rgba(124,58,237,0.5)]"
         >
-          Criar desafio para meu grupo
+          Criar desafio
           <Icon icon="lucide:arrow-right" class="ml-1 h-4 w-4" />
         </Button>
 
         <p class="mt-4 text-sm text-slate-500">
-          Beta aberto. Gratuito por enquanto.
+          Menos fricção. Mais execução.
         </p>
       </div>
     </section>

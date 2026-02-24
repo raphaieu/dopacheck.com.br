@@ -38,7 +38,14 @@ final class OauthController extends Controller
                 'profile',
                 'email',
             ])
-            ->with(['access_type' => 'offline', 'prompt' => 'consent']);
+            // Não forçar "consent" aqui: isso faz o Google pedir confirmação toda vez.
+            // Se existir um último e-mail usado, damos um "hint" para o Google tentar
+            // pular a escolha de conta quando possível.
+            ->with(array_filter([
+                'login_hint' => is_string(request()->cookie('oauth_last_email_google'))
+                    ? request()->cookie('oauth_last_email_google')
+                    : null,
+            ]));
         }
 
         return $driver->redirect();
@@ -61,9 +68,19 @@ final class OauthController extends Controller
         } catch (Throwable $throwable) {
             report($throwable);
 
+            $message = 'Ocorreu um erro durante a autenticação. Por favor, tente novamente.';
+            if (config('app.debug')) {
+                $message .= ' (DEBUG: '.$throwable->getMessage().')';
+            }
+
             return Redirect::intended(Auth::check() ? route('profile.show') : route('login'))
-                ->with('error', 'Ocorreu um erro durante a autenticação. Por favor, tente novamente.');
+                ->with('error', $message);
         }
+
+        $rememberEmailCookie = cookie()->forever(
+            "oauth_last_email_{$provider}",
+            (string) $socialiteUser->getEmail()
+        );
 
         if (Auth::guest()) {
             Auth::login($user, true);
@@ -73,13 +90,15 @@ final class OauthController extends Controller
             $path = is_string($intended) ? (parse_url($intended, PHP_URL_PATH) ?: '') : '';
             if ($path !== '' && str_starts_with($path, '/api/')) {
                 session()->forget('url.intended');
-                return Redirect::to($fallback);
+                return Redirect::to($fallback)->withCookie($rememberEmailCookie);
             }
 
-            return Redirect::intended($fallback);
+            return Redirect::intended($fallback)->withCookie($rememberEmailCookie);
         }
 
-        return Redirect::intended(route('profile.show'))->with('success', "Sua conta {$provider} foi vinculada com sucesso.");
+        return Redirect::intended(route('profile.show'))
+            ->with('success', "Sua conta {$provider} foi vinculada com sucesso.")
+            ->withCookie($rememberEmailCookie);
     }
 
     public function destroy(string $provider): RedirectResponse
