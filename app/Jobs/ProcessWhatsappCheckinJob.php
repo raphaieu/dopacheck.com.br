@@ -39,6 +39,7 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
      *   image_path?: string|null,
      *   image_url?: string|null,
      *   media_url?: string|null,
+     *   media_url_source?: string|null,
      *   image_mime?: string|null,
      * } $payload
      */
@@ -59,6 +60,7 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
         $imagePath = (string) ($this->payload['image_path'] ?? '');
         $imageUrl = (string) ($this->payload['image_url'] ?? '');
         $mediaUrl = (string) ($this->payload['media_url'] ?? '');
+        $mediaUrlSource = (string) ($this->payload['media_url_source'] ?? '');
         $storageError = (string) ($this->payload['storage_error'] ?? '');
 
         $react = function (string $emoji) use ($evolution, $instance, $remoteJid, $messageId, $senderPhoneRaw, $participantJid): void {
@@ -90,6 +92,7 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
                 'has_image_path' => $imagePath !== '',
                 'has_image_url' => $imageUrl !== '',
                 'has_media_url' => $mediaUrl !== '',
+                'media_url_source' => $mediaUrlSource !== '' ? $mediaUrlSource : null,
                 'storage_error' => $storageError !== '' ? $storageError : null,
             ]);
             $react('❌');
@@ -301,6 +304,12 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
 
         // Caminho novo: se veio `media_url` pública, seguimos sem exigir arquivo em disco.
         if ($usedMediaUrl && $imagePath === '') {
+            Log::info('WhatsApp checkin: usando media_url (S3/MinIO) sem storage local', [
+                'message_id' => $messageId,
+                'user_id' => $user->id,
+                'media_url_source' => $mediaUrlSource !== '' ? $mediaUrlSource : null,
+                'image_url' => $imageUrl,
+            ]);
             try {
                 DB::transaction(function () use ($userChallenge, $task, $caption, $imageUrl, $messageId): void {
                     $userChallenge->addCheckin($task, [

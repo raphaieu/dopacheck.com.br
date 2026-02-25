@@ -178,6 +178,7 @@ class WhatsAppController extends Controller
                     'has_base64' => !empty($item['image_base64']),
                     'has_image_url' => !empty($item['image_url']),
                     'has_media_url' => !empty($item['media_url']),
+                    'media_url_source' => $item['media_url_source'] ?? null,
                 ]);
 
                 // Para imagem com hashtag: processa check-in (mesmo sem base64)
@@ -188,7 +189,9 @@ class WhatsAppController extends Controller
 
                     // Se já existe check-in hoje pra essa task, evita salvar a imagem (storage)
                     // e deixa o job apenas reagir ✅ (idempotência).
-                    $shouldSkipStorage = $this->shouldSkipStorageBecauseAlreadyCheckedIn($item);
+                    // Se já temos `media_url`, não vamos persistir nada no webhook, então não vale o custo
+                    // de consultar o banco aqui. O job já tem idempotência por message_id e por dia.
+                    $shouldSkipStorage = $hasMediaUrl ? true : $this->shouldSkipStorageBecauseAlreadyCheckedIn($item);
 
                     // Se `media_url` existe, não persistimos nada localmente no webhook.
                     // O job vai só usar a URL pública (S3/MinIO) e criar o check-in.
@@ -225,6 +228,7 @@ class WhatsAppController extends Controller
                         'image_mime' => $stored['mime'] ?? ($item['image_mime'] ?? null),
                         'image_url' => $item['image_url'] ?? null,
                         'media_url' => $item['media_url'] ?? null,
+                        'media_url_source' => $item['media_url_source'] ?? null,
                         'storage_error' => $storageError,
                     ]);
 
@@ -345,9 +349,20 @@ class WhatsAppController extends Controller
             $messageId = $msg['key']['id'] ?? null;
             $imageUrl = null;
             $mediaUrl = null;
+            $mediaUrlSource = null;
 
             $m = $msg['message'] ?? [];
             if (is_array($m)) {
+                // Algumas builds colocam mediaUrl no root de "message" (irmão de imageMessage).
+                if (isset($m['mediaUrl']) && is_string($m['mediaUrl'])) {
+                    $mediaUrl = $m['mediaUrl'];
+                    $mediaUrlSource = 'message.mediaUrl';
+                } elseif (isset($msg['mediaUrl']) && is_string($msg['mediaUrl'])) {
+                    // Outras podem flattenar para o root do item (irmão de message/key)
+                    $mediaUrl = $msg['mediaUrl'];
+                    $mediaUrlSource = 'item.mediaUrl';
+                }
+
                 // Texto simples
                 if (isset($m['conversation']) && is_string($m['conversation'])) {
                     $content = $m['conversation'];
@@ -383,6 +398,7 @@ class WhatsAppController extends Controller
                     // Ex.: imageMessage.mediaUrl => https://files.dopacheck.com.br/... (podendo vir presigned).
                     if (isset($m['imageMessage']['mediaUrl']) && is_string($m['imageMessage']['mediaUrl'])) {
                         $mediaUrl = $m['imageMessage']['mediaUrl'];
+                        $mediaUrlSource = 'imageMessage.mediaUrl';
                     }
                 }
                 // Vídeo com legenda
@@ -410,6 +426,7 @@ class WhatsAppController extends Controller
                     'image_mime' => $imageMime,
                     'image_url' => $imageUrl,
                     'media_url' => $mediaUrl,
+                    'media_url_source' => $mediaUrlSource,
                 ];
             }
         }
