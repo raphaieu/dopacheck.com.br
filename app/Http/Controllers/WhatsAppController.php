@@ -177,18 +177,22 @@ class WhatsAppController extends Controller
                     'hashtags' => $item['hashtags'] ?? [],
                     'has_base64' => !empty($item['image_base64']),
                     'has_image_url' => !empty($item['image_url']),
+                    'has_media_url' => !empty($item['media_url']),
                 ]);
 
                 // Para imagem com hashtag: processa check-in (mesmo sem base64)
                 if (($item['type'] ?? null) === 'image' && !empty($item['hashtags'])) {
                     $stored = null;
                     $storageError = null;
+                    $hasMediaUrl = !empty($item['media_url']);
 
                     // Se já existe check-in hoje pra essa task, evita salvar a imagem (storage)
                     // e deixa o job apenas reagir ✅ (idempotência).
                     $shouldSkipStorage = $this->shouldSkipStorageBecauseAlreadyCheckedIn($item);
 
-                    if (!$shouldSkipStorage && !empty($item['image_base64'])) {
+                    // Se `media_url` existe, não persistimos nada localmente no webhook.
+                    // O job vai só usar a URL pública (S3/MinIO) e criar o check-in.
+                    if (!$hasMediaUrl && !$shouldSkipStorage && !empty($item['image_base64'])) {
                         try {
                             $stored = $this->storeIncomingWhatsappImage(
                                 base64: (string) $item['image_base64'],
@@ -220,6 +224,7 @@ class WhatsAppController extends Controller
                         'image_path' => $stored['path'] ?? null,
                         'image_mime' => $stored['mime'] ?? ($item['image_mime'] ?? null),
                         'image_url' => $item['image_url'] ?? null,
+                        'media_url' => $item['media_url'] ?? null,
                         'storage_error' => $storageError,
                     ]);
 
@@ -231,6 +236,7 @@ class WhatsAppController extends Controller
                         'hashtags' => $item['hashtags'] ?? [],
                         'has_base64' => !empty($item['image_base64']),
                         'has_image_url' => !empty($item['image_url']),
+                        'has_media_url' => !empty($item['media_url']),
                         'stored_path' => $stored['path'] ?? null,
                         'storage_error' => $storageError,
                     ]);
@@ -338,6 +344,7 @@ class WhatsAppController extends Controller
             $imageMime = null;
             $messageId = $msg['key']['id'] ?? null;
             $imageUrl = null;
+            $mediaUrl = null;
 
             $m = $msg['message'] ?? [];
             if (is_array($m)) {
@@ -372,6 +379,11 @@ class WhatsAppController extends Controller
                             }
                         }
                     }
+                    // Quando a Evolution está integrada com S3/MinIO, ela pode enviar uma URL pública da mídia.
+                    // Ex.: imageMessage.mediaUrl => https://files.dopacheck.com.br/... (podendo vir presigned).
+                    if (isset($m['imageMessage']['mediaUrl']) && is_string($m['imageMessage']['mediaUrl'])) {
+                        $mediaUrl = $m['imageMessage']['mediaUrl'];
+                    }
                 }
                 // Vídeo com legenda
                 elseif (isset($m['videoMessage']['caption']) && is_string($m['videoMessage']['caption'])) {
@@ -397,6 +409,7 @@ class WhatsAppController extends Controller
                     'image_base64' => $imageBase64,
                     'image_mime' => $imageMime,
                     'image_url' => $imageUrl,
+                    'media_url' => $mediaUrl,
                 ];
             }
         }

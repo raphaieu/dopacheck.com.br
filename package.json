@@ -1,6 +1,9 @@
 {
+  "name": "dopacheck.com.br",
+  "version": "0.0.0",
   "type": "module",
   "private": true,
+  "packageManager": "npm@10.7.0",
   "scripts": {
     "build": "vite build",
     "build:ssr": "vite build && vite build --ssr",

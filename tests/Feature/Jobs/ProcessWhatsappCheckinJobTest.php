@@ -165,6 +165,64 @@ it('baixa a imagem via image_url quando não vem base64 (DM) e cria check-in', f
     expect(Storage::disk('public')->exists($checkin->image_path))->toBeTrue();
 });
 
+it('usa media_url (S3/MinIO) e não salva nada no storage local', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create([
+        'whatsapp_number' => '5511948863848',
+        'phone' => '5511948863848',
+    ]);
+
+    $challenge = Challenge::factory()->create([
+        'visibility' => Challenge::VISIBILITY_GLOBAL,
+        'is_public' => true,
+        'duration_days' => 7,
+    ]);
+
+    ChallengeTask::factory()->create([
+        'challenge_id' => $challenge->id,
+        'hashtag' => 'water',
+        'name' => 'Water',
+    ]);
+
+    UserChallenge::factory()->create([
+        'user_id' => $user->id,
+        'challenge_id' => $challenge->id,
+        'status' => 'active',
+        'current_day' => 1,
+        'started_at' => now()->startOfDay(),
+    ]);
+
+    $mock = \Mockery::mock(EvolutionApiService::class);
+    $mock->shouldReceive('sendReaction')->once();
+    app()->instance(EvolutionApiService::class, $mock);
+
+    $stableUrl = 'https://files.dopacheck.com.br/evolution/some/path/file.jpeg';
+    $presigned = $stableUrl . '?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=604800';
+
+    $job = new ProcessWhatsappCheckinJob([
+        'instance' => 'DOPACheck',
+        'remote_jid' => '5511948863848@s.whatsapp.net',
+        'message_id' => 'MSG_MEDIA_URL_1',
+        'sender_phone' => '5511948863848',
+        'caption' => '#water',
+        'hashtags' => ['water'],
+        'media_url' => $presigned,
+        // pode vir também image_url legado; media_url deve ganhar prioridade
+        'image_url' => 'https://mmg.whatsapp.net/o1/v/t24/f2/test.jpg',
+        'image_mime' => 'image/jpeg',
+    ]);
+
+    $job->handle(app(EvolutionApiService::class));
+
+    expect(Checkin::query()->count())->toBe(1);
+    $checkin = Checkin::query()->first();
+    expect($checkin->image_path)->toBeNull();
+    expect($checkin->image_url)->toBe($stableUrl);
+
+    expect(Storage::disk('public')->allFiles())->toBeEmpty();
+});
+
 it('cria check-in via WhatsApp em grupo mapeado para um time (scope_team_id) e reage com ✅', function () {
     Storage::fake('public');
 

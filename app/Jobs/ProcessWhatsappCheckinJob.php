@@ -38,6 +38,7 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
      *   has_image?: bool|null,
      *   image_path?: string|null,
      *   image_url?: string|null,
+     *   media_url?: string|null,
      *   image_mime?: string|null,
      * } $payload
      */
@@ -57,6 +58,7 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
         $hasImage = (bool) ($this->payload['has_image'] ?? false);
         $imagePath = (string) ($this->payload['image_path'] ?? '');
         $imageUrl = (string) ($this->payload['image_url'] ?? '');
+        $mediaUrl = (string) ($this->payload['media_url'] ?? '');
         $storageError = (string) ($this->payload['storage_error'] ?? '');
 
         $react = function (string $emoji) use ($evolution, $instance, $remoteJid, $messageId, $senderPhoneRaw, $participantJid): void {
@@ -87,6 +89,7 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
                 'has_image' => $hasImage,
                 'has_image_path' => $imagePath !== '',
                 'has_image_url' => $imageUrl !== '',
+                'has_media_url' => $mediaUrl !== '',
                 'storage_error' => $storageError !== '' ? $storageError : null,
             ]);
             $react('❌');
@@ -284,15 +287,57 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
             return;
         }
 
-        if ($imagePath === '' && $imageUrl !== '') {
-            // Baixa a imagem a partir do URL da Evolution (quando webhook não inclui base64)
+        $usedMediaUrl = false;
+
+        // Se vier `media_url` (S3/MinIO), preferimos usar diretamente como URL pública e estável (sem querystring).
+        // Não fazemos download nem storage local nesse caminho.
+        if ($imagePath === '' && $mediaUrl !== '') {
+            $imageUrl = $this->stripQueryString($mediaUrl);
+            $usedMediaUrl = $imageUrl !== '';
+        } elseif ($imagePath === '' && $imageUrl !== '') {
+            // Fallback legado: baixa a imagem (quando webhook não inclui base64 e não há media_url)
             $imagePath = $this->downloadImageToPublicDisk($imageUrl, $senderPhone);
         }
 
+        // Caminho novo: se veio `media_url` pública, seguimos sem exigir arquivo em disco.
+        if ($usedMediaUrl && $imagePath === '') {
+            try {
+                DB::transaction(function () use ($userChallenge, $task, $caption, $imageUrl, $messageId): void {
+                    $userChallenge->addCheckin($task, [
+                        'image_path' => null,
+                        'image_url' => $imageUrl,
+                        'message' => $caption !== '' ? $caption : null,
+                        'source' => 'whatsapp',
+                        'whatsapp_message_id' => $messageId !== '' ? $messageId : null,
+                        'status' => 'approved',
+                    ]);
+                });
+
+                $react('✅');
+                return;
+            } catch (UniqueConstraintViolationException) {
+                $react('✅');
+                return;
+            } catch (\Throwable $e) {
+                Log::error('WhatsApp checkin: erro ao criar check-in (via media_url)', [
+                    'error' => $e->getMessage(),
+                    'user_id' => $user->id,
+                    'user_challenge_id' => $userChallenge->id,
+                    'task_id' => $task->id,
+                    'image_url' => $imageUrl,
+                    'message_id' => $messageId,
+                ]);
+                $react('❌');
+                throw $e;
+            }
+        }
+
+        // Caminho legado: precisa existir em disco local (public).
         if ($imagePath === '' || !Storage::disk('public')->exists($imagePath)) {
             Log::warning('WhatsApp checkin: imagem não encontrada no storage', [
                 'image_path' => $imagePath,
                 'image_url' => $imageUrl,
+                'media_url' => $mediaUrl !== '' ? $this->stripQueryString($mediaUrl) : null,
                 'user_id' => $user->id,
             ]);
             $react('❌');
@@ -409,6 +454,17 @@ class ProcessWhatsappCheckinJob implements ShouldQueue
         } catch (\Throwable) {
             // best-effort
         }
+    }
+
+    private function stripQueryString(string $url): string
+    {
+        $clean = trim($url);
+        if ($clean === '') {
+            return '';
+        }
+
+        $base = strtok($clean, '?');
+        return is_string($base) ? $base : $clean;
     }
 }
 
