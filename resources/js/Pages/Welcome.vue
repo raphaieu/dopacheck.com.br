@@ -137,7 +137,7 @@ const formatInt = (v) => new Intl.NumberFormat('pt-BR').format(Number(v ?? 0))
   <WebLayout :can-login="canLogin" :can-register="canRegister">
 
     <!-- ===== HERO ===== -->
-    <section class="relative overflow-hidden py-24 md:py-32">
+    <section class="relative overflow-hidden py-12">
       <div class="mx-auto max-w-6xl px-6">
         <div class="lg:grid lg:grid-cols-12 lg:items-center lg:gap-16">
 
@@ -456,7 +456,7 @@ const formatInt = (v) => new Intl.NumberFormat('pt-BR').format(Number(v ?? 0))
     </section>
 
     <!-- ===== PRICING ===== -->
-    <section id="pricing" class="border-t border-slate-100 bg-slate-50/60 py-20">
+    <section id="pricing" class="hidden border-t border-slate-100 bg-slate-50/60 py-20">
       <div class="mx-auto max-w-6xl px-6">
         <div class="mx-auto max-w-2xl text-center">
           <p class="text-[13px] font-semibold uppercase tracking-widest text-violet-600">

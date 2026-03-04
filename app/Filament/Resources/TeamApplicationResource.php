@@ -59,43 +59,51 @@ final class TeamApplicationResource extends Resource
     {
         return $form->schema([
             Forms\Components\Section::make('Dados da inscrição')
-                ->schema([
-                    Forms\Components\Select::make('team_id')
-                        ->relationship('team', 'name')
-                        ->searchable()
-                        ->required(),
+                ->schema(array_merge(
+                    [
+                        Forms\Components\Select::make('team_id')
+                            ->relationship('team', 'name')
+                            ->searchable()
+                            ->required(),
 
-                    Forms\Components\Select::make('status')
-                        ->options([
-                            'pending' => 'pending',
-                            'approved' => 'approved',
-                            'rejected' => 'rejected',
-                        ])
-                        ->required(),
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                'pending' => 'pending',
+                                'approved' => 'approved',
+                                'rejected' => 'rejected',
+                            ])
+                            ->required(),
 
-                    Forms\Components\TextInput::make('name')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\DatePicker::make('birthdate')
-                        ->required(),
-                    Forms\Components\TextInput::make('email')
-                        ->email()
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\TextInput::make('whatsapp_number')
-                        ->required()
-                        ->maxLength(20),
-                    Forms\Components\TextInput::make('city')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\TextInput::make('neighborhood')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\TextInput::make('circle_url')
-                        ->url()
-                        ->required()
-                        ->maxLength(2048),
-                ])
+                        Forms\Components\TextInput::make('name')
+                            ->maxLength(255),
+                        Forms\Components\DatePicker::make('birthdate'),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('whatsapp_number')
+                            ->maxLength(20),
+                        Forms\Components\TextInput::make('city')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('neighborhood')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('circle_url')
+                            ->url()
+                            ->maxLength(2048),
+                    ],
+                    [
+                        Forms\Components\Placeholder::make('form_data_display')
+                            ->label('Formulário custom (dados enviados)')
+                            ->content(function (?TeamApplication $record): string {
+                                if (! $record || ! $record->hasCustomFormData()) {
+                                    return '-';
+                                }
+                                $data = $record->form_data ?? [];
+                                return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                            })
+                            ->visible(fn (?TeamApplication $record): bool => $record !== null && $record->hasCustomFormData())
+                            ->columnSpanFull(),
+                    ]
+                ))
                 ->columns(2),
 
             Forms\Components\Section::make('Aprovação / Claim')
@@ -151,10 +159,23 @@ final class TeamApplicationResource extends Resource
                     ->badge()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable()
+                    ->label('Nome')
+                    ->formatStateUsing(fn (TeamApplication $record): string => $record->getDisplayName() ?? '-')
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function (Builder $q) use ($search): void {
+                            $q->where('name', 'like', "%{$search}%")
+                                ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(form_data, '$.name')) LIKE ?", ["%{$search}%"]);
+                        });
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable()
+                    ->formatStateUsing(fn (TeamApplication $record): string => $record->getDisplayEmail() ?? '-')
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function (Builder $q) use ($search): void {
+                            $q->where('email', 'like', "%{$search}%")
+                                ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(form_data, '$.email')) LIKE ?", ["%{$search}%"]);
+                        });
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('whatsapp_number')
                     ->label('WhatsApp')

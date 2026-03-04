@@ -10,7 +10,7 @@
       <!-- CTA de Upgrade (FREE -> PRO) -->
       <div
         v-if="user && !user.is_pro"
-        class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        class="hidden bg-white rounded-2xl shadow-sm border border-purple-100 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-sm font-medium">

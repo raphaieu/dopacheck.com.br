@@ -193,6 +193,24 @@
                             </p>
                         </div>
 
+                        <!-- Visitante: desafio de grupo → link para landing do grupo -->
+                        <div v-else-if="!isAuthenticated && challenge.visibility === 'team' && challenge.team?.slug" class="text-center">
+                            <div
+                                class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-2xl">👥</span>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Desafio para um grupo específico</h3>
+                            <p class="text-gray-600 text-sm mb-4">
+                                Este desafio é do grupo <strong>{{ challenge.team.name }}</strong>. Acesse a página do grupo para participar.
+                            </p>
+                            <Link
+                                :href="`/join/${challenge.team.slug}`"
+                                class="cursor-pointer w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2"
+                            >
+                                Participar
+                            </Link>
+                        </div>
+
                         <div v-else-if="!isParticipating && canJoin" class="text-center">
                             <div
                                 class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">

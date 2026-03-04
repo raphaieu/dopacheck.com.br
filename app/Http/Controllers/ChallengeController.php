@@ -56,7 +56,12 @@ class ChallengeController extends Controller
         }
 
         if ($challenge->visibility === Challenge::VISIBILITY_TEAM) {
-            abort_unless($user && $challenge->team_id, 404);
+            // Visitantes podem ver a página do desafio (para depois ir à landing do grupo)
+            if (! $user) {
+                abort_unless($challenge->team_id, 404);
+                abort_unless(Team::query()->find($challenge->team_id), 404);
+                return;
+            }
             $team = Team::query()->find($challenge->team_id);
             abort_unless($team && $user->belongsToTeam($team), 404);
             return;
@@ -81,11 +86,14 @@ class ChallengeController extends Controller
             ->where(function ($q) use ($user, $teamIds, $showPrivate) {
                 $q->where('visibility', Challenge::VISIBILITY_GLOBAL);
 
+                // Desafios de time: para usuário logado só dos seus times; para visitante mostrar todos (públicos)
                 if ($user && ! empty($teamIds)) {
                     $q->orWhere(function ($subQ) use ($teamIds) {
                         $subQ->where('visibility', Challenge::VISIBILITY_TEAM)
                             ->whereIn('team_id', $teamIds);
                     });
+                } elseif (! $user) {
+                    $q->orWhere('visibility', Challenge::VISIBILITY_TEAM);
                 }
 
                 if ($showPrivate && $user) {

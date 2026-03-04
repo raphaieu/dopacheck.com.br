@@ -46,8 +46,6 @@ const audiences = [
   'Para comunidades que querem estrutura.',
   'Para líderes que querem organização.',
   'Para indivíduos que querem progresso real.',
-  'Funciona sozinho.',
-  'Funciona melhor em grupo.',
 ]
 
 const visionItems = [
@@ -62,7 +60,7 @@ const visionItems = [
   <WebLayout :can-login="canLogin" :can-register="canRegister">
 
     <!-- ===== HERO ===== -->
-    <section class="py-24 md:py-32">
+    <section class="py-12">
       <div class="mx-auto max-w-3xl px-6">
         <p class="text-[13px] font-semibold uppercase tracking-widest text-violet-600">
           Sobre
@@ -85,7 +83,7 @@ const visionItems = [
     </section>
 
     <!-- ===== ORIGEM ===== -->
-    <section class="border-t border-slate-100 bg-slate-50/60 py-20">
+    <section class="border-t border-slate-100 bg-slate-50/60 py-12">
       <div class="mx-auto max-w-3xl px-6">
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           De onde surgiu
@@ -140,7 +138,7 @@ const visionItems = [
     </section>
 
     <!-- ===== NO QUE ACREDITAMOS ===== -->
-    <section class="py-20">
+    <section class="py-12">
       <div class="mx-auto max-w-3xl px-6">
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           No que acreditamos
@@ -175,7 +173,7 @@ const visionItems = [
     </section>
 
     <!-- ===== O QUE É ===== -->
-    <section class="border-t border-slate-100 bg-slate-50/60 py-20">
+    <section class="border-t border-slate-100 bg-slate-50/60 py-12">
       <div class="mx-auto max-w-3xl px-6">
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           O que o DOPA Check realmente é
@@ -219,17 +217,11 @@ const visionItems = [
     </section>
 
     <!-- ===== PARA QUEM ===== -->
-    <section class="py-20">
+    <section class="py-12">
       <div class="mx-auto max-w-3xl px-6">
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           Para quem é
         </h2>
-
-        <div class="mt-6 space-y-2 text-lg leading-relaxed text-slate-700">
-          <p>Para quem decidiu levar consistência a sério.</p>
-          <p>Para comunidades que querem estrutura. Para líderes que querem organização.</p>
-          <p>Para indivíduos que querem progresso real.</p>
-        </div>
 
         <div class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div
@@ -252,19 +244,18 @@ const visionItems = [
     </section>
 
     <!-- ===== INDEPENDÊNCIA ===== -->
-    <section class="border-t border-slate-100 bg-slate-50/60 py-20">
+    <section class="border-t border-slate-100 bg-slate-50/60 py-12">
       <div class="mx-auto max-w-3xl px-6">
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           Independência
         </h2>
 
         <div class="mt-6 space-y-4 text-lg leading-relaxed text-slate-700">
-          <p>O DOPA Check nasceu inspirado em comunidades,</p>
-          <p>mas é um produto independente.</p>
+          <p>O DOPA Check nasceu inspirado em comunidades, mas é um produto independente.</p>
           <p class="text-slate-600">
-            Não pertence a nenhuma estrutura específica.
+            - Não pertence a nenhuma estrutura específica.
             <br>
-            Não depende de uma comunidade única.
+            - Não depende de uma comunidade única.
           </p>
           <p class="font-medium text-slate-800">
             É uma infraestrutura plugável para qualquer grupo —
@@ -275,7 +266,7 @@ const visionItems = [
     </section>
 
     <!-- ===== CONSTRUÇÃO + VISÃO ===== -->
-    <section class="py-20">
+    <section class="py-12">
       <div class="mx-auto max-w-3xl px-6">
         <div class="grid gap-16 md:grid-cols-2">
           <!-- Visão -->
@@ -326,7 +317,7 @@ const visionItems = [
     </section>
 
     <!-- ===== CLOSING ===== -->
-    <section class="border-t border-slate-100 bg-slate-50/60 py-20">
+    <section class="border-t border-slate-100 bg-slate-50/60 py-12">
       <div class="mx-auto max-w-3xl px-6 text-center">
         <h2 class="text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">
           Funciona sozinho.

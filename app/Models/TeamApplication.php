@@ -11,13 +11,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id
  * @property int $team_id
- * @property string $name
- * @property CarbonImmutable $birthdate
- * @property string $email
- * @property string $whatsapp_number
- * @property string $city
- * @property string $neighborhood
- * @property string $circle_url
+ * @property string|null $name
+ * @property CarbonImmutable|null $birthdate
+ * @property string|null $email
+ * @property string|null $whatsapp_number
+ * @property string|null $city
+ * @property string|null $neighborhood
+ * @property string|null $circle_url
+ * @property array<string, mixed>|null $form_data
  * @property string $status
  * @property int|null $user_id
  * @property int|null $approved_by
@@ -40,6 +41,7 @@ final class TeamApplication extends Model
         'city',
         'neighborhood',
         'circle_url',
+        'form_data',
         'status',
         'user_id',
         'approved_by',
@@ -56,6 +58,7 @@ final class TeamApplication extends Model
             'birthdate' => 'date:Y-m-d',
             'approved_at' => 'datetime',
             'meta' => 'array',
+            'form_data' => 'array',
         ];
     }
 
@@ -81,6 +84,30 @@ final class TeamApplication extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function getDisplayName(): ?string
+    {
+        if ($this->name !== null && $this->name !== '') {
+            return $this->name;
+        }
+        $data = $this->form_data ?? [];
+        return isset($data['name']) && is_string($data['name']) ? $data['name'] : null;
+    }
+
+    public function getDisplayEmail(): ?string
+    {
+        if ($this->email !== null && $this->email !== '') {
+            return $this->email;
+        }
+        $data = $this->form_data ?? [];
+        return isset($data['email']) && is_string($data['email']) ? $data['email'] : null;
+    }
+
+    public function hasCustomFormData(): bool
+    {
+        $data = $this->form_data ?? [];
+        return $data !== [];
     }
 }
 

@@ -59,6 +59,13 @@
             >
               👥 {{ challenge.team?.name || 'Time' }}
             </span>
+            <!-- Aviso para visitante: desafio de grupo -->
+            <span
+              v-if="!user && challenge.visibility === 'team'"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"
+            >
+              Desafio para um grupo específico
+            </span>
 
             <!-- Category -->
             <span
@@ -110,7 +117,16 @@
                 Ver Detalhes
             </button>
 
-            <button v-if="!isParticipating" @click="handleJoin" :disabled="joining"
+            <!-- Visitante + desafio de time: link para landing do grupo -->
+            <Link
+                v-if="!user && challenge.visibility === 'team' && challenge.team?.slug && !challenge.is_expired"
+                :href="`/join/${challenge.team.slug}`"
+                class="cursor-pointer flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 bg-blue-600 text-white hover:bg-blue-700"
+            >
+                Participar
+            </Link>
+
+            <button v-else-if="!isParticipating" @click="handleJoin" :disabled="joining"
                 class="cursor-pointer flex-1 px-4 py-2.5 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
                 :class="challenge.is_expired ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'"
             >
@@ -139,7 +155,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 
 // Props
 const props = defineProps({

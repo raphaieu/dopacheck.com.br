@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Laravel\Jetstream\Team as JetstreamTeam;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Challenge;
 
 /**
  * @property int $id
@@ -21,6 +22,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string|null $whatsapp_group_jid
  * @property string|null $whatsapp_group_name
  * @property bool $personal_team
+ * @property string|null $landing_template
+ * @property array<int, array{key: string, type: string, label: string, required?: bool, placeholder?: string}>|null $form_schema
+ * @property string|null $onboarding_behavior
+ * @property array<string, string>|null $theme
+ * @property string|null $custom_landing
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read User|null $owner
@@ -53,6 +59,14 @@ final class Team extends JetstreamTeam
      *
      * @var list<string>
      */
+    public const LANDING_TEMPLATE_DOPAMINA = 'dopamina';
+
+    public const LANDING_TEMPLATE_DEFAULT = 'default';
+
+    public const ONBOARDING_BEHAVIOR_APPLICATION_ONLY = 'application_only';
+
+    public const ONBOARDING_BEHAVIOR_CREATE_USER = 'create_user';
+
     protected $fillable = [
         'name',
         'slug',
@@ -61,6 +75,11 @@ final class Team extends JetstreamTeam
         'whatsapp_group_name',
         'onboarding_title',
         'onboarding_body',
+        'landing_template',
+        'form_schema',
+        'onboarding_behavior',
+        'theme',
+        'custom_landing',
         'personal_team',
     ];
 
@@ -94,6 +113,23 @@ final class Team extends JetstreamTeam
     {
         return [
             'personal_team' => 'boolean',
+            'form_schema' => 'array',
+            'theme' => 'array',
         ];
+    }
+
+    public function usesDopaminaLanding(): bool
+    {
+        return ($this->landing_template ?? self::LANDING_TEMPLATE_DOPAMINA) === self::LANDING_TEMPLATE_DOPAMINA;
+    }
+
+    /**
+     * Desafios vinculados a este time.
+     *
+     * @return HasMany<Challenge, $this>
+     */
+    public function challenges(): HasMany
+    {
+        return $this->hasMany(Challenge::class);
     }
 }

@@ -21,6 +21,7 @@ class UserChallenge extends Model
     protected $fillable = [
         'user_id',
         'challenge_id',
+        'team_id',
         'status',
         'started_at',
         'completed_at',
