@@ -112,6 +112,32 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Nginx & Octane:** O Octane gerencia o processo do Laravel de forma persistente. Evite Singletons que guardam estado entre requisições para prevenir vazamento de memória ou de dados entre sessões.
 - **Dedupe de Mensagens:** Sempre verifique se o `message_id` do WhatsApp já foi processado antes de criar um novo check-in para evitar duplicidade.
 
+### Premium Design System (v2.0)
+
+**Aesthetics & Visual Layers:**
+- **Atmospheric Backgrounds:** Use animated colored blurs (e.g., `bg-blue-400/10 blur-[120px] rounded-full animate-pulse`) to create depth.
+- **Glassmorphism:** Components should use `bg-white/70 backdrop-blur-xl border border-white/80` for a high-end feel.
+- **Deep Shadows:** Use `shadow-2xl shadow-slate-200/50` or custom brand-colored glows (`shadow-blue-500/10`).
+
+**Typography:**
+- **Emphasis:** Use `font-black`, `uppercase`, `tracking-widest` for headers and labels.
+- **Italics:** Use `italic` on main titles for a dynamic, "speed" aesthetic.
+- **Micro-copy:** Use `text-[10px]` with `font-bold` for metadata and metadata-labels.
+
+**Interactive Elements:**
+- **Buttons:** Standardize on large, rounded-2xl buttons with brand gradients (`from-blue-600 to-violet-600`) and subtle scale/hover transforms.
+- **Inputs:** Maintain high contrast with `bg-slate-50/50` and `focus:bg-white`.
+- **Icons:** Mandatory use of `@iconify/vue` (Lucide sets) for all UI controls.
+
+### Storage & Cloud Integration
+
+**S3 / MinIO Patterns:**
+- **Disk-Agnostic Storage:** Use the `Storage` facade with dynamic disks (`FILESYSTEM_DISK`).
+- **Web Check-ins:** Web-based check-ins must upload to the cloud (S3) and store full URLs using `Storage::disk($disk)->url($path)`.
+- **Environment Parity:** Local dev uses `public` or local S3 (MinIO), while production uses dedicated S3/R2 storage.
+
+---
+
 ## Code Patterns
 
 - **PHP Components:**

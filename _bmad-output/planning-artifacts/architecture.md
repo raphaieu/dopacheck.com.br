@@ -120,6 +120,7 @@ O projeto já utiliza a stack VILT de última geração. A escolha de manter o m
 ### Architectural Boundaries
 - **API Boundary**: Webhooks externos (Evolution API) -> Redis Queue -> App Jobs.
 - **Frontend Boundary**: Reatividade via Inertia 2.0 (Deferred Props para feeds sociais).
+- **Design System**: Premium UI v2.0 (Glassmorphism, Atmospheric Blurs, `font-black` typography).
 - **Data Boundary**: Eloquent ORM + Cache Layer (Idempotência).
 - **Storage Boundary**: Laravel `Storage` (R2/S3/MinIO) para mídia persistente.
 
