@@ -212,32 +212,15 @@
                                     </Link>
                                 </div>
 
-                                <!-- Ready to Join -->
-                                <div v-else-if="!isParticipating && canJoin" class="text-center">
-                                    <div class="w-16 h-16 mx-auto mb-6 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
-                                        <Icon icon="lucide:rocket" class="size-8" />
-                                    </div>
-                                    <h3 class="text-xl font-black mb-3">Vamos Começar?</h3>
-                                    <p class="text-slate-400 text-sm mb-8">
-                                        Junte-se a {{ stats.total_participants }} pessoas agora mesmo.
-                                    </p>
-
-                                    <button @click="handleJoinChallenge" :disabled="joining"
-                                        class="cursor-pointer w-full bg-gradient-to-r from-blue-500 via-violet-600 to-purple-600 text-white py-4 rounded-2xl font-black text-center shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3">
-                                        <Icon v-if="joining" icon="lucide:loader" class="size-6 animate-spin" />
-                                        <span>{{ joining ? 'Processando...' : 'Participar Agora' }}</span>
-                                    </button>
-                                </div>
-
-                                <!-- Already Participating -->
-                                <div v-else-if="isParticipating" class="text-center">
+                                <!-- Already Participating (Active) -->
+                                <div v-else-if="userChallenge && userChallenge.status === 'active'" class="text-center">
                                     <div class="w-16 h-16 mx-auto mb-6 bg-emerald-500/20 rounded-2xl flex items-center justify-center">
                                         <Icon icon="lucide:party-popper" class="size-8 text-emerald-400" />
                                     </div>
                                     <h3 class="text-xl font-black mb-2">Você está dentro!</h3>
                                     <p class="text-slate-400 text-sm mb-8">Seu foco gera consistência.</p>
-
-                                    <div v-if="userChallenge" class="bg-white/5 rounded-2xl p-5 mb-8 border border-white/5 text-left">
+                                    <!-- Progress section keeps as is -->
+                                    <div class="bg-white/5 rounded-2xl p-5 mb-8 border border-white/5 text-left">
                                         <div class="flex justify-between items-center mb-4">
                                             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Seu Progresso</span>
                                             <span class="text-xs font-black text-emerald-400">Dia {{ parseInt(userChallenge.current_day) || 1 }}</span>
@@ -259,6 +242,43 @@
                                             Abandonar desafio
                                         </button>
                                     </div>
+                                </div>
+
+                                <!-- Already Finalized (Completed or Expired) -->
+                                <div v-else-if="userChallenge && (userChallenge.status === 'completed' || userChallenge.status === 'expired')" class="text-center">
+                                    <div class="w-16 h-16 mx-auto mb-6" :class="userChallenge.status === 'completed' ? 'bg-emerald-500/20' : 'bg-amber-500/20'">
+                                        <Icon :icon="userChallenge.status === 'completed' ? 'lucide:medal' : 'lucide:history'" 
+                                            class="size-16" :class="userChallenge.status === 'completed' ? 'text-emerald-400' : 'text-amber-400'" />
+                                    </div>
+                                    <h3 class="text-xl font-black mb-2">
+                                        {{ userChallenge.status === 'completed' ? 'Desafio Concluído!' : 'Tempo Esgotado' }}
+                                    </h3>
+                                    <p class="text-slate-400 text-sm mb-8">
+                                        {{ userChallenge.status === 'completed' ? 'Você cruzou a linha de chegada.' : 'O período do desafio terminou.' }}
+                                    </p>
+
+                                    <div class="space-y-4">
+                                        <Link :href="`/reports/challenge/${userChallenge.id}`" class="block w-full bg-white text-slate-900 py-4 rounded-2xl font-black text-center hover:scale-[1.02] shadow-lg shadow-white/10 transition-all">
+                                            Ver Histórico
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                <!-- Ready to Join (Fallback for guest or member not in challenge) -->
+                                <div v-else-if="canJoin" class="text-center">
+                                    <div class="w-16 h-16 mx-auto mb-6 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
+                                        <Icon icon="lucide:rocket" class="size-8" />
+                                    </div>
+                                    <h3 class="text-xl font-black mb-3">Vamos Começar?</h3>
+                                    <p class="text-slate-400 text-sm mb-8">
+                                        Junte-se a {{ stats.total_participants }} pessoas agora mesmo.
+                                    </p>
+
+                                    <button @click="handleJoinChallenge" :disabled="joining"
+                                        class="cursor-pointer w-full bg-gradient-to-r from-blue-500 via-violet-600 to-purple-600 text-white py-4 rounded-2xl font-black text-center shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3">
+                                        <Icon v-if="joining" icon="lucide:loader" class="size-6 animate-spin" />
+                                        <span>{{ joining ? 'Processando...' : 'Participar Agora' }}</span>
+                                    </button>
                                 </div>
 
                                 <!-- Limit Reached -->

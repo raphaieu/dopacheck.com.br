@@ -104,8 +104,8 @@
       <button @click="handleConnect" :disabled="connecting"
         class="cursor-pointer w-full bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-slate-800 hover:-translate-y-1 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 active:scale-[0.98]">
         <Icon v-if="connecting" icon="lucide:loader-2" class="size-6 animate-spin" />
-        <Icon v-else icon="lucide:qr-code" class="size-6 text-blue-400" />
-        <span>{{ connecting ? 'Conectando...' : 'Conectar agora via QR Code' }}</span>
+        <Icon v-else icon="lucide:external-link" class="size-6 text-blue-400" />
+        <span>{{ connecting ? 'Conectando...' : 'Conectar agora' }}</span>
       </button>
 
       <!-- Free Plan Limitation -->

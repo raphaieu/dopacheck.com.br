@@ -124,7 +124,7 @@
                 Participar
             </Link>
 
-            <button v-else-if="!isParticipating" @click="handleJoin" :disabled="joining"
+            <button v-else-if="!challenge.user_participation" @click="handleJoin" :disabled="joining"
                 class="cursor-pointer flex-1 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
                 :class="challenge.is_expired ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20'"
             >
@@ -132,10 +132,19 @@
                 <span>{{ challenge.is_expired ? 'Finalizado' : (joining ? 'Entrando...' : 'Participar') }}</span>
             </button>
 
+            <!-- Status de Participação (Membro) -->
             <div v-else
-                class="flex-1 bg-emerald-500 text-white px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
-                <Icon icon="lucide:check" class="size-4" />
-                <span>Membro</span>
+                class="flex-1 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg"
+                :class="{
+                  'bg-emerald-500 text-white shadow-emerald-500/20': challenge.user_participation.status === 'completed',
+                  'bg-slate-500 text-white shadow-slate-500/20': challenge.user_participation.status === 'expired',
+                  'bg-blue-500 text-white shadow-blue-500/20': challenge.user_participation.status === 'active'
+                }"
+            >
+                <Icon :icon="challenge.user_participation.status === 'completed' ? 'lucide:award' : (challenge.user_participation.status === 'expired' ? 'lucide:history' : 'lucide:check')" class="size-4" />
+                <span>
+                  {{ challenge.user_participation.status === 'completed' ? 'Concluído' : (challenge.user_participation.status === 'expired' ? 'Finalizado' : 'Membro') }}
+                </span>
             </div>
         </div>
     </div>

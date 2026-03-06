@@ -71,11 +71,13 @@ class UserChallenge extends Model
      */
     public function getChallengeEndDate(): CarbonInterface
     {
+        // Se o desafio tem um fim global, ele é a verdade absoluta.
         $end = $this->challenge?->end_date;
         if ($end) {
             return Carbon::parse($end)->endOfDay();
         }
 
+        // Se não tem fim global, calculamos baseado no início deste usuário + duração.
         $start = $this->getChallengeStartDate();
         $duration = (int) ($this->challenge?->duration_days ?? 1);
         $duration = max(1, $duration);
@@ -228,6 +230,11 @@ class UserChallenge extends Model
      */
     public function getProgressPercentageAttribute(): float
     {
+        // Se já está completo, é 100% por definição.
+        if ($this->status === 'completed') {
+            return 100.0;
+        }
+
         $startDate = $this->getChallengeStartDate()->startOfDay();
         $today = now()->startOfDay();
         if ($today->lt($startDate)) {
@@ -405,14 +412,15 @@ class UserChallenge extends Model
         $this->current_day = max(1, (int) $newCurrentDay);
 
         // Check if challenge should be finalized (completed or expired)
-        // O desafio só é finalizado quando JÁ PASSOU do último dia válido
-        // Para um desafio de N dias, o último dia válido é o dia N
-        // Então só finaliza quando daysSinceStart > duration_days
-        // (ou seja, quando já passou do último dia)
-        // O método complete() verifica se completou todos os check-ins obrigatórios
-        // Se sim, marca como 'completed', se não, marca como 'expired'
+        // Regra: O desafio é finalizado se a data atual ultrapassou o fim global (se houver) 
+        // ou se o progresso de dias ultrapassou o duration_days.
+        $globalEndDate = $this->challenge?->end_date ? Carbon::parse($this->challenge->end_date)->endOfDay() : null;
+        $isPastGlobalEnd = $globalEndDate && now()->startOfDay()->gt($globalEndDate->startOfDay());
+
         $daysSinceStartReal = $startDate->diffInDays($today, false) + 1; // signed (não clamped)
-        if ($daysSinceStartReal > $durationDays) {
+        $isPastDuration = $daysSinceStartReal > $durationDays;
+
+        if ($isPastGlobalEnd || $isPastDuration) {
             $this->complete(); // Verifica se completou tudo, senão marca como expired
         } else {
             $this->save();

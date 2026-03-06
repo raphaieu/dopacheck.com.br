@@ -142,7 +142,7 @@
             class="cursor-pointer flex-1 bg-slate-900 text-white px-6 py-3.5 rounded-2xl font-bold hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 group/btn active:scale-95"
           >
             <Icon icon="lucide:camera" class="size-5 text-blue-400 group-hover/btn:scale-110 transition-transform" />
-            <span>{{ submitting ? 'Enviando...' : 'Fazer Check-in' }}</span>
+            <span>{{ submitting ? 'Enviando...' : 'Check-in' }}</span>
           </button>
           
           <button

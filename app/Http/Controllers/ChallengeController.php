@@ -145,14 +145,14 @@ class ChallengeController extends Controller
         // Get user participation info and completion rate for each challenge
         $user = $request->user();
         if ($user) {
-            $userChallengeIds = $user->userChallenges()
+            $userParticipations = $user->userChallenges()
                 ->whereIn('challenge_id', $challenges->pluck('id'))
-                ->where('status', 'active')
-                ->pluck('challenge_id')
-                ->toArray();
+                ->with('challenge') // Necessário para progress_percentage não dar LazyLoadingViolation
+                ->get()
+                ->keyBy('challenge_id');
             
             // Add user participation info and completion rate to each challenge
-            $challenges->getCollection()->transform(function ($challenge) use ($userChallengeIds) {
+            $challenges->getCollection()->transform(function ($challenge) use ($userParticipations) {
                 $today = Carbon::now()->startOfDay();
                 $startDate = $challenge->start_date
                     ? Carbon::parse($challenge->start_date)->startOfDay()
@@ -184,7 +184,13 @@ class ChallengeController extends Controller
                 }
                 
                 // Adicionar atributos dinâmicos DEPOIS da atualização do banco
-                $challenge->user_is_participating = in_array($challenge->id, $userChallengeIds);
+                $participation = $userParticipations->get($challenge->id);
+                $challenge->user_is_participating = (bool) $participation;
+                $challenge->user_participation = $participation ? [
+                    'status' => $participation->status,
+                    'current_day' => $participation->current_day,
+                    'progress_percentage' => $participation->progress_percentage,
+                ] : null;
                 
                 // Calculate completion rate based on all participants (not filtered)
                 $completedParticipants = $challenge->completedParticipants()->count();
@@ -251,13 +257,13 @@ class ChallengeController extends Controller
         
         // Add user participation info and completion rate to featured challenges
         if ($user) {
-            $featuredUserChallengeIds = $user->userChallenges()
+            $featuredUserParticipations = $user->userChallenges()
                 ->whereIn('challenge_id', $featuredChallenges->pluck('id'))
-                ->where('status', 'active')
-                ->pluck('challenge_id')
-                ->toArray();
+                ->with('challenge') // Necessário para progress_percentage
+                ->get()
+                ->keyBy('challenge_id');
             
-            $featuredChallenges->transform(function ($challenge) use ($featuredUserChallengeIds) {
+            $featuredChallenges->transform(function ($challenge) use ($featuredUserParticipations) {
                 $today = Carbon::now()->startOfDay();
                 $startDate = $challenge->start_date
                     ? Carbon::parse($challenge->start_date)->startOfDay()
@@ -289,7 +295,13 @@ class ChallengeController extends Controller
                 }
                 
                 // Adicionar atributos dinâmicos DEPOIS da atualização do banco
-                $challenge->user_is_participating = in_array($challenge->id, $featuredUserChallengeIds);
+                $participation = $featuredUserParticipations->get($challenge->id);
+                $challenge->user_is_participating = (bool) $participation;
+                $challenge->user_participation = $participation ? [
+                    'status' => $participation->status,
+                    'current_day' => $participation->current_day,
+                    'progress_percentage' => $participation->progress_percentage,
+                ] : null;
                 
                 // Calculate completion rate based on all participants (not filtered)
                 $completedParticipants = $challenge->completedParticipants()->count();
@@ -414,31 +426,44 @@ class ChallengeController extends Controller
         if ($user) {
             $userChallenge = $user->userChallenges()
                 ->where('challenge_id', $challenge->id)
-                ->where('status', 'active')
+                ->with('challenge') // Prevent lazy loading
                 ->first();
             
-            $canJoin = !$userChallenge && $user->canCreateChallenge() && !((bool) $challenge->getAttribute('is_expired'));
+            // canJoin só faz sentido se não estiver participando (ativo) E o desafio não expirou
+            $isActivelyParticipating = $userChallenge && $userChallenge->status === 'active';
+            $canJoin = !$isActivelyParticipating && $user->canCreateChallenge() && !((bool) $challenge->getAttribute('is_expired'));
         }
         
         // Get challenge stats
         $stats = $challenge->getStats();
         
         // Get recent participants
-        $recentParticipants = $challenge->activeParticipants()
-            ->with(['user', 'challenge.tasks']) // Carregar challenge e tasks para calcular progress_percentage
-            ->latest()
-            ->limit(10)
-            ->get()
-            ->map(function ($userChallenge) {
+        $participantsQuery = $challenge->userChallenges()
+            ->whereIn('status', ['active', 'completed', 'expired'])
+            ->with(['user', 'challenge.tasks']) 
+            ->latest();
+
+        $recentParticipants = $participantsQuery->limit(10)->get();
+
+        // Se o usuário logado está participando, mas não está nos top 10 recentes, adicionamos ele
+        if ($user && $userChallenge && !$recentParticipants->contains('id', $userChallenge->id)) {
+            $recentParticipants->prepend($userChallenge);
+            if ($recentParticipants->count() > 10) {
+                $recentParticipants->pop();
+            }
+        }
+
+        $formattedParticipants = $recentParticipants->map(function ($userChallenge) use ($user) {
                 return [
                     'id' => $userChallenge->id,
                     'user' => $userChallenge->user,
+                    'is_me' => $user && $userChallenge->user_id === $user->id,
                     'status' => $userChallenge->status,
                     'current_day' => $userChallenge->current_day,
                     'started_at' => $userChallenge->started_at,
                     'streak_days' => $userChallenge->streak_days,
                     'completion_rate' => $userChallenge->completion_rate,
-                    'progress_percentage' => $userChallenge->progress_percentage, // Progresso baseado em dias completos
+                    'progress_percentage' => $userChallenge->progress_percentage,
                 ];
             });
         
@@ -453,7 +478,7 @@ class ChallengeController extends Controller
             'userChallenge' => $userChallenge,
             'canJoin' => $canJoin,
             'stats' => $stats,
-            'recentParticipants' => $recentParticipants,
+            'recentParticipants' => $formattedParticipants,
             'isAuthenticated' => (bool) $user,
         ])->withViewData([
             // OG tags precisam sair no HTML inicial para WhatsApp/Telegram/Discord.
@@ -488,7 +513,8 @@ class ChallengeController extends Controller
      */
     public function participants(Request $request, Challenge $challenge): Response
     {
-        $this->ensureChallengeVisibleToUser($request->user(), $challenge);
+        $user = $request->user();
+        $this->ensureChallengeVisibleToUser($user, $challenge);
         
         $challenge->load(['creator', 'tasks']);
         
@@ -501,16 +527,17 @@ class ChallengeController extends Controller
             ])
             ->whereIn('status', ['active', 'completed', 'expired'])
             ->get()
-            ->map(function ($userChallenge) {
+            ->map(function ($userChallenge) use ($user) {
                 return [
                     'id' => $userChallenge->id,
                     'user' => $userChallenge->user,
+                    'is_me' => $user && $userChallenge->user_id === $user->id,
                     'status' => $userChallenge->status,
                     'current_day' => $userChallenge->current_day,
                     'started_at' => $userChallenge->started_at,
                     'streak_days' => $userChallenge->streak_days,
                     'completion_rate' => $userChallenge->completion_rate,
-                    'progress_percentage' => $userChallenge->progress_percentage, // Progresso baseado em dias completos
+                    'progress_percentage' => $userChallenge->progress_percentage,
                 ];
             })
             ->sortByDesc('progress_percentage')
@@ -1084,7 +1111,14 @@ class ChallengeController extends Controller
             ->first();
         
         if ($anyParticipation) {
-            // Update existing participation to active
+            // Se o desafio já foi finalizado (completo ou expirado), não permite "re-join" limpando tudo
+            // O usuário deve apenas visualizar o relatório.
+            if ($anyParticipation->is_finalized) {
+                return redirect()->route('reports.challenge', $anyParticipation)
+                    ->with('info', 'Você já concluiu este desafio. Veja seu desempenho no relatório!');
+            }
+
+            // Update existing participation to active (apenas para casos pausados ou abandonados)
             // Reset challenge progress when re-joining
             $anyParticipation->update([
                 'status' => 'active',

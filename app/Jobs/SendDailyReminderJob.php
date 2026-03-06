@@ -32,25 +32,46 @@ class SendDailyReminderJob implements ShouldQueue
             ->get();
 
         $remindersSentCount = 0;
-        $groupsToNotify = []; // [jid => ['team_name' => str, 'users' => [name1, name2]]]
+        $groupsToNotify = []; // [jid => ['team_name' => str, 'completed' => [], 'pending' => []]]
 
         foreach ($activeParticipations as $participation) {
             $user = $participation->user;
+            $hasCompletedToday = $participation->hasCompletedToday();
             
-            // Se o dia já está completo, pula
-            if ($participation->hasCompletedToday()) {
-                continue;
-            }
-
             // Preferências do usuário
             $prefs = $user->preferences['notifications'] ?? [];
             $reminderEnabled = (bool) ($prefs['daily_reminder'] ?? false);
+            
+            // Lógica de Grupo (Sempre coleta para o resumo do time, se houver grupo)
+            $team = $participation->team ?? $participation->challenge->team;
+            $groupJid = $team?->whatsapp_group_jid;
+
+            if ($groupJid) {
+                if (!isset($groupsToNotify[$groupJid])) {
+                    $groupsToNotify[$groupJid] = [
+                        'team_name' => $team->name,
+                        'completed' => [],
+                        'pending' => []
+                    ];
+                }
+                
+                if ($hasCompletedToday) {
+                    $groupsToNotify[$groupJid]['completed'][] = $user->name;
+                } else {
+                    $groupsToNotify[$groupJid]['pending'][] = $user->name;
+                }
+            }
+
+            // Se o dia já está completo, pula o lembrete individual (E-mail/DM)
+            if ($hasCompletedToday) {
+                continue;
+            }
             
             if (!$reminderEnabled) {
                 continue;
             }
 
-            // 1. Notificação via Canais Padrão (E-mail/Database) - Sempre envia se o lembrete estiver on
+            // 1. Notificação via Canais Padrão (E-mail/Database)
             try {
                 $user->notify(new CheckinReminderNotification($participation));
             } catch (\Throwable $e) {
@@ -60,21 +81,8 @@ class SendDailyReminderJob implements ShouldQueue
                 ]);
             }
 
-            // 2. Lógica Híbrida WhatsApp
-            $team = $participation->team ?? $participation->challenge->team;
-            $groupJid = $team?->whatsapp_group_jid;
-
-            if ($groupJid) {
-                // Adiciona para notificação coletiva no grupo
-                if (!isset($groupsToNotify[$groupJid])) {
-                    $groupsToNotify[$groupJid] = [
-                        'team_name' => $team->name,
-                        'users' => []
-                    ];
-                }
-                $groupsToNotify[$groupJid]['users'][] = $user->name;
-            } else {
-                // Se não tem grupo, tenta DM (se habilitado via pref - hoje protegida no front)
+            // 2. Tenta DM se não há grupo (ou se habilitado especificamente)
+            if (!$groupJid) {
                 $whatsappDmEnabled = (bool) ($prefs['whatsapp'] ?? false);
                 if ($whatsappDmEnabled) {
                     $this->sendWhatsappReminder($evolution, $participation);
@@ -103,25 +111,42 @@ class SendDailyReminderJob implements ShouldQueue
 
         foreach ($groupsToNotify as $jid => $data) {
             $teamName = $data['team_name'];
-            $usersList = array_unique($data['users']);
+            $completed = array_unique($data['completed']);
+            $pending = array_unique($data['pending']);
             
-            if (empty($usersList)) continue;
+            $total = count($completed) + count($pending);
+            if ($total === 0) continue;
+            
+            $rate = round((count($completed) / $total) * 100);
 
-            $message = "⏰ *DOPA Check - Hora do Foco!* 🚀\n\n";
-            $message .= "E aí, time *{$teamName}*! Passando para lembrar dos check-ins que ainda não rolaram hoje.\n\n";
-            $message .= "Atletas em modo offline:\n";
+            $message = "📊 *Resumo Diário - Time {$teamName}* 🏆\n\n";
+            $message .= "O dia está quase acabando! Veja como estamos:\n";
+            $message .= "📈 *Performance do Time:* {$rate}%\n\n";
             
-            foreach ($usersList as $name) {
-                $message .= "• *{$name}*\n";
+            if (!empty($completed)) {
+                $message .= "✅ *Focados de hoje:* (" . count($completed) . ")\n";
+                foreach ($completed as $name) {
+                    $message .= "• {$name}\n";
+                }
+                $message .= "\n";
             }
 
-            $message .= "\nA consistência é o que separa os amadores dos pros. Bora pra cima! 💪\n\n";
-            $message .= "👉 " . url('/dopa');
+            if (!empty($pending)) {
+                $message .= "⏰ *Ainda dá tempo:* (" . count($pending) . ")\n";
+                foreach ($pending as $name) {
+                    $message .= "• *{$name}*\n";
+                }
+                $message .= "\nBora fechar esse check-in! 🚀\n";
+            } else {
+                $message .= "🌟 *SENSACIONAL!* Todo o time completou o desafio hoje! 100% de consistência! 🔥\n";
+            }
+
+            $message .= "\n👉 " . url('/dopa');
 
             try {
                 $evolution->sendTextMessage($instance, $jid, $message);
             } catch (\Throwable $e) {
-                Log::error('Erro ao enviar lembrete coletivo via WhatsApp', [
+                Log::error('Erro ao enviar resumo diário via WhatsApp', [
                     'group_jid' => $jid,
                     'team' => $teamName,
                     'error' => $e->getMessage()

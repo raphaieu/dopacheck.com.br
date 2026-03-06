@@ -67,10 +67,13 @@
                             <div class="flex items-center justify-between gap-4">
                                 <div class="flex items-center gap-4 min-w-0">
                                     <div class="relative shrink-0">
-                                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-400 to-violet-400 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-400 to-violet-400 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity"
+                                            :class="participant.is_me ? 'opacity-50 ring-2 ring-blue-500' : ''"></div>
                                         <img :src="participant.user.profile_photo_url || '/default-avatar.png'" 
                                             :alt="participant.user.display_name"
                                             class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-white shadow-sm object-cover">
+                                        <!-- EU Badge -->
+                                        <div v-if="participant.is_me" class="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full ring-2 ring-white uppercase z-20">Eu</div>
                                         <div v-if="participant.status === 'active'" 
                                             class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-sm"></div>
                                         <div v-else-if="participant.status === 'completed'" 
@@ -80,8 +83,9 @@
                                     </div>
                                     
                                     <div class="min-w-0">
-                                        <h3 class="font-bold text-slate-900 text-base sm:text-lg truncate tracking-tight group-hover:text-blue-600 transition-colors">
+                                        <h3 class="font-bold text-slate-900 text-base sm:text-lg truncate tracking-tight group-hover:text-blue-600 transition-colors flex items-center gap-2">
                                             {{ participant.user.display_name }}
+                                            <span v-if="participant.is_me" class="text-[10px] text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md">(Eu)</span>
                                         </h3>
                                         <div class="flex items-center gap-2 text-xs text-slate-500">
                                             <span class="font-medium">@{{ participant.user.username }}</span>

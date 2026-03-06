@@ -1,25 +1,30 @@
 <template>
-    <div class="group flex items-center gap-4 p-4 rounded-3xl bg-white/70 backdrop-blur-md border border-white/80 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 transition-all duration-300">
+    <div class="group flex items-center gap-4 p-4 rounded-3xl bg-white/70 backdrop-blur-md border border-white/80 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 transition-all duration-300"
+      :class="participant.is_me ? 'ring-2 ring-blue-500/50 bg-blue-50/30' : ''">
         <!-- Avatar -->
         <div class="shrink-0 relative">
-            <div class="absolute -inset-1 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity blur-[2px]"></div>
+            <div class="absolute -inset-1 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity blur-[2px]"
+                :class="participant.is_me ? 'opacity-100' : ''"></div>
             <img :src="participant.user?.profile_photo_url || participant.user?.avatar || '/default-avatar.png'"
                 :alt="participant.user?.name || 'Participante'"
                 class="relative w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm transition-transform group-hover:scale-105 duration-300">
+            <!-- EU Badge -->
+            <div v-if="participant.is_me" class="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full ring-2 ring-white uppercase">Eu</div>
         </div>
 
         <!-- User Info -->
         <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">
-                    <h4 class="text-sm font-extrabold text-slate-900 truncate tracking-tight">
+                    <h4 class="text-sm font-extrabold text-slate-900 truncate tracking-tight flex items-center gap-2">
                         {{ participant.user?.display_name || participant.user?.name || 'Usuário' }}
+                        <span v-if="participant.is_me" class="text-[9px] text-blue-500 uppercase tracking-widest">(Eu)</span>
                     </h4>
                     <div class="flex items-center gap-2 mt-1">
                         <span :class="getStatusClasses(participant.status)" class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border">
-                            <Icon :icon="getStatusIconSlug(participant.status)" class="size-2.5" />
                             {{ formatStatus(participant.status) }}
                         </span>
+                        <span v-if="participant.current_day" class="text-[9px] font-bold text-slate-400 uppercase">Dia {{ participant.current_day }}</span>
                     </div>
                 </div>
 
