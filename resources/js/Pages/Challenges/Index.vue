@@ -30,103 +30,111 @@
 
             <!-- Filters & Search -->
             <section class="mb-12">
-                <div class="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-white/80">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                        <!-- Search -->
-                        <div class="flex-1 max-w-full lg:max-w-md">
-                            <div class="relative group">
-                                <Icon icon="lucide:search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 group-focus-within:text-blue-600 transition-colors" />
-                                <input v-model="searchQuery" type="text" placeholder="Buscar por título ou hashtag..."
-                                    class="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-900 placeholder-slate-400"
-                                    @input="handleSearch">
+                <div class="relative group">
+                    <!-- Accent Gradient Border -->
+                    <div class="absolute -inset-[1px] bg-gradient-to-r from-blue-600/20 via-violet-600/20 to-purple-600/20 rounded-[2.5rem] blur-sm opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                    
+                    <div class="relative bg-white/90 backdrop-blur-2xl rounded-[2.5rem] p-6 sm:p-8 shadow-2xl shadow-blue-500/10 border border-white/80 overflow-hidden">
+                        <!-- Top Accent Line -->
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 opacity-80"></div>
+
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                            <!-- Search -->
+                            <div class="flex-1 max-w-full lg:max-w-md">
+                                <div class="relative group/search">
+                                    <Icon icon="lucide:search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 group-focus-within/search:text-blue-600 group-focus-within/search:scale-110 transition-all duration-300" />
+                                    <input v-model="searchQuery" type="text" placeholder="Buscar desafios..."
+                                        class="w-full pl-12 pr-4 py-4 bg-slate-50/80 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-bold text-slate-900 placeholder-slate-400"
+                                        @input="handleSearch">
+                                </div>
+                            </div>
+
+                            <!-- Filters -->
+                            <div class="flex flex-wrap items-center gap-3">
+                                <!-- Category Filter -->
+                                <div class="relative flex-1 sm:flex-initial min-w-[160px]">
+                                    <Icon icon="lucide:layout-grid" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none transition-colors group-focus-within:text-blue-600" />
+                                    <select v-model="selectedCategory" @change="handleFilter"
+                                        class="w-full pl-10 pr-10 py-3.5 bg-slate-50/80 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-black uppercase tracking-widest text-slate-700 text-[10px] appearance-none cursor-pointer">
+                                        <option value="">Categorias</option>
+                                        <option v-for="category in categories" :key="category" :value="category">
+                                            {{ formatCategoryLabel(category) }}
+                                        </option>
+                                    </select>
+                                    <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                                </div>
+
+                                <!-- Difficulty Filter -->
+                                <div class="relative flex-1 sm:flex-initial min-w-[160px]">
+                                    <Icon icon="lucide:bar-chart" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none transition-colors group-focus-within:text-emerald-600" />
+                                    <select v-model="selectedDifficulty" @change="handleFilter"
+                                        class="w-full pl-10 pr-10 py-3.5 bg-slate-50/80 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-black uppercase tracking-widest text-slate-700 text-[10px] appearance-none cursor-pointer">
+                                        <option value="">Dificuldade</option>
+                                        <option value="beginner">Iniciante</option>
+                                        <option value="intermediate">Intermediário</option>
+                                        <option value="advanced">Avançado</option>
+                                    </select>
+                                    <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                                </div>
+
+                                <!-- Sort -->
+                                <div class="relative flex-1 sm:flex-initial min-w-[160px]">
+                                    <Icon icon="lucide:arrow-up-down" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                                    <select v-model="selectedSort" @change="handleFilter"
+                                        class="w-full pl-10 pr-10 py-3.5 bg-slate-50/80 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-black uppercase tracking-widest text-slate-700 text-[10px] appearance-none cursor-pointer">
+                                        <option value="newest">Mais recentes</option>
+                                        <option value="popular">Mais populares</option>
+                                        <option value="featured">Destaques</option>
+                                    </select>
+                                    <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Filters -->
-                        <div class="flex flex-wrap items-center gap-3">
-                            <!-- Category Filter -->
-                            <div class="relative flex-1 sm:flex-initial min-w-[160px]">
-                                <Icon icon="lucide:layout-grid" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
-                                <select v-model="selectedCategory" @change="handleFilter"
-                                    class="w-full pl-10 pr-10 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-700 text-sm appearance-none cursor-pointer">
-                                    <option value="">Categorias</option>
-                                    <option v-for="category in categories" :key="category" :value="category">
-                                        {{ formatCategoryLabel(category) }}
-                                    </option>
-                                </select>
-                                <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
-                            </div>
+                        <!-- Toggle Private & Active Filters -->
+                        <div class="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-6 border-t border-slate-100">
+                            <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-3">
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Filtrado por:</span>
 
-                            <!-- Difficulty Filter -->
-                            <div class="relative flex-1 sm:flex-initial min-w-[160px]">
-                                <Icon icon="lucide:bar-chart" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
-                                <select v-model="selectedDifficulty" @change="handleFilter"
-                                    class="w-full pl-10 pr-10 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-700 text-sm appearance-none cursor-pointer">
-                                    <option value="">Dificuldade</option>
-                                    <option value="beginner">Iniciante</option>
-                                    <option value="intermediate">Intermediário</option>
-                                    <option value="advanced">Avançado</option>
-                                </select>
-                                <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
-                            </div>
+                                <button v-if="selectedCategory" @click="clearFilter('category')"
+                                    class="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all gap-2 cursor-pointer active:scale-95">
+                                    <Icon :icon="getCategoryIconSlug(selectedCategory)" class="size-3.5" />
+                                    {{ formatCategory(selectedCategory) }}
+                                    <Icon icon="lucide:x" class="size-3" />
+                                </button>
 
-                            <!-- Sort -->
-                            <div class="relative flex-1 sm:flex-initial min-w-[160px]">
-                                <Icon icon="lucide:arrow-up-down" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
-                                <select v-model="selectedSort" @change="handleFilter"
-                                    class="w-full pl-10 pr-10 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-700 text-sm appearance-none cursor-pointer">
-                                    <option value="newest">Mais recentes</option>
-                                    <option value="popular">Mais populares</option>
-                                    <option value="featured">Destaques</option>
-                                </select>
-                                <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                                <button v-if="selectedDifficulty" @click="clearFilter('difficulty')"
+                                    class="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all gap-2 cursor-pointer active:scale-95">
+                                    <Icon icon="lucide:bar-chart-3" class="size-3.5" />
+                                    {{ formatDifficulty(selectedDifficulty) }}
+                                    <Icon icon="lucide:x" class="size-3" />
+                                </button>
+
+                                <button v-if="user && showPrivateChallenges" @click="clearFilter('private')"
+                                    class="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-purple-600 text-white shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-all gap-2 cursor-pointer active:scale-95">
+                                    <Icon icon="lucide:lock" class="size-3.5" />
+                                    Privados
+                                    <Icon icon="lucide:x" class="size-3" />
+                                </button>
+
+                                <button v-if="searchQuery" @click="clearFilter('search')"
+                                    class="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter bg-slate-900 text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all gap-2 cursor-pointer active:scale-95">
+                                    "{{ searchQuery }}"
+                                    <Icon icon="lucide:x" class="size-3" />
+                                </button>
+
+                                <button @click="clearAllFilters" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 underline underline-offset-4 decoration-slate-200 hover:decoration-slate-900 transition-all cursor-pointer">
+                                    Limpar tudo
+                                </button>
                             </div>
+                            <div v-else></div>
+
+                            <label v-if="user" class="relative inline-flex items-center cursor-pointer group px-5 py-3 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 transition-all">
+                                <input v-model="showPrivateChallenges" type="checkbox" @change="handleFilter" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[15px] after:left-[23px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                <span class="ml-3 text-[11px] font-black uppercase tracking-widest text-slate-600 group-hover:text-slate-900">Incluir Desafios Privados</span>
+                            </label>
                         </div>
-                    </div>
-
-                    <!-- Toggle Private & Active Filters -->
-                    <div class="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-6 border-t border-slate-100">
-                        <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-3">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Filtrado por:</span>
-
-                            <button v-if="selectedCategory" @click="clearFilter('category')"
-                                class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-blue-50 text-blue-600 border border-blue-100/50 hover:bg-blue-100 transition-colors gap-2 cursor-pointer">
-                                <Icon :icon="getCategoryIconSlug(selectedCategory)" class="size-3.5" />
-                                {{ formatCategory(selectedCategory) }}
-                                <Icon icon="lucide:x" class="size-3" />
-                            </button>
-
-                            <button v-if="selectedDifficulty" @click="clearFilter('difficulty')"
-                                class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-100/50 hover:bg-emerald-100 transition-colors gap-2 cursor-pointer">
-                                <Icon icon="lucide:trello" class="size-3.5" />
-                                {{ formatDifficulty(selectedDifficulty) }}
-                                <Icon icon="lucide:x" class="size-3" />
-                            </button>
-
-                            <button v-if="user && showPrivateChallenges" @click="clearFilter('private')"
-                                class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-purple-50 text-purple-600 border border-purple-100/50 hover:bg-purple-100 transition-colors gap-2 cursor-pointer">
-                                <Icon icon="lucide:lock" class="size-3.5" />
-                                Privados
-                                <Icon icon="lucide:x" class="size-3" />
-                            </button>
-
-                            <button v-if="searchQuery" @click="clearFilter('search')"
-                                class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors gap-2 cursor-pointer">
-                                "{{ searchQuery }}"
-                                <Icon icon="lucide:x" class="size-3" />
-                            </button>
-
-                            <button @click="clearAllFilters" class="text-xs font-bold text-slate-400 hover:text-slate-900 underline underline-offset-4 decoration-slate-200 hover:decoration-slate-900 transition-all cursor-pointer">
-                                Limpar filtros
-                            </button>
-                        </div>
-                        <div v-else></div>
-
-                        <label v-if="user" class="relative inline-flex items-center cursor-pointer group px-5 py-3 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-all">
-                            <input v-model="showPrivateChallenges" type="checkbox" @change="handleFilter" class="sr-only peer">
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[15px] after:left-[22px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                            <span class="ml-3 text-sm font-bold text-slate-600 group-hover:text-slate-900">Incluir Privados</span>
-                        </label>
                     </div>
                 </div>
             </section>

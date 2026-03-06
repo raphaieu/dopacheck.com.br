@@ -9,6 +9,7 @@ import Input from '@/components/ui/input/Input.vue'
 
 import Label from '@/components/ui/label/Label.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
+import { Icon } from '@iconify/vue'
 
 useSeoMetaTags({
   title: 'Two-factor Confirmation',
@@ -46,65 +47,104 @@ function submit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col items-center justify-center">
-    <Card class="mx-auto max-w-lg">
-      <CardHeader>
-        <CardTitle class="flex justify-center">
-          <AuthenticationCardLogo />
+  <div class="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-hidden">
+    <!-- Decorative Blurs -->
+    <div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-400/10 rounded-full blur-[120px] animate-pulse pointer-events-none"></div>
+    <div class="absolute top-[20%] -right-[10%] w-[35%] h-[35%] bg-purple-400/10 rounded-full blur-[120px] animate-pulse pointer-events-none" style="animation-delay: 2s"></div>
+    <div class="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] bg-emerald-400/10 rounded-full blur-[120px] animate-pulse pointer-events-none" style="animation-delay: 4s"></div>
+
+    <Card class="relative mx-auto w-[95%] max-w-[440px] shadow-2xl shadow-slate-200/50 border border-white/80 bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-4 transition-all duration-500 hover:shadow-blue-500/5 overflow-hidden z-10">
+      <!-- Header -->
+      <CardHeader class="space-y-6 pb-8 pt-6">
+        <CardTitle class="flex flex-col items-center gap-4">
+          <div class="size-16 rounded-2xl bg-gradient-to-br from-blue-600 via-violet-600 to-purple-600 flex items-center justify-center shadow-xl shadow-blue-600/20 transform hover:rotate-6 transition-transform duration-300">
+             <span class="text-white text-3xl select-none">🧠</span>
+          </div>
+          <div class="text-center">
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">DOPA Check</h1>
+          </div>
         </CardTitle>
-        <CardDescription class="text-center text-2xl">
-          Two-factor authentication
+        <CardDescription class="text-center text-lg font-black text-slate-500 uppercase tracking-widest italic">
+          Verificação em duas etapas
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
-        <div class="mb-4 text-sm">
-          <template v-if="!recovery">
-            Please confirm access to your account by entering the authentication code provided by your
-            authenticator application.
-          </template>
-
-          <template v-else>
-            Please confirm access to your account by entering one of your emergency recovery codes.
-          </template>
+      <CardContent class="px-6 pb-8">
+        <div class="mb-8 flex items-start gap-3 bg-slate-50/40 backdrop-blur-sm border border-slate-100/50 rounded-2xl p-4">
+          <Icon :icon="recovery ? 'lucide:key' : 'lucide:smartphone'" class="size-4 text-slate-400 mt-0.5" />
+          <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-relaxed">
+            <template v-if="!recovery">
+              Por favor, confirme o acesso à sua conta digitando o código de autenticação fornecido pelo seu aplicativo.
+            </template>
+            <template v-else>
+              Por favor, confirme o acesso à sua conta digitando um de seus códigos de recuperação de emergência.
+            </template>
+          </p>
         </div>
 
         <form @submit.prevent="submit">
-          <div v-if="!recovery">
-            <Label for="code">Code</Label>
-            <Input
-              id="code" ref="codeInput" v-model="form.code" type="text" inputmode="numeric"
-              class="mt-1 block w-full" autofocus autocomplete="one-time-code"
-            />
-            <InputError class="mt-2" :message="form.errors.code" />
-          </div>
+          <div class="grid gap-6">
+            <div v-if="!recovery" class="grid gap-2.5">
+              <Label for="code" class="text-slate-900 font-black uppercase tracking-widest text-[10px] ml-1">Código</Label>
+              <Input
+                id="code" 
+                ref="codeInput" 
+                v-model="form.code" 
+                type="text" 
+                inputmode="numeric"
+                placeholder="000000"
+                class="h-12 border-slate-200 bg-white/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-xl transition-all font-medium text-center text-xl tracking-[0.5em]"
+                autofocus 
+                autocomplete="one-time-code"
+              />
+              <InputError :message="form.errors.code" />
+            </div>
 
-          <div v-else>
-            <Label for="recovery_code">Recovery Code</Label>
-            <Input
-              id="recovery_code" ref="recoveryCodeInput" v-model="form.recovery_code" type="text"
-              class="mt-1 block w-full" autocomplete="one-time-code"
-            />
-            <InputError class="mt-2" :message="form.errors.recovery_code" />
-          </div>
+            <div v-else class="grid gap-2.5">
+              <Label for="recovery_code" class="text-slate-900 font-black uppercase tracking-widest text-[10px] ml-1">Código de Recuperação</Label>
+              <Input
+                id="recovery_code" 
+                ref="recoveryCodeInput" 
+                v-model="form.recovery_code" 
+                type="text"
+                placeholder="xxxx-xxxx-xxxx"
+                class="h-12 border-slate-200 bg-white/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-xl transition-all font-medium text-center tabular-nums"
+                autocomplete="one-time-code"
+              />
+              <InputError :message="form.errors.recovery_code" />
+            </div>
 
-          <div class="mt-4 flex items-center justify-end">
-            <button type="button" class="cursor-pointer text-sm" @click.prevent="toggleRecovery">
-              <template v-if="!recovery">
-                Use a recovery code
-              </template>
+            <div class="flex flex-col gap-4 mt-2">
+              <Button 
+                type="submit"
+                class="h-14 w-full bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-[0.2em] text-sm rounded-2xl shadow-xl shadow-slate-900/10 transition-all active:scale-[0.98] disabled:opacity-50"
+                :disabled="form.processing"
+              >
+                {{ form.processing ? 'Entrando...' : 'Entrar' }}
+              </Button>
 
-              <template v-else>
-                Use an authentication code
-              </template>
-            </button>
+              <button
+                type="button"
+                class="text-center text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-[0.2em] transition-colors"
+                @click.prevent="toggleRecovery"
+              >
+                <template v-if="!recovery">
+                  Usar código de recuperação
+                </template>
 
-            <Button class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-              Log in
-            </Button>
+                <template v-else>
+                  Usar código de autenticação
+                </template>
+              </button>
+            </div>
           </div>
         </form>
       </CardContent>
     </Card>
+
+    <!-- Footer Credit -->
+    <p class="mt-12 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] select-none">
+       DOPA Check · Built for consistency.
+    </p>
   </div>
 </template>

@@ -1,468 +1,457 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-x-clip pt-28">
-        <!-- Header -->
-        <DopaHeader :subtitle="isEditMode ? 'Editar Desafio' : 'Criar Desafio'" max-width="4xl" :show-back-button="true" back-link="/challenges" />
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-x-clip pt-28">
+        <!-- Decorative atmospheric blurs -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse pointer-events-none"></div>
+        <div class="absolute top-1/2 -left-24 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl animate-pulse pointer-events-none" style="animation-delay: 2s"></div>
+        <div class="absolute -bottom-24 right-1/4 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl animate-pulse pointer-events-none" style="animation-delay: 4s"></div>
+        
+        <!-- Header Wrapper -->
+        <DopaHeaderWrapper :subtitle="isEditMode ? 'Editar Desafio' : 'Criar Desafio'" max-width="4xl" />
 
-        <main class="max-w-4xl mx-auto px-4 pb-8">
-            <!-- Progress Steps -->
-            <div class="mb-8">
-                <div class="flex items-center justify-center space-x-4">
-                    <div class="flex items-center">
+        <main class="max-w-4xl mx-auto px-4 pb-24 relative z-10">
+            <!-- Progress Steps (Premium Stepper) -->
+            <div class="mb-12">
+                <div class="flex items-center justify-between max-w-2xl mx-auto relative px-4">
+                    <!-- Progress Line Background -->
+                    <div class="absolute top-5 left-12 right-12 h-[2px] bg-slate-100 -z-10"></div>
+                    <!-- Progress Line Active -->
+                    <div class="absolute top-5 left-12 h-[2px] bg-gradient-to-r from-blue-600 to-violet-600 -z-10 transition-all duration-500" 
+                        :style="{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }"></div>
+
+                    <!-- Step 1 -->
+                    <div class="flex flex-col items-center gap-3">
                         <div :class="[
-                            'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors',
-                            currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                            'size-10 rounded-2xl flex items-center justify-center text-sm font-black transition-all duration-500 shadow-xl',
+                            currentStep >= 1 ? 'bg-slate-900 text-white shadow-slate-900/10' : 'bg-white text-slate-400'
                         ]">
-                            1
+                            <Icon v-if="currentStep > 1" icon="lucide:check" class="size-5" />
+                            <span v-else>01</span>
                         </div>
-                        <span class="ml-2 text-sm font-medium text-gray-700">Informações Básicas</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Informações</span>
                     </div>
 
-                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-
-                    <div class="flex items-center">
+                    <!-- Step 2 -->
+                    <div class="flex flex-col items-center gap-3">
                         <div :class="[
-                            'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors',
-                            currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                            'size-10 rounded-2xl flex items-center justify-center text-sm font-black transition-all duration-500 shadow-xl',
+                            currentStep >= 2 ? 'bg-slate-900 text-white shadow-slate-900/10' : 'bg-white text-slate-400'
                         ]">
-                            2
+                            <Icon v-if="currentStep > 2" icon="lucide:check" class="size-5" />
+                            <span v-else>02</span>
                         </div>
-                        <span class="ml-2 text-sm font-medium text-gray-700">Tasks Diárias</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Tarefas Diárias</span>
                     </div>
 
-                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-
-                    <div class="flex items-center">
+                    <!-- Step 3 -->
+                    <div class="flex flex-col items-center gap-3">
                         <div :class="[
-                            'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors',
-                            currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                            'size-10 rounded-2xl flex items-center justify-center text-sm font-black transition-all duration-500 shadow-xl',
+                            currentStep >= 3 ? 'bg-slate-900 text-white shadow-slate-900/10' : 'bg-white text-slate-400'
                         ]">
-                            3
+                            <Icon v-if="currentStep === 3 && submitting" icon="lucide:loader-2" class="size-5 animate-spin" />
+                            <span v-else>03</span>
                         </div>
-                        <span class="ml-2 text-sm font-medium text-gray-700">Revisão</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Revisão Final</span>
                     </div>
                 </div>
             </div>
 
             <form @submit.prevent="handleSubmit" class="space-y-8">
                 <!-- Step 1: Basic Information -->
-                <div v-show="currentStep === 1" class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Informações Básicas</h2>
-                        <p class="text-gray-600">Defina o título, descrição e configurações do seu desafio</p>
-                    </div>
-
-                    <div class="space-y-6">
-                        <!-- Title -->
-                        <div>
-                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
-                                Título do Desafio *
-                            </label>
-                            <input id="title" v-model="form.title" type="text" maxlength="255" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
-                                placeholder="Ex: 30 Dias de Leitura" @input="validateField('title')">
-                            <div class="flex justify-between mt-1">
-                                <span v-if="errors.title" class="text-sm text-red-600">{{ errors.title }}</span>
-                                <span class="text-sm text-gray-500">{{ form.title.length }}/255</span>
-                            </div>
+                <div v-show="currentStep === 1" class="relative group">
+                    <div class="absolute -inset-[1px] bg-gradient-to-r from-blue-600/10 via-violet-600/10 to-purple-600/10 rounded-[2.5rem] blur-sm opacity-50"></div>
+                    <div class="relative bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 sm:p-12 shadow-2xl shadow-slate-200/50 border border-white/80 overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 opacity-80"></div>
+                        
+                        <div class="text-center mb-12">
+                            <h2 class="text-2xl font-black text-slate-900 uppercase tracking-tighter italic mb-2">Informações Básicas</h2>
+                            <p class="text-xs font-black uppercase tracking-widest text-slate-400">Defina o DNA do seu desafio</p>
                         </div>
 
-                        <!-- Description -->
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                                Descrição *
-                            </label>
-                            <textarea id="description" v-model="form.description" rows="4" maxlength="1000" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
-                                placeholder="Descreva qual é o objetivo do desafio e como ele pode transformar a vida dos participantes..."
-                                @input="validateField('description')"></textarea>
-                            <div class="flex justify-between mt-1">
-                                <span v-if="errors.description" class="text-sm text-red-600">{{ errors.description
-                                    }}</span>
-                                <span class="text-sm text-gray-500">{{ form.description.length }}/1000</span>
-                            </div>
-                        </div>
-
-                        <!-- Período do desafio -->
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Data de início *
+                        <div class="space-y-10">
+                            <!-- Title -->
+                            <div class="group/input relative">
+                                <label for="title" class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
+                                    Título do Desafio *
                                 </label>
-                                <input
-                                    id="start_date"
-                                    v-model="form.start_date"
-                                    type="date"
-                                    required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                    @input="validateField('start_date')"
-                                >
-                                <span v-if="errors.start_date" class="text-sm text-red-600">{{ errors.start_date }}</span>
-                                <p class="mt-1 text-xs text-gray-500">
-                                    Use para criar desafios que já estão em andamento.
-                                </p>
-                            </div>
-
-                            <div>
-                                <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Data fim *
-                                </label>
-                                <input
-                                    id="end_date"
-                                    v-model="form.end_date"
-                                    type="date"
-                                    required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                    @input="validateField('end_date')"
-                                >
-                                <span v-if="errors.end_date" class="text-sm text-red-600">{{ errors.end_date }}</span>
-                                <p class="mt-1 text-xs text-gray-500">
-                                    Ao alterar, a duração será recalculada automaticamente.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Duration & Settings Grid -->
-                        <div class="grid md:grid-cols-3 gap-6">
-                            <!-- Duration -->
-                            <div>
-                                <label for="duration_days" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Duração (dias) *
-                                </label>
-                                <input id="duration_days" v-model.number="form.duration_days" type="number" min="1"
-                                    max="365" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                    @input="validateField('duration_days')">
-                                <span v-if="errors.duration_days" class="text-sm text-red-600">{{ errors.duration_days
-                                    }}</span>
-                            </div>
-
-                            <!-- Category -->
-                            <div>
-                                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Categoria *
-                                </label>
-                                <select id="category" v-model="form.category" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                    @change="validateField('category')">
-                                    <option value="">Selecione...</option>
-                                    <option value="fitness">💪 Fitness</option>
-                                    <option value="mindfulness">🧘 Mindfulness</option>
-                                    <option value="productivity">⚡ Produtividade</option>
-                                    <option value="learning">📚 Aprendizado</option>
-                                    <option value="health">🏥 Saúde</option>
-                                    <option value="creativity">🎨 Criatividade</option>
-                                    <option value="social">👥 Social</option>
-                                    <option value="lifestyle">🌟 Estilo de Vida</option>
-                                </select>
-                                <span v-if="errors.category" class="text-sm text-red-600">{{ errors.category }}</span>
-                            </div>
-
-                            <!-- Difficulty -->
-                            <div>
-                                <label for="difficulty" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Dificuldade *
-                                </label>
-                                <select id="difficulty" v-model="form.difficulty" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                    @change="validateField('difficulty')">
-                                    <option value="">Selecione...</option>
-                                    <option value="beginner">🟢 Iniciante</option>
-                                    <option value="intermediate">🟡 Intermediário</option>
-                                    <option value="advanced">🔴 Avançado</option>
-                                </select>
-                                <span v-if="errors.difficulty" class="text-sm text-red-600">{{ errors.difficulty
-                                    }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Visibility / Sharing -->
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <label class="flex items-center space-x-3">
-                                <input v-model="shareEnabled" type="checkbox"
-                                    class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <div>
-                                    <span class="text-sm font-medium text-gray-900">Compartilhar desafio</span>
-                                    <p class="text-sm text-gray-600">
-                                        Compartilhe globalmente ou com um time específico.
-                                    </p>
+                                <div class="relative">
+                                    <Icon icon="lucide:type" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 size-5 group-focus-within/input:text-blue-600 transition-colors" />
+                                    <input id="title" v-model="form.title" type="text" maxlength="255" required
+                                        class="w-full pl-14 pr-16 py-5 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-bold text-slate-900 placeholder-slate-300"
+                                        placeholder="Ex: 30 Dias de Alta Performance" @input="validateField('title')">
+                                    <span class="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-300">{{ form.title.length }}/255</span>
                                 </div>
-                            </label>
+                                <p v-if="errors.title" class="mt-2 text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ errors.title }}</p>
+                            </div>
 
-                            <div class="mt-4 grid gap-2 md:grid-cols-2">
-                                <div class="md:col-span-2">
-                                    <label for="share_scope" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Onde compartilhar
-                                    </label>
-                                    <select
-                                      id="share_scope"
-                                      v-model="shareScope"
-                                      :disabled="!shareEnabled"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-                                    >
-                                      <option value="global">🌍 Global (qualquer pessoa pode participar)</option>
-                                      <optgroup v-if="teamOptions.length" label="Times">
-                                        <option v-for="team in teamOptions" :key="team.id" :value="String(team.id)">
-                                          👥 {{ team.name }}
-                                        </option>
-                                      </optgroup>
-                                    </select>
-                                    <span v-if="errors.team_id" class="text-sm text-red-600">{{ errors.team_id }}</span>
-                                    <p v-if="!shareEnabled" class="mt-2 text-xs text-gray-500">
-                                      Desmarcado = privado (só você vê e participa).
-                                    </p>
+                            <!-- Description -->
+                            <div class="group/input relative">
+                                <label for="description" class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">
+                                    Descrição do Desafio *
+                                </label>
+                                <textarea id="description" v-model="form.description" rows="4" maxlength="1000" required
+                                    class="w-full px-6 py-5 bg-slate-50/50 border border-slate-100 rounded-3xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-medium text-slate-900 placeholder-slate-300 resize-none leading-relaxed"
+                                    placeholder="Descreva o objetivo e como ele vai transformar vidas..."
+                                    @input="validateField('description')"></textarea>
+                                <div class="flex justify-between mt-2 px-1">
+                                    <p v-if="errors.description" class="text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ errors.description }}</p>
+                                    <span class="text-[10px] font-black text-slate-300 ml-auto">{{ form.description.length }}/1000</span>
                                 </div>
+                            </div>
+
+                            <!-- Período -->
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div class="group/input relative">
+                                    <label for="start_date" class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Data de Início *</label>
+                                    <div class="relative">
+                                        <Icon icon="lucide:calendar-play" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 size-5 group-focus-within/input:text-blue-600 transition-colors" />
+                                        <input id="start_date" v-model="form.start_date" type="date" required
+                                            class="w-full pl-14 pr-5 py-5 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-bold text-slate-900"
+                                            @input="validateField('start_date')">
+                                    </div>
+                                    <p v-if="errors.start_date" class="mt-2 text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ errors.start_date }}</p>
+                                </div>
+
+                                <div class="group/input relative">
+                                    <label for="end_date" class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Data de Término *</label>
+                                    <div class="relative">
+                                        <Icon icon="lucide:calendar-check" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 size-5 group-focus-within/input:text-blue-600 transition-colors" />
+                                        <input id="end_date" v-model="form.end_date" type="date" required
+                                            class="w-full pl-14 pr-5 py-5 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-bold text-slate-900"
+                                            @input="validateField('end_date')">
+                                    </div>
+                                    <p v-if="errors.end_date" class="mt-2 text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ errors.end_date }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Duration & Settings Grid -->
+                            <div class="grid md:grid-cols-3 gap-8">
+                                <div class="group/input relative">
+                                    <label for="duration_days" class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Duração (dias)</label>
+                                    <div class="relative">
+                                        <Icon icon="lucide:clock" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 size-5 group-focus-within/input:text-blue-600 transition-colors" />
+                                        <input id="duration_days" v-model.number="form.duration_days" type="number" min="1" max="365" required
+                                            class="w-full pl-14 pr-5 py-5 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-bold text-slate-900"
+                                            @input="validateField('duration_days')">
+                                    </div>
+                                    <p v-if="errors.duration_days" class="mt-2 text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ errors.duration_days }}</p>
+                                </div>
+
+                                <div class="group/input relative">
+                                    <label for="category" class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Categoria *</label>
+                                    <div class="relative">
+                                        <Icon icon="lucide:layout-grid" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 size-5 pointer-events-none group-focus-within/input:text-blue-600 transition-colors" />
+                                        <select id="category" v-model="form.category" required
+                                            class="w-full pl-14 pr-10 py-5 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-black uppercase tracking-widest text-slate-700 text-[10px] appearance-none cursor-pointer">
+                                            <option value="">Selecione...</option>
+                                            <option value="fitness">💪 Fitness</option>
+                                            <option value="mindfulness">🧘 Mindfulness</option>
+                                            <option value="productivity">⚡ Produtividade</option>
+                                            <option value="learning">📚 Aprendizado</option>
+                                            <option value="health">🏥 Saúde</option>
+                                            <option value="creativity">🎨 Criatividade</option>
+                                            <option value="social">👥 Social</option>
+                                            <option value="lifestyle">🌟 Estilo de Vida</option>
+                                        </select>
+                                        <Icon icon="lucide:chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 size-4 pointer-events-none" />
+                                    </div>
+                                    <p v-if="errors.category" class="mt-2 text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ errors.category }}</p>
+                                </div>
+
+                                <div class="group/input relative">
+                                    <label for="difficulty" class="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Dificuldade *</label>
+                                    <div class="relative">
+                                        <Icon icon="lucide:bar-chart-3" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 size-5 pointer-events-none group-focus-within/input:text-blue-600 transition-colors" />
+                                        <select id="difficulty" v-model="form.difficulty" required
+                                            class="w-full pl-14 pr-10 py-5 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-black uppercase tracking-widest text-slate-700 text-[10px] appearance-none cursor-pointer">
+                                            <option value="">Selecione...</option>
+                                            <option value="beginner">🟢 Iniciante</option>
+                                            <option value="intermediate">🟡 Intermediário</option>
+                                            <option value="advanced">🔴 Avançado</option>
+                                        </select>
+                                        <Icon icon="lucide:chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 size-4 pointer-events-none" />
+                                    </div>
+                                    <p v-if="errors.difficulty" class="mt-2 text-[10px] font-black text-rose-600 uppercase tracking-widest">{{ errors.difficulty }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Visibility / Sharing -->
+                            <div class="bg-slate-50/50 border border-slate-100 rounded-[2rem] p-8 space-y-8">
+                                <label class="flex items-center space-x-5 cursor-pointer group/check">
+                                    <div class="relative flex items-center">
+                                        <input v-model="shareEnabled" type="checkbox"
+                                            class="size-6 text-blue-600 border-slate-200 rounded-lg focus:ring-blue-500 focus:ring-offset-0 transition-all cursor-pointer">
+                                    </div>
+                                    <div>
+                                        <span class="text-[11px] font-black uppercase tracking-widest text-slate-900 group-hover/check:text-blue-600 transition-colors">Compartilhar desafio</span>
+                                        <p class="text-[10px] font-medium text-slate-500 mt-1 uppercase tracking-tighter">Torne este desafio visível para outras pessoas</p>
+                                    </div>
+                                </label>
+
+                                <div class="grid gap-6 md:grid-cols-2 animate-in fade-in slide-in-from-top-2 duration-500" v-if="shareEnabled">
+                                    <div class="md:col-span-2">
+                                        <label for="share_scope" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Escopo de Compartilhamento</label>
+                                        <div class="relative">
+                                            <Icon icon="lucide:globe" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 size-5" />
+                                            <select
+                                              id="share_scope"
+                                              v-model="shareScope"
+                                              class="w-full pl-14 pr-10 py-5 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 transition-all font-black uppercase tracking-widest text-slate-700 text-[10px] appearance-none cursor-pointer"
+                                            >
+                                              <option value="global">🌍 Público Global</option>
+                                              <optgroup v-if="teamOptions.length" label="Times">
+                                                <option v-for="team in teamOptions" :key="team.id" :value="String(team.id)">
+                                                  👥 {{ team.name }}
+                                                </option>
+                                              </optgroup>
+                                            </select>
+                                            <Icon icon="lucide:chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 size-4" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <p v-else class="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center italic">
+                                    🔒 Desafio Privado (Apenas você terá acesso)
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Step 2: Tasks -->
-                <div v-show="currentStep === 2" class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Tasks Diárias</h2>
-                        <p class="text-gray-600">Defina as atividades que os participantes farão todos os dias</p>
+                <div v-show="currentStep === 2" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div class="text-center mb-12">
+                        <h2 class="text-2xl font-black text-slate-900 uppercase tracking-tighter italic mb-2">Tasks Diárias</h2>
+                        <p class="text-xs font-black uppercase tracking-widest text-slate-400 px-4">O que precisa ser feito para manter o progresso?</p>
                     </div>
 
-                    <div class="space-y-6">
-                        <!-- Existing Tasks -->
-                        <div v-for="(task, index) in form.tasks" :key="`task-${index}`" class="space-y-4">
-                            <div class="border border-gray-200 rounded-lg p-6">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h3 class="text-lg font-semibold text-gray-900">Task {{ index + 1 }}</h3>
+                    <div class="grid gap-8">
+                        <div v-for="(task, index) in form.tasks" :key="`task-${index}`" class="relative group">
+                            <!-- Premium Task Card -->
+                            <div class="absolute -inset-[1px] bg-gradient-to-r from-blue-600/5 via-violet-600/5 to-purple-600/5 rounded-[2.5rem] blur-sm opacity-50"></div>
+                            <div class="relative bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-white/80 overflow-hidden">
+                                <div class="absolute top-0 left-0 w-2 h-full" :style="{ backgroundColor: task.color }"></div>
+                                
+                                <div class="flex items-center justify-between mb-8">
+                                    <div class="flex items-center gap-4">
+                                        <div class="size-12 rounded-2xl flex items-center justify-center text-xl shadow-lg" :style="{ backgroundColor: task.color + '15', color: task.color }">
+                                            {{ task.icon || '📝' }}
+                                        </div>
+                                        <div>
+                                            <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Task {{ String(index + 1).padStart(2, '0') }}</h3>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Configuração diária</p>
+                                        </div>
+                                    </div>
+                                    
                                     <button v-if="form.tasks.length > 1" type="button" @click="removeTask(index)"
-                                        class="text-red-600 hover:text-red-700 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
+                                        class="size-10 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all duration-300 flex items-center justify-center group/del active:scale-90">
+                                        <Icon icon="lucide:trash-2" class="size-5 group-hover/del:scale-110" />
                                     </button>
                                 </div>
 
-                                <div class="grid md:grid-cols-2 gap-4">
+                                <div class="grid md:grid-cols-2 gap-8">
                                     <!-- Task Name -->
-                                    <div class="md:col-span-2">
-                                        <label :for="`task-name-${index}`"
-                                            class="block text-sm font-medium text-gray-700 mb-2">
-                                            Nome da Task *
-                                        </label>
-                                        <input :id="`task-name-${index}`" v-model="task.name" type="text"
-                                            maxlength="255" required
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                            placeholder="Ex: Ler por 30 minutos">
+                                    <div class="md:col-span-2 group/input">
+                                        <label :for="`task-name-${index}`" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Nome da Task *</label>
+                                        <input :id="`task-name-${index}`" v-model="task.name" type="text" maxlength="255" required
+                                            class="w-full px-6 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-bold text-slate-900 placeholder-slate-300"
+                                            placeholder="Ex: Beber 3L de água">
                                     </div>
 
                                     <!-- Hashtag -->
-                                    <div>
-                                        <label :for="`task-hashtag-${index}`"
-                                            class="block text-sm font-medium text-gray-700 mb-2">
-                                            Hashtag (WhatsApp) *
-                                        </label>
+                                    <div class="group/input">
+                                        <label :for="`task-hashtag-${index}`" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Hashtag (WhatsApp) *</label>
                                         <div class="relative">
-                                            <span
-                                                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">#</span>
-                                            <input :id="`task-hashtag-${index}`" v-model="task.hashtag" type="text"
-                                                maxlength="50" required pattern="^[a-zA-Z0-9_]+$"
-                                                class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                                placeholder="leitura" @input="sanitizeHashtag(task, index)">
+                                            <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">#</span>
+                                            <input :id="`task-hashtag-${index}`" v-model="task.hashtag" type="text" maxlength="50" required pattern="^[a-zA-Z0-9_]+$"
+                                                class="w-full pl-10 pr-5 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-bold text-slate-900 placeholder-slate-300"
+                                                placeholder="agua" @input="sanitizeHashtag(task, index)">
                                         </div>
-                                        <p class="text-xs text-gray-500 mt-1">Apenas letras, números e _ (será única no
-                                            sistema)</p>
                                     </div>
 
-                                    <!-- Icon -->
-                                    <div>
-                                        <label :for="`task-icon-${index}`"
-                                            class="block text-sm font-medium text-gray-700 mb-2">
-                                            Ícone (Emoji)
-                                        </label>
-                                        <input :id="`task-icon-${index}`" v-model="task.icon" type="text" maxlength="10"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                                            placeholder="📚">
+                                    <!-- Icon Picker & Color -->
+                                    <div class="flex gap-4">
+                                        <div class="flex-1 group/input">
+                                            <label :for="`task-icon-${index}`" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Emoji</label>
+                                            <input :id="`task-icon-${index}`" v-model="task.icon" type="text" maxlength="10"
+                                                class="w-full px-5 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all text-center text-xl"
+                                                placeholder="📝">
+                                        </div>
+                                        <div class="group/input">
+                                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Cor</label>
+                                            <div class="relative size-[60px] rounded-2xl border border-slate-100 bg-white overflow-hidden p-1 shadow-sm">
+                                                <input v-model="task.color" type="color" class="absolute inset-0 size-full opacity-0 cursor-pointer z-10">
+                                                <div class="size-full rounded-xl" :style="{ backgroundColor: task.color }"></div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Description -->
-                                    <div class="md:col-span-2">
-                                        <label :for="`task-description-${index}`"
-                                            class="block text-sm font-medium text-gray-700 mb-2">
-                                            Descrição (opcional)
-                                        </label>
-                                        <textarea :id="`task-description-${index}`" v-model="task.description" rows="2"
-                                            maxlength="500"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 resize-none"
-                                            placeholder="Detalhe como realizar esta task..."></textarea>
+                                    <div class="md:col-span-2 group/input">
+                                        <label :for="`task-description-${index}`" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Descrição (opcional)</label>
+                                        <textarea :id="`task-description-${index}`" v-model="task.description" rows="2" maxlength="500"
+                                            class="w-full px-6 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-200 transition-all font-medium text-slate-900 placeholder-slate-300 resize-none leading-relaxed"
+                                            placeholder="Dicas ou regras para esta tarefa..."></textarea>
                                     </div>
 
-                                    <!-- Settings -->
-                                    <div class="md:col-span-2 flex flex-wrap gap-4">
-                                        <label class="flex items-center space-x-2">
+                                    <!-- Required Toggle -->
+                                    <div class="md:col-span-2 flex items-center justify-between pt-4 border-t border-slate-50">
+                                        <label class="flex items-center space-x-3 cursor-pointer group/req">
                                             <input v-model="task.is_required" type="checkbox"
-                                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                            <span class="text-sm text-gray-700">Task obrigatória</span>
+                                                class="size-5 text-blue-600 border-slate-200 rounded focus:ring-blue-500 transition-all cursor-pointer">
+                                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-600 group-hover/req:text-slate-900">Task Obrigatória</span>
                                         </label>
-
-                                        <div class="flex items-center space-x-2">
-                                            <label :for="`task-color-${index}`"
-                                                class="text-sm text-gray-700">Cor:</label>
-                                            <input :id="`task-color-${index}`" v-model="task.color" type="color"
-                                                class="w-8 h-8 border border-gray-300 rounded cursor-pointer">
-                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Add Task Button -->
-                        <div v-if="form.tasks.length < 10" class="text-center">
+                        <div v-if="form.tasks.length < 10" class="pt-4 px-4">
                             <button type="button" @click="addTask"
-                                class="inline-flex items-center px-6 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                Adicionar Task ({{ form.tasks.length }}/10)
-                            </button>
-                        </div>
-
-                        <div v-if="form.tasks.length === 0" class="text-center py-8 text-gray-500">
-                            <div
-                                class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                            </div>
-                            <p class="mb-4">Nenhuma task criada ainda</p>
-                            <button type="button" @click="addTask"
-                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                                Criar Primeira Task
+                                class="w-full py-8 border-2 border-dashed border-slate-200 rounded-[2.5rem] bg-white/50 text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] hover:bg-white hover:border-blue-400 hover:text-blue-600 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 flex flex-col items-center gap-3 group">
+                                <div class="size-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
+                                    <Icon icon="lucide:plus" class="size-6" />
+                                </div>
+                                <span>Adicionar Nova Task ({{ form.tasks.length }}/10)</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Step 3: Review -->
-                <div v-show="currentStep === 3" class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Revisão Final</h2>
-                        <p class="text-gray-600">Confira os detalhes do seu desafio antes de criar</p>
+                <div v-show="currentStep === 3" class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div class="text-center mb-12">
+                        <h2 class="text-2xl font-black text-slate-900 uppercase tracking-tighter italic mb-2">Revisão Final</h2>
+                        <p class="text-xs font-black uppercase tracking-widest text-slate-400 px-4">Quase lá! Confira se tudo está no seu devido lugar.</p>
                     </div>
 
-                    <!-- Challenge Preview -->
-                    <div class="space-y-6">
-                        <!-- Basic Info Preview -->
-                        <div class="border border-gray-200 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Informações Básicas</h3>
-                            <div class="space-y-3">
-                                <div>
-                                    <span class="text-sm text-gray-600">Título:</span>
-                                    <p class="text-gray-800 font-medium">{{ form.title || 'Sem título' }}</p>
+                    <div class="relative group">
+                        <div class="absolute -inset-[1px] bg-gradient-to-r from-blue-600/10 via-violet-600/10 to-purple-600/10 rounded-[2.5rem] blur-sm opacity-50"></div>
+                        <div class="relative bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-2xl shadow-slate-200/50 border border-white/80 space-y-12">
+                            
+                            <!-- Header Detail -->
+                            <div class="flex items-center gap-6 pb-10 border-b border-slate-100">
+                                <div class="size-20 rounded-3xl bg-slate-900 flex items-center justify-center text-3xl shadow-2xl rotate-3">
+                                    <Icon icon="lucide:clipboard-check" class="size-10 text-white" />
                                 </div>
                                 <div>
-                                    <span class="text-sm text-gray-600">Descrição:</span>
-                                    <p class="text-gray-800">{{ form.description || 'Sem descrição' }}</p>
-                                </div>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3">
-                                    <div>
-                                        <span class="text-sm text-gray-600">Duração:</span>
-                                        <p class="text-gray-800 font-medium">{{ form.duration_days }} dias</p>
-                                    </div>
-                                    <div class="md:col-span-1">
-                                        <span class="text-sm text-gray-600">Início:</span>
-                                        <p class="text-gray-800 font-medium">{{ form.start_date }}</p>
-                                    </div>
-                                    <div class="md:col-span-1">
-                                        <span class="text-sm text-gray-600">Fim:</span>
-                                        <p class="text-gray-800 font-medium">{{ form.end_date }}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-sm text-gray-600">Categoria:</span>
-                                        <p class="text-gray-800 font-medium">{{ formatCategoryPreview(form.category) }}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-sm text-gray-600">Dificuldade:</span>
-                                        <p class="text-gray-800 font-medium">{{ formatDifficultyPreview(form.difficulty) }}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-sm text-gray-600">Visibilidade:</span>
-                                        <p class="text-gray-800 font-medium">{{ visibilityPreview }}</p>
-                                    </div>
+                                    <h3 class="text-2xl font-black text-slate-900 uppercase tracking-tighter">{{ form.title || 'Desafio sem Título' }}</h3>
+                                    <p class="text-xs font-black uppercase tracking-widest text-slate-400 truncate max-w-md">{{ form.description || 'Nenhuma descrição fornecida.' }}</p>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Tasks Preview -->
-                        <div class="border border-gray-200 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Tasks Diárias ({{ form.tasks.length }})
-                            </h3>
-                            <div class="space-y-3">
-                                <div v-for="(task, index) in form.tasks" :key="`preview-task-${index}`"
-                                    class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-                                        :style="`background-color: ${task.color}20; color: ${task.color}`">
-                                        {{ task.icon || '📝' }}
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="flex items-center space-x-2">
-                                            <h4 class="font-medium text-gray-900">{{ task.name || `Task ${index + 1}` }}
-                                            </h4>
-                                            <span class="text-sm text-blue-600">#{{ task.hashtag || 'hashtag' }}</span>
-                                            <span v-if="task.is_required"
-                                                class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Obrigatória</span>
+                            <!-- Meta Info Grid -->
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-10">
+                                <div class="space-y-2">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Icon icon="lucide:calendar" class="size-3.5" /> Início / Fim
+                                    </span>
+                                    <p class="text-xs font-black uppercase tracking-widest text-slate-900">{{ form.start_date }} a {{ form.end_date }}</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Icon icon="lucide:clock" class="size-3.5" /> Duração
+                                    </span>
+                                    <p class="text-xs font-black uppercase tracking-widest text-slate-900">{{ form.duration_days }} Dias</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Icon icon="lucide:layout-grid" class="size-3.5" /> Categoria
+                                    </span>
+                                    <p class="text-xs font-black uppercase tracking-widest text-slate-900">{{ formatCategoryPreview(form.category) }}</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Icon icon="lucide:bar-chart-3" class="size-3.5" /> Dificuldade
+                                    </span>
+                                    <p class="text-xs font-black uppercase tracking-widest text-slate-900">{{ formatDifficultyPreview(form.difficulty) }}</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Icon icon="lucide:shield-check" class="size-3.5" /> Visibilidade
+                                    </span>
+                                    <p class="text-xs font-black uppercase tracking-widest text-slate-900">{{ visibilityPreview }}</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Icon icon="lucide:list-todo" class="size-3.5" /> Total de Tasks
+                                    </span>
+                                    <p class="text-xs font-black uppercase tracking-widest text-slate-900 text-blue-600">{{ form.tasks.length }} Ativas</p>
+                                </div>
+                            </div>
+
+                            <!-- Tasks Summary -->
+                            <div class="space-y-4 pt-6 border-t border-slate-100">
+                                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Listagem de Atividades Diárias</h4>
+                                <div class="grid gap-3">
+                                    <div v-for="(task, index) in form.tasks" :key="`preview-${index}`" 
+                                        class="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl group/prev transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50">
+                                        <div class="size-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-xl shadow-sm group-hover/prev:scale-110 transition-transform">
+                                            {{ task.icon || '📝' }}
                                         </div>
-                                        <p v-if="task.description" class="text-sm text-gray-600">{{ task.description }}
-                                        </p>
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-xs font-black uppercase tracking-tighter text-slate-900">{{ task.name }}</span>
+                                                <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100/50">#{{ task.hashtag }}</span>
+                                                <span v-if="task.is_required" class="text-[8px] font-black uppercase tracking-widest bg-rose-50 text-rose-500 px-1.5 py-0.5 rounded border border-rose-100/50">Obrigatória</span>
+                                            </div>
+                                        </div>
+                                        <div class="size-3 rounded-full shadow-sm" :style="{ backgroundColor: task.color }"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Aviso ao editar: alterações sensíveis zeram o progresso -->
-                    <div v-if="isEditMode && hasSensitiveChanges" class="mt-6 p-4 rounded-xl border-2 border-amber-200 bg-amber-50">
-                        <p class="font-semibold text-amber-800 mb-2">⚠️ Atenção</p>
-                        <p class="text-sm text-amber-800 mb-4">
-                            Você alterou a <strong>data de início/fim</strong> ou <strong>adicionou novas tasks</strong>. Ao salvar, todo o progresso já feito (check-ins, sequência de dias) será perdido e o desafio recomeçará do zero, para manter os relatórios consistentes.
-                        </p>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input v-model="confirmResetProgress" type="checkbox" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500">
-                            <span class="text-sm font-medium text-amber-900">Confirmo que entendo que todo o progresso será perdido ao salvar</span>
-                        </label>
-                        <p v-if="errors.confirm_reset_progress" class="mt-2 text-sm text-red-600">{{ errors.confirm_reset_progress }}</p>
+                    <!-- Aviso ao editar -->
+                    <div v-if="isEditMode && hasSensitiveChanges" class="relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-amber-500/5 border border-amber-500/20 rounded-[2.5rem] blur-sm"></div>
+                        <div class="relative bg-amber-50/80 backdrop-blur-xl rounded-[2.5rem] p-8 border border-amber-100/50 space-y-6">
+                            <div class="flex items-center gap-4">
+                                <div class="size-12 rounded-2xl bg-amber-500 flex items-center justify-center text-white shadow-xl shadow-amber-500/20">
+                                    <Icon icon="lucide:alert-triangle" class="size-6" />
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-black text-amber-900 uppercase tracking-widest">Atenção Crítica</h3>
+                                    <p class="text-[10px] font-bold text-amber-700 uppercase tracking-tighter">Impacto nas métricas do desafio</p>
+                                </div>
+                            </div>
+                            
+                            <p class="text-xs font-medium text-amber-800 leading-relaxed uppercase tracking-tighter">
+                                Você alterou datas ou adicionou novas tasks. Ao salvar, todo o progresso atual será **REINICIADO** para garantir a consistência dos novos relatórios.
+                            </p>
+
+                            <label class="flex items-center gap-4 cursor-pointer p-4 bg-white/50 rounded-2xl border border-amber-200 transition-all hover:bg-white active:scale-[0.98]">
+                                <input v-model="confirmResetProgress" type="checkbox" class="size-5 rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-amber-900">Estou ciente e desejo reiniciar o progresso</span>
+                            </label>
+
+                            <p v-if="errors.confirm_reset_progress" class="text-[10px] font-black text-rose-600 uppercase tracking-widest px-2">{{ errors.confirm_reset_progress }}</p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Navigation Buttons -->
-                <div class="flex items-center justify-between">
-                    <!-- Botão Voltar: apenas nos passos 2 e 3 para navegar entre passos -->
-                    <button v-if="currentStep > 1" type="button" @click="previousStep"
-                        class="cursor-pointer px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-10">
+                    <Button v-if="currentStep > 1" type="button" variant="outline" @click="previousStep"
+                        class="cursor-pointer h-16 w-full sm:w-auto px-10 rounded-2xl border-slate-200 text-slate-400 font-black uppercase tracking-[0.2em] text-[11px] hover:bg-white hover:text-slate-900 hover:border-slate-400 transition-all active:scale-95">
+                        <Icon icon="lucide:arrow-left" class="mr-2 size-4" />
                         Voltar
-                    </button>
-                    <div v-else></div>
+                    </Button>
+                    <div v-else class="hidden sm:block"></div>
 
-                    <!-- Botão de ação: Continuar ou Criar Desafio -->
-                    <div class="flex justify-end">
-                        <button v-if="currentStep < 3" type="button" @click="nextStep" :disabled="!canProceed"
-                            class="cursor-pointer px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                            Continuar
-                        </button>
+                    <div class="w-full sm:w-auto flex flex-col sm:flex-row gap-4">
+                        <Button v-if="currentStep < 3" type="button" @click="nextStep" :disabled="!canProceed"
+                            class="cursor-pointer h-16 w-full sm:w-auto px-12 rounded-2xl bg-slate-900 text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-slate-900/10 hover:shadow-2xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50">
+                            Próximo Passo
+                            <Icon icon="lucide:arrow-right" class="ml-2 size-4" />
+                        </Button>
 
                         <button v-else type="submit" :disabled="submitting || !canProceed"
-                            class="cursor-pointer px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2">
-                            <svg v-if="submitting" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none"
-                                viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                            <span>{{ submitting ? (isEditMode ? 'Salvando...' : 'Criando...') : (isEditMode ? 'Salvar Alterações' : 'Criar Desafio') }}</span>
+                            class="cursor-pointer h-16 w-full sm:w-auto px-12 rounded-2xl bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-blue-600/20 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 active:scale-110 disabled:opacity-50 flex items-center justify-center cursor-pointer">
+                            <Icon v-if="submitting" icon="lucide:loader-2" class="mr-2 size-4 animate-spin" />
+                            <span>{{ submitting ? (isEditMode ? 'Salvando...' : 'Criando...') : (isEditMode ? 'Salvar Desafio' : 'Lançar Desafio') }}</span>
+                            <Icon v-if="!submitting" icon="lucide:rocket" class="ml-2 size-4" />
                         </button>
                     </div>
                 </div>
@@ -474,8 +463,9 @@
 <script setup>
 import { ref, computed, reactive, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { toast } from 'vue-sonner'
-import DopaHeader from '@/components/DopaHeader.vue'
+import { Icon } from '@iconify/vue'
+import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
+import Button from '@/components/ui/button/Button.vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
 
 // State
@@ -820,18 +810,12 @@ if (isEditMode.value) {
 </script>
 
 <style scoped>
-/* Custom input styles */
-input[type="text"],
-input[type="number"],
-select,
-textarea {
-    background-color: white !important;
-    color: #111827 !important;
+/* Custom transitions */
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.5s ease;
 }
-
-input[type="text"]::placeholder,
-textarea::placeholder {
-    color: #6b7280 !important;
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
 }
 
 /* Custom scrollbar */
@@ -840,39 +824,42 @@ textarea::placeholder {
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 3px;
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
 
-/* Progress steps animation */
-.transition-colors {
-    transition: all 0.3s ease;
+/* Force modern inputs */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+    border-color: #f1f5f9;
 }
 
 /* Custom color picker */
-input[type="color"] {
-    -webkit-appearance: none;
-    appearance: none;
-    border: none;
-    width: 32px;
-    height: 32px;
-    cursor: pointer;
-}
-
 input[type="color"]::-webkit-color-swatch-wrapper {
     padding: 0;
 }
-
 input[type="color"]::-webkit-color-swatch {
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
+    border: none;
+    border-radius: 12px;
+}
+
+@keyframes pulse-soft {
+    0%, 100% { transform: scale(1); opacity: 0.1; }
+    50% { transform: scale(1.1); opacity: 0.15; }
+}
+
+.animate-pulse {
+    animation: pulse-soft 8s infinite ease-in-out;
 }
 </style>
