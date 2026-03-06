@@ -98,6 +98,55 @@ class EvolutionApiService
         }
     }
 
+    /**
+     * Envia uma mensagem de texto (1:1).
+     */
+    public function sendTextMessage(
+        string $instance,
+        string $remoteJid,
+        string $text,
+    ): void {
+        $baseUrl = $this->getBaseUrl();
+        if ($baseUrl === '') {
+            throw new \RuntimeException('EVOLUTION_API_URL não configurada');
+        }
+
+        $apiKey = $this->getApiKey();
+        if ($apiKey === '') {
+            throw new \RuntimeException('EVOLUTION_API_KEY não configurada');
+        }
+
+        $url = $baseUrl . '/message/sendText/' . urlencode($instance);
+
+        $body = [
+            'number' => $this->normalizeNumber($remoteJid),
+            'text' => $text,
+            'delay' => 1200, // micro-delay humano
+            'linkPreview' => true,
+        ];
+
+        try {
+            /** @var \Illuminate\Http\Client\Response $response */
+            $response = Http::timeout(20)
+                ->withHeaders([
+                    'apikey' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($url, $body);
+
+            if (!$response->successful()) {
+                throw new \RuntimeException('HTTP ' . $response->status() . ' ao enviar text');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Falha ao enviar mensagem de texto via Evolution API', [
+                'error' => $e->getMessage(),
+                'instance' => $instance,
+                'remote_jid' => $remoteJid,
+            ]);
+            throw $e;
+        }
+    }
+
     private function normalizeNumber(string $phone): string
     {
         $digits = preg_replace('/\D/', '', $phone) ?: '';

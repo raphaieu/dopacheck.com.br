@@ -1,27 +1,22 @@
 <template>
   <Teleport to="body">
-    <div
-      v-if="show"
-      class="fixed inset-0 z-9999 bg-black/30 backdrop-blur-sm flex items-center justify-center"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 px-6 py-5 w-[min(90vw,420px)]">
-        <div class="flex items-center gap-4">
-          <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-            <div class="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    <transition name="fade">
+      <div v-if="show" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[200]">
+        <div class="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50 flex flex-col items-center gap-4">
+          <div class="relative">
+            <div class="size-12 rounded-full border-4 border-slate-100 border-t-blue-600 animate-spin"></div>
+            <Icon icon="lucide:loader-2" class="size-6 text-blue-600 absolute inset-0 m-auto animate-pulse" />
           </div>
-          <div class="flex-1">
-            <div class="text-base font-semibold text-gray-900">Carregando...</div>
-            <div class="text-sm text-gray-600">Aguarde...</div>
-          </div>
+          <span class="text-slate-900 font-bold tracking-tight">Processando...</span>
         </div>
       </div>
-    </div>
+    </transition>
   </Teleport>
 </template>
 
 <script setup>
+import { Icon } from '@iconify/vue'
+
 defineProps({
   show: {
     type: Boolean,

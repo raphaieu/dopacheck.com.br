@@ -40,6 +40,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
      */
     protected $fillable = [
         'name',
+        'nickname',
         'email',
         'username',
         'password',
@@ -66,6 +67,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     protected $appends = [
         'profile_photo_url',
         'is_pro',
+        'display_name',
         'public_profile_url',
     ];
 
@@ -134,6 +136,30 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
             $disk = Storage::disk($this->profilePhotoDisk());
 
             return $disk->url($path);
+        });
+    }
+
+    /**
+     * Get the user's display name (prioritizes nickname).
+     */
+    protected function displayName(): Attribute
+    {
+        return Attribute::get(function () {
+            $nickname = isset($this->attributes['nickname']) ? $this->nickname : null;
+            
+            if (!empty($nickname)) {
+                return $nickname;
+            }
+
+            $name = isset($this->attributes['name']) ? $this->name : null;
+            
+            if (empty($name)) {
+                return 'Usuário';
+            }
+
+            // Fallback: primeiro nome se não houver apelido
+            $parts = explode(' ', trim((string) $name));
+            return $parts[0] ?: 'Usuário';
         });
     }
 

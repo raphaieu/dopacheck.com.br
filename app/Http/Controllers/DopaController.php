@@ -56,13 +56,23 @@ class DopaController extends Controller
         }
         
         // Recarregar para pegar desafios que foram marcados como completos ou reativados
-        $activeChallengesEloquent = $user->activeChallenges()->with(['challenge.tasks'])->get();
+        $activeChallengesEloquent = $user->activeChallenges()
+            ->with(['challenge.tasks', 'challenge.team', 'team'])
+            ->get();
         
         $activeChallenges = $activeChallengesEloquent->map(function ($userChallenge) {
             // Atualizar current_day antes de calcular (garante que está sincronizado)
             if ($userChallenge->status === 'active') {
                 $userChallenge->updateCurrentDay();
                 $userChallenge->refresh();
+            }
+            
+            // Link do WhatsApp contextual
+            $whatsappCheckinUrl = 'https://wa.me/5571993676365'; // Fallback Bot DM
+            $team = $userChallenge->team ?? $userChallenge->challenge->team;
+            
+            if ($team?->whatsapp_join_url) {
+                $whatsappCheckinUrl = $team->whatsapp_join_url;
             }
             
             // Calculate current day for this challenge (já limitado pelo updateCurrentDay)
@@ -143,6 +153,7 @@ class DopaController extends Controller
                     })
                 ],
                 'today_tasks' => $todayTasks->values(),
+                'whatsapp_checkin_url' => $whatsappCheckinUrl,
             ];
         });
 

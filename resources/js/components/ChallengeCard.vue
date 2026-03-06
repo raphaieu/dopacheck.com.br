@@ -1,153 +1,141 @@
 <template>
     <div
-        class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover-scale">
+        class="group relative bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-7 border border-white/80 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-500 overflow-hidden">
+        
+        <!-- Hover highlight -->
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
         <!-- Challenge Header -->
-        <div class="flex items-start justify-between mb-4">
+        <div class="flex items-start justify-between mb-6 relative z-10">
             <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-100/50">
+                        <Icon :icon="getCategoryIconSlug(challenge.category)" class="mr-1.5 size-3" />
+                        {{ formatCategory(challenge.category) }}
+                    </span>
+                    <span :class="getDifficultyClasses(challenge.difficulty)">
+                        {{ formatDifficulty(challenge.difficulty) }}
+                    </span>
+                </div>
+
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2 leading-tight tracking-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
                     {{ challenge.title }}
                 </h3>
-                <p class="text-gray-600 text-sm line-clamp-3 mb-3">
-                    {{ challenge.description }}
-                </p>
             </div>
 
             <!-- Challenge Image/Icon -->
-            <div class="shrink-0 ml-4">
-                <div v-if="challenge.image_url" class="w-16 h-16 rounded-lg overflow-hidden">
+            <div class="shrink-0 ml-4 group-hover:scale-110 transition-transform duration-500">
+                <div v-if="challenge.image_url" class="size-16 rounded-2xl overflow-hidden border-2 border-white shadow-md">
                     <img :src="challenge.image_url" :alt="challenge.title" class="w-full h-full object-cover">
                 </div>
                 <div v-else
-                    class="w-16 h-16 bg-linear-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
-                    <span class="text-2xl">{{ getCategoryIcon(challenge.category) }}</span>
+                    class="size-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner shadow-slate-900/5"
+                    :style="`background-color: ${getCategoryColor(challenge.category)}15; color: ${getCategoryColor(challenge.category)}`">
+                    <Icon :icon="getCategoryIconSlug(challenge.category)" class="size-8" />
                 </div>
             </div>
         </div>
 
-        <!-- Challenge Meta -->
-        <div class="flex flex-wrap gap-2 mb-4">
-            <!-- Status (período global) -->
-            <span
-              v-if="challenge.is_expired"
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700"
-            >
-              ⛔ Encerrado
-            </span>
-            <span
-              v-else-if="challenge.is_future"
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
-            >
-              🗓️ Em breve
-            </span>
-            <span
-              v-else-if="challenge.is_active"
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
-            >
-              ✅ Ativo
-            </span>
+        <!-- Description -->
+        <p class="text-slate-500 text-sm font-medium line-clamp-2 mb-6 leading-relaxed relative z-10">
+            {{ challenge.description }}
+        </p>
 
-            <!-- Visibility Indicator -->
-            <span
-              v-if="challenge.visibility === 'private'"
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-            >
-              🔒 Privado
-            </span>
-            <span
-              v-else-if="challenge.visibility === 'team'"
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-            >
-              👥 {{ challenge.team?.name || 'Time' }}
-            </span>
-            <!-- Aviso para visitante: desafio de grupo -->
-            <span
-              v-if="!user && challenge.visibility === 'team'"
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"
-            >
-              Desafio para um grupo específico
-            </span>
-
-            <!-- Category -->
-            <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {{ getCategoryIcon(challenge.category) }} {{ formatCategory(challenge.category) }}
-            </span>
-
-            <!-- Difficulty -->
-            <span :class="getDifficultyClasses(challenge.difficulty)">
-                {{ getDifficultyIcon(challenge.difficulty) }} {{ formatDifficulty(challenge.difficulty) }}
-            </span>
-
-            <!-- Duration -->
-            <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                📅 {{ challenge.duration_days }} dias
-            </span>
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-3 gap-3 mb-6 p-4 bg-slate-50/50 rounded-2xl border border-slate-100/50 relative z-10">
+            <div class="text-center">
+                <div class="text-base font-black text-slate-900">{{ formatNumber(challenge.participant_count) }}</div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Participantes</div>
+            </div>
+            <div class="text-center border-x border-slate-200/50 px-2">
+                <div class="text-base font-black text-slate-900">{{ challenge.tasks?.length || 0 }}</div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tarefas</div>
+            </div>
+            <div class="text-center">
+                <div class="text-base font-black text-blue-600">{{ getCompletionRate(challenge) }}%</div>
+                <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Concluído</div>
+            </div>
         </div>
 
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
-            <div class="text-center">
-                <div class="text-lg font-bold text-blue-600">{{ formatNumber(challenge.participant_count) }}</div>
-                <div class="text-xs text-gray-500">Participantes</div>
+        <!-- Tags & Meta -->
+        <div class="flex flex-wrap items-center gap-2 mb-6 relative z-10">
+            <!-- Period Status -->
+            <div
+              v-if="challenge.is_expired"
+              class="flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200"
+            >
+              <Icon icon="lucide:calendar-off" class="size-3" />
+              Encerrado
             </div>
-            <div class="text-center">
-                <div class="text-lg font-bold text-green-600">{{ challenge.tasks?.length || 0 }}</div>
-                <div class="text-xs text-gray-500">Tasks</div>
+            <div
+              v-else-if="challenge.is_future"
+              class="flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-100/50"
+            >
+              <Icon icon="lucide:calendar" class="size-3" />
+              Em breve
             </div>
-            <div class="text-center">
-                <div class="text-lg font-bold text-purple-600">{{ getCompletionRate(challenge) }}%</div>
-                <div class="text-xs text-gray-500">Conclusão</div>
+            <div
+              v-else-if="challenge.is_active"
+              class="flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100/50"
+            >
+              <Icon icon="lucide:check-circle" class="size-3" />
+              Ativo
+            </div>
+
+            <!-- Duration -->
+            <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-600 border border-slate-100">
+                <Icon icon="lucide:timer" class="size-3" />
+                {{ challenge.duration_days }}d
+            </div>
+
+            <!-- Visibility -->
+            <div
+              v-if="challenge.visibility === 'private'"
+              class="flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-purple-50 text-purple-600 border border-purple-100/50"
+            >
+              <Icon icon="lucide:lock" class="size-3" />
+              Privado
             </div>
         </div>
 
         <!-- Creator Info -->
-        <div v-if="challenge.creator" class="flex items-center space-x-2 mb-4 text-xs text-gray-500">
-            <img :src="challenge.creator.profile_photo_url || '/default-avatar.png'" :alt="challenge.creator.name"
-                class="w-5 h-5 rounded-full">
-            <span>Por {{ challenge.creator.name }}</span>
-            <span>•</span>
-            <span>{{ formatDate(challenge.created_at) }}</span>
+        <div v-if="challenge.creator" class="flex items-center justify-between mb-6 relative z-10">
+            <div class="flex items-center gap-2">
+                <img :src="challenge.creator.profile_photo_url || '/default-avatar.png'" :alt="challenge.creator.name"
+                    class="size-6 rounded-full ring-2 ring-white shadow-sm">
+                <span class="text-[11px] font-bold text-slate-400 tracking-tight">Por <span class="text-slate-600">{{ challenge.creator.name }}</span></span>
+            </div>
+            <span class="text-[10px] font-bold text-slate-300">{{ formatDate(challenge.created_at) }}</span>
         </div>
 
         <!-- Actions -->
-        <div class="flex gap-3">
+        <div class="flex gap-3 relative z-10">
             <button @click="$emit('view', challenge.id)"
-                class="cursor-pointer flex-1 border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                Ver Detalhes
+                class="cursor-pointer flex-1 bg-slate-50 text-slate-700 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-100 active:scale-95">
+                Detalhes
             </button>
 
             <!-- Visitante + desafio de time: link para landing do grupo -->
             <Link
                 v-if="!user && challenge.visibility === 'team' && challenge.team?.slug && !challenge.is_expired"
                 :href="`/join/${challenge.team.slug}`"
-                class="cursor-pointer flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 bg-blue-600 text-white hover:bg-blue-700"
+                class="cursor-pointer flex-1 bg-slate-900 text-white px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 text-center active:scale-95"
             >
                 Participar
             </Link>
 
             <button v-else-if="!isParticipating" @click="handleJoin" :disabled="joining"
-                class="cursor-pointer flex-1 px-4 py-2.5 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
-                :class="challenge.is_expired ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'"
+                class="cursor-pointer flex-1 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                :class="challenge.is_expired ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20'"
             >
-                <svg v-if="joining" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-                <span v-if="challenge.is_expired">Encerrado</span>
-                <span v-else>{{ joining ? 'Entrando...' : 'Participar' }}</span>
+                <Icon v-if="joining" icon="lucide:loader-2" class="size-4 animate-spin" />
+                <span>{{ challenge.is_expired ? 'Finalizado' : (joining ? 'Entrando...' : 'Participar') }}</span>
             </button>
 
             <div v-else
-                class="flex-1 bg-green-100 text-green-800 px-4 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clip-rule="evenodd" />
-                </svg>
-                <span>Participando</span>
+                class="flex-1 bg-emerald-500 text-white px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                <Icon icon="lucide:check" class="size-4" />
+                <span>Membro</span>
             </div>
         </div>
     </div>
@@ -156,6 +144,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import { Icon } from '@iconify/vue'
 
 // Props
 const props = defineProps({
@@ -177,7 +166,6 @@ const user = computed(() => pageProps.auth?.user)
 
 // Computed
 const isParticipating = computed(() => {
-    // Check if user is participating in this challenge
     return props.challenge.user_is_participating || false
 })
 
@@ -194,59 +182,64 @@ const handleJoin = async () => {
     }
 }
 
-const getCategoryIcon = (category) => {
+const getCategoryIconSlug = (category) => {
     const icons = {
-        'fitness': '💪',
-        'mindfulness': '🧘',
-        'productivity': '⚡',
-        'learning': '📚',
-        'health': '🏥',
-        'creativity': '🎨',
-        'social': '👥',
-        'lifestyle': '🌟'
+        'fitness': 'lucide:dumbbell',
+        'mindfulness': 'lucide:brain-circuit',
+        'productivity': 'lucide:zap',
+        'learning': 'lucide:book-open',
+        'health': 'lucide:heart-pulse',
+        'creativity': 'lucide:palette',
+        'social': 'lucide:users-2',
+        'lifestyle': 'lucide:sparkles'
     }
-    return icons[category] || '🎯'
+    return icons[category] || 'lucide:target'
+}
+
+const getCategoryColor = (category) => {
+    const colors = {
+        'fitness': '#3b82f6', // blue
+        'mindfulness': '#8b5cf6', // violet
+        'productivity': '#f59e0b', // amber
+        'learning': '#10b981', // emerald
+        'health': '#ef4444', // red
+        'creativity': '#ec4899', // pink
+        'social': '#6366f1', // indigo
+        'lifestyle': '#f97316' // orange
+    }
+    return colors[category] || '#3b82f6'
 }
 
 const formatCategory = (category) => {
     const categoryMap = {
         'fitness': 'Fitness',
-        'mindfulness': 'Mindfulness',
-        'productivity': 'Produtividade',
-        'learning': 'Aprendizado',
+        'mindfulness': 'Mind',
+        'productivity': 'Foco',
+        'learning': 'Educa',
         'health': 'Saúde',
-        'creativity': 'Criatividade',
+        'creativity': 'Criat',
         'social': 'Social',
-        'lifestyle': 'Estilo de Vida'
+        'lifestyle': 'Life'
     }
     return categoryMap[category] || category
-}
-
-const getDifficultyIcon = (difficulty) => {
-    const icons = {
-        'beginner': '🟢',
-        'intermediate': '🟡',
-        'advanced': '🔴'
-    }
-    return icons[difficulty] || '⚪'
 }
 
 const formatDifficulty = (difficulty) => {
     const difficultyMap = {
         'beginner': 'Iniciante',
-        'intermediate': 'Intermediário',
-        'advanced': 'Avançado'
+        'intermediate': 'Médio',
+        'advanced': 'Pró'
     }
     return difficultyMap[difficulty] || difficulty
 }
 
 const getDifficultyClasses = (difficulty) => {
     const classes = {
-        'beginner': 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800',
-        'intermediate': 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800',
-        'advanced': 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'
+        'beginner': 'inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100/50',
+        'intermediate': 'inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-100/50',
+        'advanced': 'inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-100/50'
     }
-    return classes[difficulty] || 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800'
+    return classes[difficulty] || 'inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-600 border border-slate-100'
 }
 
 const formatNumber = (num) => {
@@ -257,7 +250,6 @@ const formatNumber = (num) => {
 }
 
 const getCompletionRate = (challenge) => {
-    // Use completion rate from backend (calculated based on all participants)
     return challenge.completion_rate ?? 0
 }
 
@@ -276,20 +268,5 @@ const formatDate = (dateString) => {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-.line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.hover-scale {
-    transition: transform 0.2s ease;
-}
-
-.hover-scale:hover {
-    transform: translateY(-2px);
 }
 </style>

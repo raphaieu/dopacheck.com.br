@@ -1,0 +1,127 @@
+{
+    "workflow_version": "1.2.0",
+    "timestamps": {
+        "started": "2026-03-05T21:46:00Z",
+        "last_updated": "2026-03-05T21:46:00Z"
+    },
+    "mode": "initial_scan",
+    "scan_level": "deep",
+    "project_root": "/home/raphael/www/dopacheck.com.br",
+    "project_knowledge": "/home/raphael/www/dopacheck.com.br/docs",
+    "completed_steps": [
+        {
+            "step": "step_1",
+            "status": "completed",
+            "timestamp": "2026-03-05T21:48:00Z",
+            "summary": "Classified as Monolith with 1 part (web)"
+        },
+        {
+            "step": "step_2",
+            "status": "completed",
+            "timestamp": "2026-03-05T21:50:00Z",
+            "summary": "Found 13 existing documents in /docs and root"
+        },
+        {
+            "step": "step_3",
+            "status": "completed",
+            "timestamp": "2026-03-05T21:52:00Z",
+            "summary": "Analyzed Tech Stack: Laravel 12, Vue 3, Inertia 2, Stripe (Cashier), Filament 3"
+        },
+        {
+            "step": "step_4",
+            "status": "completed",
+            "timestamp": "2026-03-05T21:55:00Z",
+            "summary": "Deep Scan complete: Documented Architecture, API, Models, Components, Trees, and Guides."
+        }
+    ],
+    "current_step": "completed",
+    "findings": {
+        "tech_stack": {
+            "backend": "Laravel 12 (PHP 8.3)",
+            "frontend": "Vue 3 (Inertia 2, Tailwind 4)",
+            "admin": "Filament 3",
+            "payments": "Stripe (Laravel Cashier)",
+            "monitoring": "Sentry, Laravel Telescope",
+            "queues": "Redis (Laravel Horizon)",
+            "deployment": "Docker, Octane"
+        },
+        "project_classification": {
+            "repository_type": "monolith",
+            "parts_count": 1,
+            "primary_tech": "Laravel/Vue"
+        },
+        "project_types": [
+            {
+                "part_id": "root",
+                "project_type_id": "web",
+                "display_name": "Laravel Web Application"
+            }
+        ],
+        "existing_documentation": [
+            {
+                "path": "README.md",
+                "type": "readme",
+                "part": "root"
+            },
+            {
+                "path": "docs/PRD.md",
+                "type": "prd",
+                "part": "root"
+            },
+            {
+                "path": "docs/master-plan.md",
+                "type": "architecture",
+                "part": "root"
+            },
+            {
+                "path": "docs/DOCKER_SETUP.md",
+                "type": "setup",
+                "part": "root"
+            },
+            {
+                "path": "docs/DOCUMENTACAO_COMPLETA.md",
+                "type": "full_docs",
+                "part": "root"
+            },
+            {
+                "path": "docs/DOC_TEC_BASE_SPRINT_01.md",
+                "type": "sprint_docs",
+                "part": "root"
+            },
+            {
+                "path": "docs/DOC_TEC_BASE_SPRINT_02.md",
+                "type": "sprint_docs",
+                "part": "root"
+            },
+            {
+                "path": "docs/DOC_TEC_WHATSAPP_IA.md",
+                "type": "whatsapp_docs",
+                "part": "root"
+            },
+            {
+                "path": "docs/ESTRUTURA_APLICACAO.md",
+                "type": "architecture",
+                "part": "root"
+            },
+            {
+                "path": "docs/SPEC.md",
+                "type": "specification",
+                "part": "root"
+            },
+            {
+                "path": "docs/TESTES_E_PROBLEMAS.md",
+                "type": "testing",
+                "part": "root"
+            },
+            {
+                "path": "_bmad-output/project-context.md",
+                "type": "bmad_context",
+                "part": "root"
+            }
+        ]
+    },
+    "outputs_generated": [
+        "project-scan-report.json"
+    ],
+    "resume_instructions": "Starting from step 1"
+}

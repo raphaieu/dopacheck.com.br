@@ -1,40 +1,46 @@
 <template>
-    <div class="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+    <div class="group flex items-center gap-4 p-4 rounded-3xl bg-white/70 backdrop-blur-md border border-white/80 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-0.5 transition-all duration-300">
         <!-- Avatar -->
-        <div class="shrink-0">
+        <div class="shrink-0 relative">
+            <div class="absolute -inset-1 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity blur-[2px]"></div>
             <img :src="participant.user?.profile_photo_url || participant.user?.avatar || '/default-avatar.png'"
                 :alt="participant.user?.name || 'Participante'"
-                class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm">
+                class="relative w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm transition-transform group-hover:scale-105 duration-300">
         </div>
 
         <!-- User Info -->
         <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <h4 class="font-medium text-gray-900 truncate">
-                        {{ participant.user?.name || 'Usuário' }}
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-extrabold text-slate-900 truncate tracking-tight">
+                        {{ participant.user?.display_name || participant.user?.name || 'Usuário' }}
                     </h4>
-                    <div class="flex items-center space-x-2 mt-1">
-                        <span :class="getStatusClasses(participant.status)">
-                            {{ getStatusIcon(participant.status) }} {{ formatStatus(participant.status) }}
+                    <div class="flex items-center gap-2 mt-1">
+                        <span :class="getStatusClasses(participant.status)" class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border">
+                            <Icon :icon="getStatusIconSlug(participant.status)" class="size-2.5" />
+                            {{ formatStatus(participant.status) }}
                         </span>
                     </div>
                 </div>
 
                 <!-- Progress -->
-                <div class="shrink-0 text-right ml-4">
-                    <div class="text-lg font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <div class="shrink-0 text-right">
+                    <div class="text-base font-black bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent leading-none">
                         {{ Math.round(participant.progress_percentage || participant.completion_rate || 0) }}%
                     </div>
-                    <div class="text-xs text-gray-500">Progresso</div>
+                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Progresso</div>
                 </div>
             </div>
 
             <!-- Additional Info -->
-            <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-                <span>Iniciou {{ formatRelativeDate(participant.started_at) }}</span>
-                <span v-if="participant.streak_days" class="text-orange-600 font-medium">
-                    🔥 {{ participant.streak_days }} dias
+            <div class="flex items-center justify-between mt-3 text-[10px] font-bold text-slate-400">
+                <span class="flex items-center gap-1">
+                    <Icon icon="lucide:calendar-days" class="size-3" />
+                    {{ formatRelativeDate(participant.started_at) }}
+                </span>
+                <span v-if="participant.streak_days" class="flex items-center gap-1 text-orange-600">
+                    <Icon icon="lucide:flame" class="size-3 fill-current" />
+                    {{ participant.streak_days }} d
                 </span>
             </div>
         </div>
@@ -42,6 +48,7 @@
 </template>
 
 <script setup>
+import { Icon } from '@iconify/vue'
 import { formatUserChallengeStatus } from '@/utils/userChallengeStatus.js'
 
 // Props
@@ -53,31 +60,32 @@ defineProps({
 })
 
 // Methods
-const getStatusIcon = (status) => {
+const getStatusIconSlug = (status) => {
     const icons = {
-        'active': '🟢',
-        'completed': '✅',
-        'paused': '⏸️',
-        'abandoned': '❌',
-        'expired': '🏁',
+        'active': 'lucide:play-circle',
+        'completed': 'lucide:award',
+        'paused': 'lucide:pause-circle',
+        'abandoned': 'lucide:x-circle',
+        'expired': 'lucide:calendar-x',
     }
-    return icons[status] || '⚪'
+    return icons[status] || 'lucide:circle'
 }
 
 const formatStatus = (status) => formatUserChallengeStatus(status)
 
 const getStatusClasses = (status) => {
     const classes = {
-        'active': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700',
-        'completed': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700',
-        'paused': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700',
-        'abandoned': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700',
-        'expired': 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700'
+        'active': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+        'completed': 'bg-blue-50 text-blue-600 border-blue-100',
+        'paused': 'bg-amber-50 text-amber-600 border-amber-100',
+        'abandoned': 'bg-rose-50 text-rose-600 border-rose-100',
+        'expired': 'bg-slate-50 text-slate-500 border-slate-100'
     }
-    return classes[status] || 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700'
+    return classes[status] || 'bg-slate-50 text-slate-500 border-slate-100'
 }
 
 const formatRelativeDate = (dateString) => {
+    if (!dateString) return ''
     const date = new Date(dateString)
     const now = new Date()
     const diffTime = now.getTime() - date.getTime()
@@ -86,7 +94,7 @@ const formatRelativeDate = (dateString) => {
     if (diffDays === 0) return 'hoje'
     if (diffDays === 1) return 'ontem'
     if (diffDays < 7) return `${diffDays} dias atrás`
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} semanas atrás`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} sem atrás`
 
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }

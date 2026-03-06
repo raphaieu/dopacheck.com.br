@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
     <!-- Modal Backdrop -->
     <Transition
       enter-active-class="transition-opacity duration-300"
@@ -10,7 +11,7 @@
     >
       <div 
         v-if="show && imageUrl" 
-        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[120] flex items-center justify-center p-4 md:p-8"
         @click="handleBackdropClick"
       >
         <!-- Modal Content -->
@@ -24,98 +25,71 @@
         >
           <div 
             v-if="show" 
-            class="relative max-w-4xl max-h-[90vh] w-full"
+            class="relative max-w-5xl w-full h-full flex items-center justify-center select-none"
             @click.stop
           >
-            <!-- Header -->
-            <div class="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/50 to-transparent p-4">
-              <div class="flex items-center justify-between text-white">
-                <h3 v-if="title" class="text-lg font-semibold">{{ title }}</h3>
-                <div class="flex items-center space-x-2">
-                  <!-- Download Button -->
-                  <button
-                    @click="handleDownload"
-                    class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                    title="Baixar imagem"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </button>
-                  
-                  <!-- Close Button -->
-                  <button
-                    @click="handleClose"
-                    class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                    title="Fechar"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-  
+            <!-- Close Button (Top Right) -->
+            <button
+              @click="handleClose"
+              class="cursor-pointer absolute -top-2 -right-2 md:-top-6 md:-right-6 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all active:scale-90 border border-white/10"
+              title="Fechar"
+            >
+              <Icon icon="lucide:x" class="size-6 md:size-8" />
+            </button>
+
             <!-- Image Container -->
-            <div class="relative bg-white rounded-2xl overflow-hidden shadow-2xl">
+            <div class="relative bg-black/40 rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 w-full h-full flex items-center justify-center p-2 backdrop-blur-sm">
               <img 
                 :src="imageUrl" 
                 :alt="title || 'Imagem'"
-                class="w-full h-auto max-h-[80vh] object-contain"
+                class="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
                 @load="handleImageLoad"
                 @error="handleImageError"
               >
               
               <!-- Loading State -->
-              <div v-if="loading" class="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                <div class="flex items-center space-x-3 text-gray-600">
-                  <svg class="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Carregando imagem...</span>
+              <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+                <div class="flex flex-col items-center gap-4 text-white">
+                  <div class="size-12 rounded-full border-4 border-white/10 border-t-blue-500 animate-spin"></div>
+                  <span class="font-bold tracking-tight">Carregando imagem...</span>
                 </div>
               </div>
               
               <!-- Error State -->
-              <div v-if="error" class="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                <div class="text-center text-gray-600">
-                  <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p class="font-medium">Erro ao carregar imagem</p>
-                  <p class="text-sm text-gray-500 mt-1">Verifique sua conexão e tente novamente</p>
+              <div v-if="error" class="absolute inset-0 flex items-center justify-center bg-red-900/20 backdrop-blur-md">
+                <div class="text-center text-white p-8">
+                  <Icon icon="lucide:alert-circle" class="size-16 mx-auto mb-4 text-red-400" />
+                  <p class="text-xl font-black tracking-tight">Erro ao carregar imagem</p>
+                  <p class="text-sm text-white/60 mt-2 font-medium">Verifique sua conexão e tente novamente</p>
                 </div>
               </div>
-            </div>
-  
-            <!-- Footer Info -->
-            <div v-if="metadata" class="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/50 to-transparent p-4">
-              <div class="text-white text-sm space-y-1">
-                <div v-if="metadata.date" class="flex items-center space-x-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span>{{ formatDate(metadata.date) }}</span>
-                </div>
+
+              <!-- Controls Overlay (Bottom) -->
+              <div v-if="!loading && !error" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl">
+                <h3 v-if="title" class="text-sm font-black text-white/90 mr-4 tracking-tight">{{ title }}</h3>
+                <div class="h-4 w-px bg-white/20 mr-2"></div>
                 
-                <div v-if="metadata.source" class="flex items-center space-x-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Enviado via {{ metadata.source === 'whatsapp' ? 'WhatsApp' : 'Web' }}</span>
-                </div>
+                <!-- Download Button -->
+                <button
+                  @click="handleDownload"
+                  class="cursor-pointer p-2 rounded-xl bg-white/10 hover:bg-white text-white hover:text-slate-900 transition-all flex items-center gap-2 group"
+                  title="Baixar imagem"
+                >
+                  <Icon icon="lucide:download" class="size-5" />
+                  <span class="text-xs font-bold uppercase tracking-widest hidden sm:inline-block">Baixar</span>
+                </button>
               </div>
             </div>
           </div>
         </Transition>
       </div>
     </Transition>
-  </template>
-  
-  <script setup>
+  </Teleport>
+</template>
+
+<script setup>
   import { ref, watch } from 'vue'
+  import { Icon } from '@iconify/vue'
   
   // Props
   const props = defineProps({

@@ -496,7 +496,7 @@ class ChallengeController extends Controller
         // Ordenar por progresso (dias completos) - maior primeiro
         $participants = $challenge->userChallenges()
             ->with([
-                'user:id,name,username,profile_photo_path,plan,subscription_ends_at',
+                'user:id,name,nickname,username,profile_photo_path,plan,subscription_ends_at',
                 'challenge.tasks' // Carregar challenge e tasks para calcular progress_percentage
             ])
             ->whereIn('status', ['active', 'completed', 'expired'])

@@ -1,48 +1,47 @@
 <template>
-    <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+    <div class="group flex items-center gap-5 p-4 sm:p-5 rounded-3xl bg-white/70 backdrop-blur-md border border-white/80 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300">
         <!-- Task Number & Icon -->
-        <div class="flex-shrink-0 flex items-center space-x-3">
-            <div
-                class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-sm font-bold text-gray-500 border border-gray-200">
+        <div class="flex-shrink-0 relative">
+            <div class="absolute -top-2 -left-2 w-6 h-6 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black z-10 shadow-lg">
                 {{ index + 1 }}
             </div>
 
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-                :style="`background-color: ${task.color}20; color: ${task.color}`">
-                <span>{{ task.icon || '📝' }}</span>
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform group-hover:scale-110 duration-500 shadow-sm border border-white/50"
+                :style="`background-color: ${task.color}15; color: ${task.color}`">
+                <Icon v-if="task.icon_slug" :icon="task.icon_slug" class="size-8" />
+                <span v-else>{{ task.icon || '📋' }}</span>
             </div>
         </div>
 
         <!-- Task Content -->
         <div class="flex-1 min-w-0">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div class="flex-1">
-                    <h4 class="font-semibold text-gray-900 mb-1">{{ task.name }}</h4>
-                    <p v-if="task.description" class="text-sm text-gray-600 mb-2">{{ task.description }}</p>
+                    <h4 class="text-base font-extrabold text-slate-900 mb-1 leading-tight">{{ task.name }}</h4>
+                    <p v-if="task.description" class="text-sm text-slate-500 mb-3 leading-snug line-clamp-2">{{ task.description }}</p>
 
                     <!-- Hashtag & Required -->
-                    <div class="flex items-center space-x-2">
-                        <span
-                            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-100/50">
                             #{{ task.hashtag }}
                         </span>
 
                         <span v-if="task.is_required"
-                            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">
+                            class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-100/50">
                             Obrigatória
                         </span>
                         <span v-else
-                            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                            class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-500">
                             Opcional
                         </span>
                     </div>
                 </div>
 
                 <!-- Example Preview -->
-                <div v-if="isParticipating" class="flex-shrink-0 mt-3 sm:mt-0 sm:ml-4">
-                    <div class="text-left sm:text-right">
-                        <div class="text-sm text-gray-500 mb-1">Exemplo:</div>
-                        <div class="text-xs text-gray-600 bg-white px-3 py-2 rounded-lg border border-gray-200 font-mono break-words">
+                <div v-if="isParticipating" class="flex-shrink-0 lg:block hidden">
+                    <div class="text-right">
+                        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">no WhatsApp</div>
+                        <div class="text-[11px] font-bold text-slate-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 font-mono italic">
                             Foto + #{{ task.hashtag }}
                         </div>
                     </div>
@@ -53,6 +52,8 @@
 </template>
 
 <script setup>
+import { Icon } from '@iconify/vue'
+
 // Props
 defineProps({
     task: {
@@ -68,4 +69,5 @@ defineProps({
         default: false
     }
 })
+
 </script>

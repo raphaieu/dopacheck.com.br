@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
     <!-- Modal Backdrop -->
     <Transition
       enter-active-class="transition-opacity duration-300"
@@ -8,7 +9,7 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="show" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div v-if="show" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
         <!-- Modal Content -->
         <Transition
           enter-active-class="transition-all duration-300"
@@ -18,39 +19,38 @@
           leave-from-class="opacity-100 scale-100"
           leave-to-class="opacity-0 scale-95"
         >
-          <div v-if="show" class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div v-if="show" class="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative border border-white/50 animate-in zoom-in-95 duration-300">
             <!-- Header -->
-            <div class="px-6 py-4 border-b border-gray-200">
+            <div class="px-8 py-4 border-b border-slate-100/50">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-gray-900">Check-in</h3>
+                <h3 class="text-2xl font-black text-slate-900 tracking-tight">Check-in</h3>
                 <button
                   @click="handleClose"
-                  class="text-gray-400 hover:text-gray-600 transition-colors"
+                  class="cursor-pointer text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all"
                 >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <Icon icon="lucide:x" class="size-6" />
                 </button>
               </div>
             </div>
   
             <!-- Form -->
-            <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
+            <form @submit.prevent="handleSubmit" class="p-4 space-y-8">
               <!-- Task Info -->
-              <div class="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center" 
-                     :style="`background-color: ${task.color}20; color: ${task.color}`">
-                  <span class="text-lg">{{ task.icon || '📝' }}</span>
+              <div class="flex items-center gap-4 p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-white/50" 
+                     :style="`background-color: ${task.color}15; color: ${task.color}`">
+                  <Icon v-if="task.icon_slug" :icon="task.icon_slug" class="size-8" />
+                  <span v-else>{{ task.icon || '📋' }}</span>
                 </div>
                 <div class="flex-1">
-                  <h4 class="font-semibold text-gray-900">{{ task.name }}</h4>
-                  <p class="text-sm text-gray-600">#{{ task.hashtag }}</p>
+                  <h4 class="text-xl font-black text-slate-900 tracking-tight leading-none">{{ task.name }}</h4>
+                  <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">#{{ task.hashtag }}</p>
                 </div>
               </div>
   
               <!-- Image Upload -->
               <div class="space-y-3">
-                <label class="block text-sm font-medium text-gray-700">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                   Foto (opcional)
                 </label>
                 
@@ -61,10 +61,10 @@
                   @dragenter="handleDragEnter"
                   @dragleave="handleDragLeave"
                   :class="[
-                    'border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer',
+                    'border-2 border-dashed rounded-3xl p-8 text-center transition-all cursor-pointer group',
                     isDragging 
-                      ? 'border-blue-400 bg-blue-50' 
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-blue-500 bg-blue-50/50' 
+                      : 'border-slate-200 hover:border-blue-400 hover:bg-blue-50/20'
                   ]"
                   @click="$refs.fileInput.click()"
                 >
@@ -77,85 +77,100 @@
                     :disabled="submitting"
                   >
                   
-                  <div v-if="!previewUrl" class="space-y-2">
-                    <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <div class="text-sm text-gray-600">
-                      <span class="font-medium text-blue-600">Clique para selecionar</span>
-                      ou arraste uma imagem aqui
+                  <div v-if="!previewUrl" class="space-y-3">
+                    <div class="size-16 mx-auto bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                      <Icon icon="lucide:camera" class="size-8" />
                     </div>
-                    <p class="text-xs text-gray-500">PNG, JPG até 5MB</p>
+                    <div class="text-sm">
+                      <span class="font-black text-blue-600">Clique para selecionar</span>
+                      <p class="text-slate-500 font-medium mt-1">ou arraste uma imagem aqui</p>
+                    </div>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">PNG, JPG até 5MB</p>
                   </div>
                   
                   <!-- Preview -->
-                  <div v-else class="relative">
+                  <div v-else class="relative group/preview">
                     <img 
                       :src="previewUrl" 
                       alt="Preview" 
-                      class="w-full h-48 object-cover rounded-lg"
+                      class="w-full h-56 object-cover rounded-2xl shadow-xl border border-white/50"
                     >
+                    <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity rounded-2xl flex items-center justify-center pointer-events-none">
+                      <Icon icon="lucide:refresh-cw" class="size-8 text-white drop-shadow-lg" />
+                    </div>
                     <button
                       type="button"
                       @click.stop="removeImage"
-                      class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                      class="absolute top-4 right-4 bg-red-500 text-white rounded-full size-8 flex items-center justify-center hover:bg-red-600 shadow-lg transition-all active:scale-95"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      <Icon icon="lucide:x" class="size-5" />
                     </button>
                   </div>
                 </div>
                 
                 <!-- File size error -->
-                <p v-if="fileSizeError" class="text-sm text-red-600">
+                <p v-if="fileSizeError" class="text-sm font-bold text-red-500 flex items-center gap-2 mt-2 px-1">
+                  <Icon icon="lucide:alert-circle" class="size-4" />
                   {{ fileSizeError }}
                 </p>
               </div>
   
               <!-- Message -->
-              <div class="space-y-2">
-                <label for="message" class="block text-sm font-medium text-gray-700">
+              <div class="space-y-3">
+                <label for="message" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
                   Mensagem (opcional)
                 </label>
-                <textarea
-                  id="message"
-                  v-model="form.message"
-                  rows="3"
-                  :disabled="submitting"
-                  class="w-full px-3 py-2 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-                  placeholder="Conte como foi..."
-                />
+                <div class="relative group">
+                  <div class="absolute top-4 left-4 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                    <Icon icon="lucide:message-square" class="size-5" />
+                  </div>
+                  <textarea
+                    id="message"
+                    v-model="form.message"
+                    rows="3"
+                    :disabled="submitting"
+                    class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 text-slate-900 rounded-3xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 disabled:opacity-50 transition-all font-medium placeholder:text-slate-400"
+                    placeholder="Conte como foi essa conquista..."
+                  />
+                </div>
               </div>
   
               <!-- AI Analysis (PRO) -->
-              <div v-if="user.is_pro && selectedFile" class="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                <div class="flex items-center space-x-2 mb-2">
-                  <span class="text-purple-600">🤖</span>
-                  <span class="text-sm font-medium text-purple-800">Análise com IA</span>
-                  <span class="px-2 py-0.5 bg-purple-200 text-purple-700 rounded text-xs">PRO</span>
+              <div v-if="user.is_pro && selectedFile" class="p-5 bg-violet-600/5 rounded-3xl border border-violet-600/10 relative overflow-hidden group/ai">
+                <div class="absolute -top-12 -right-12 size-32 bg-violet-600/10 rounded-full blur-2xl group-hover/ai:bg-violet-600/20 transition-colors duration-500"></div>
+                <div class="relative z-10">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-violet-100 text-violet-700 text-[10px] font-black uppercase tracking-wider">
+                      <Icon icon="lucide:bot" class="size-3.5" />
+                      Análise IA
+                    </div>
+                  </div>
+                  <label class="flex items-start gap-3 cursor-pointer select-none">
+                    <div class="relative flex items-center mt-1">
+                      <input
+                        type="checkbox"
+                        v-model="form.use_ai_analysis"
+                        disabled="disabled"
+                        class="peer size-5 opacity-0 absolute cursor-pointer"
+                      >
+                      <div class="size-5 border-2 border-violet-200 rounded-lg group-hover/ai:border-violet-400 transition-all peer-checked:bg-violet-600 peer-checked:border-violet-600 flex items-center justify-center">
+                        <Icon icon="lucide:check" class="size-3.5 text-white scale-0 peer-checked:scale-100 transition-transform stroke-[4]" />
+                      </div>
+                    </div>
+                    <span class="text-sm text-slate-700 font-bold leading-relaxed">
+                      Extrair métricas automáticas da imagem para meus relatórios detalhados
+                    </span>
+                  </label>
                 </div>
-                <label class="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    v-model="form.use_ai_analysis"
-                    :disabled="submitting"
-                    class="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                  >
-                  <span class="text-sm text-purple-700">
-                    Analisar imagem automaticamente com IA
-                  </span>
-                </label>
               </div>
   
               <!-- Actions -->
-              <div class="flex space-x-3 pt-4">
+              <div class="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   type="button"
                   @click="handleClose"
                   :disabled="submitting"
-                  class="cursor-pointer flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                  class="cursor-pointer flex-1 px-8 py-5 border border-slate-200 text-slate-500 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 transition-all active:scale-95"
                 >
                   Cancelar
                 </button>
@@ -163,12 +178,10 @@
                 <button
                   type="submit"
                   :disabled="submitting"
-                  class="cursor-pointer flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
+                  class="cursor-pointer flex-1 bg-slate-900 text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-900/10 active:scale-95"
                 >
-                  <svg v-if="submitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <Icon v-if="submitting" icon="lucide:loader-2" class="size-5 animate-spin" />
+                  <Icon v-else icon="lucide:zap" class="size-5 text-blue-400" />
                   <span>{{ submitting ? 'Enviando...' : 'Fazer Check-in' }}</span>
                 </button>
               </div>
@@ -177,12 +190,14 @@
         </Transition>
       </div>
     </Transition>
-  </template>
-  
-  <script setup>
+  </Teleport>
+</template>
+
+<script setup>
   import { reactive, ref, computed } from 'vue'
   import { usePage } from '@inertiajs/vue3'
   import { csrfFetch } from '@/utils/csrf.js'
+  import { Icon } from '@iconify/vue'
   
   // Props
   const props = defineProps({
@@ -221,7 +236,7 @@
   // Form
   const form = reactive({
     message: '',
-    use_ai_analysis: true
+    use_ai_analysis: false
   })
   
   // Methods

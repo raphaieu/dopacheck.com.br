@@ -1,176 +1,182 @@
 <template>
-    <div class="min-h-screen bg-gray-50">
-        <!-- Header -->
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-12 overflow-x-clip pt-24">
+        <!-- Header Wrapper -->
         <DopaHeaderWrapper 
-            :subtitle="`${challenge.title} - Participantes`" 
-            max-width="7xl" 
+            max-width="6xl" 
             :show-back-button="true" 
             back-link="/challenges" 
         />
 
+        <!-- Hero Section -->
+        <div class="relative overflow-hidden pt-4 pb-12">
+            <div class="absolute -top-24 -right-24 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"></div>
+            
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div class="max-w-2xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-bold tracking-wider uppercase mb-4 shadow-sm">
+                            <Icon icon="lucide:users" class="size-3.5" />
+                            Comunidade
+                        </div>
+                        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                            Participantes do <br>
+                            <span class="bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">
+                                {{ challenge.title }}
+                            </span>
+                        </h1>
+                        <p class="mt-4 text-lg text-slate-600 leading-relaxed max-w-xl">
+                            Acompanhe a evolução de quem aceitou o desafio e está construindo consistência dia após dia.
+                        </p>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="bg-white/70 backdrop-blur-md rounded-2xl p-5 shadow-xl shadow-blue-500/5 border border-white/80 min-w-[140px] text-center transform transition hover:scale-105 duration-300">
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Participantes</p>
+                            <p class="text-3xl font-black text-slate-900">{{ stats.total_participants }}</p>
+                        </div>
+                        <div class="bg-white/70 backdrop-blur-md rounded-2xl p-5 shadow-xl shadow-purple-500/5 border border-white/80 min-w-[140px] text-center transform transition hover:scale-105 duration-300">
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Concluídos</p>
+                            <p class="text-3xl font-black text-violet-600">{{ stats.completed_participants }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid lg:grid-cols-3 gap-8">
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-12 gap-8">
                 <!-- Participants List -->
-                <div class="lg:col-span-2">
-                    <div class="bg-white rounded-2xl shadow-lg border border-gray-200">
-                        <div class="p-6 border-b border-gray-200 bg-linear-to-r from-white to-gray-50">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div>
-                                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
-                                        <span class="mr-2">👥</span>
-                                        Todos os Participantes
-                                    </h2>
-                                    <p class="text-gray-600 mt-1 text-sm sm:text-base font-medium">Veja quem está participando deste desafio</p>
+                <div class="lg:col-span-8">
+                    <div v-if="participants.data.length === 0" 
+                        class="bg-white/40 backdrop-blur-sm rounded-3xl border border-white/80 p-12 text-center shadow-xl shadow-slate-200/50">
+                        <div class="w-20 h-20 mx-auto mb-6 bg-slate-100 rounded-2xl flex items-center justify-center text-3xl">
+                            🎯
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-2">Ainda sem participantes</h3>
+                        <p class="text-slate-600">Seja o primeiro a começar este desafio e inspire outros!</p>
+                        <Link href="/challenges" class="mt-8 inline-flex items-center text-violet-600 font-bold hover:gap-2 transition-all">
+                            Explorar mais desafios <Icon icon="lucide:arrow-right" class="ml-1 size-5" />
+                        </Link>
+                    </div>
+
+                    <div v-else class="space-y-4">
+                        <div v-for="participant in participants.data" :key="participant.id" 
+                            class="group relative bg-white/70 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/80 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-4 min-w-0">
+                                    <div class="relative shrink-0">
+                                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-400 to-violet-400 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                                        <img :src="participant.user.profile_photo_url || '/default-avatar.png'" 
+                                            :alt="participant.user.display_name"
+                                            class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-white shadow-sm object-cover">
+                                        <div v-if="participant.status === 'active'" 
+                                            class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-sm"></div>
+                                        <div v-else-if="participant.status === 'completed'" 
+                                            class="absolute bottom-0 right-0 w-4 h-4 bg-violet-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
+                                            <Icon icon="lucide:check" class="size-2.5 text-white stroke-[4px]" />
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="min-w-0">
+                                        <h3 class="font-bold text-slate-900 text-base sm:text-lg truncate tracking-tight group-hover:text-blue-600 transition-colors">
+                                            {{ participant.user.display_name }}
+                                        </h3>
+                                        <div class="flex items-center gap-2 text-xs text-slate-500">
+                                            <span class="font-medium">@{{ participant.user.username }}</span>
+                                            <span v-if="participant.streak_days" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-50 text-orange-600 font-bold">
+                                                <Icon icon="lucide:flame" class="size-3" /> {{ participant.streak_days }}
+                                            </span>
+                                        </div>
+                                        <div class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                            Dia {{ parseInt(participant.current_day) || 1 }} de {{ challenge.duration_days }}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="text-right bg-linear-to-br from-blue-50 to-purple-50 rounded-xl px-4 py-3 border border-blue-200 shadow-sm self-start sm:self-auto">
-                                    <div class="text-xl sm:text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{{ stats.total_participants }}</div>
-                                    <div class="text-xs text-gray-600 font-medium">Participantes</div>
+
+                                <div class="shrink-0 flex flex-col items-end gap-1">
+                                    <div class="text-2xl sm:text-3xl font-black tabular-nums text-slate-900">
+                                        {{ Math.round(parseFloat(participant.progress_percentage || 0)) }}<span class="text-sm font-bold text-slate-400">%</span>
+                                    </div>
+                                    <div class="w-16 sm:w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-blue-500 to-violet-600 transition-all duration-1000" 
+                                            :style="{ width: Math.min(100, parseFloat(participant.progress_percentage || 0)) + '%' }"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="p-6">
-                            <div v-if="participants.data.length === 0" class="text-center py-12">
-                                <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                                    </svg>
-                                </div>
-                                <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum participante ainda</h3>
-                                <p class="text-gray-500">Seja o primeiro a participar deste desafio!</p>
-                            </div>
-
-                            <div v-else class="space-y-3">
-                                <div v-for="participant in participants.data" :key="participant.id" 
-                                    class="flex items-center justify-between p-5 bg-linear-to-r from-white to-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
-                                    <div class="flex items-center space-x-4 flex-1">
-                                        <div class="relative">
-                                            <img :src="participant.user.profile_photo_url || '/default-avatar.png'" 
-                                                :alt="participant.user.name"
-                                                class="w-14 h-14 rounded-full border-2 border-white shadow-md object-cover">
-                                            <div v-if="participant.status === 'active'" 
-                                                class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                                            <div v-else-if="participant.status === 'completed'" 
-                                                class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></div>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <h3 class="font-semibold text-gray-900 text-lg">{{ participant.user.name }}</h3>
-                                            <p class="text-sm text-gray-500">@{{ participant.user.username }}</p>
-                                            <div class="flex items-center space-x-3 mt-2">
-                                                <span class="text-xs text-gray-600">
-                                                    {{ parseInt(participant.current_day) || 1 }} / {{ challenge.duration_days }} dias
-                                                </span>
-                                                <span v-if="participant.streak_days" class="text-xs text-orange-600 font-medium flex items-center">
-                                                    🔥 {{ participant.streak_days }} dias
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center space-x-4">
-                                        <div class="text-right">
-                                            <div class="text-2xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                                {{ Math.round(parseFloat(participant.progress_percentage || 0)) }}%
-                                            </div>
-                                            <div class="text-xs text-gray-500 font-medium">Progresso</div>
-                                            <div class="mt-2 w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                                <div class="h-full bg-linear-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300" 
-                                                    :style="{ width: Math.min(100, parseFloat(participant.progress_percentage || 0)) + '%' }"></div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="flex items-center">
-                                            <span 
-                                                :class="participant.status === 'completed'
-                                                    ? 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-linear-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200'
-                                                    : participant.status === 'active'
-                                                        ? 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-linear-to-r from-blue-100 to-cyan-100 text-blue-800 border border-blue-200'
-                                                        : participant.status === 'paused'
-                                                            ? 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200'
-                                                            : 'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200'
-                                                "
-                                            >
-                                                {{ getParticipantStatusIcon(participant.status) }} {{ getParticipantStatusLabel(participant.status) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Pagination -->
-                            <div v-if="participants.data.length > 0" class="mt-8">
-                                <Pagination :links="participants.links" :current-page="participants.current_page"
-                                    :last-page="participants.last_page" @page-changed="handlePageChange" />
-                            </div>
+                        <!-- Pagination -->
+                        <div v-if="participants.data.length > 0" class="pt-6">
+                            <Pagination :links="participants.links" :current-page="participants.current_page"
+                                :last-page="participants.last_page" @page-changed="handlePageChange" />
                         </div>
                     </div>
                 </div>
 
                 <!-- Sidebar -->
-                <div class="lg:col-span-1 space-y-6">
-                    <!-- Challenge Info -->
-                    <div class="bg-linear-to-br from-white to-blue-50 rounded-2xl p-6 shadow-lg border border-blue-100">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                            <span class="mr-2 text-xl">{{ getCategoryIcon(challenge.category) }}</span>
-                            Sobre o Desafio
-                        </h3>
+                <div class="lg:col-span-4 space-y-6">
+                    <!-- About Challenge -->
+                    <div class="bg-white/70 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-white/80 shadow-xl shadow-slate-200/50 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-5">
+                            <Icon :icon="getCategoryIconSlug(challenge.category)" class="size-32" />
+                        </div>
                         
-                        <div class="space-y-4">
-                            <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
-                                <h4 class="font-semibold text-gray-900 mb-2">{{ challenge.title }}</h4>
-                                <p class="text-sm text-gray-600 leading-relaxed">{{ challenge.description }}</p>
-                            </div>
+                        <div class="relative z-10">
+                            <h3 class="text-xl font-extrabold text-slate-900 mb-6 flex items-center gap-3">
+                                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                                    <Icon icon="lucide:info" class="size-5" />
+                                </span>
+                                Detalhes
+                            </h3>
                             
-                            <div class="grid grid-cols-2 gap-4 pt-4">
-                                <div class="text-center bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
-                                    <div class="text-3xl font-bold bg-linear-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{{ stats.active_participants }}</div>
-                                    <div class="text-xs font-medium text-gray-600 mt-1">Ativos</div>
+                            <div class="space-y-6">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Sobre o desafio</p>
+                                    <p class="text-slate-600 leading-relaxed">{{ challenge.description }}</p>
                                 </div>
-                                <div class="text-center bg-linear-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                                    <div class="text-3xl font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{{ stats.completed_participants }}</div>
-                                    <div class="text-xs font-medium text-gray-600 mt-1">Concluídos</div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dificuldade</p>
+                                        <p :class="getDifficultyTextClasses(challenge.difficulty)" class="text-sm font-bold truncate">
+                                            {{ formatDifficulty(challenge.difficulty) }}
+                                        </p>
+                                    </div>
+                                    <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Duração</p>
+                                        <p class="text-sm font-bold text-slate-900">{{ challenge.duration_days }} dias</p>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div class="pt-4 border-t border-blue-200">
-                                <div class="flex justify-between items-center text-sm mb-2">
-                                    <span class="text-gray-700 font-medium">Taxa de conclusão</span>
-                                    <span class="font-bold text-gray-900">{{ stats.completion_rate }}%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
-                                    <div class="bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500 shadow-sm" 
-                                        :style="{ width: Math.min(100, stats.completion_rate) + '%' }"></div>
+
+                                <div class="pt-6 border-t border-slate-100">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <span class="text-sm font-bold text-slate-900">Taxa de conclusão</span>
+                                        <span class="text-sm font-black text-violet-600">{{ stats.completion_rate }}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                        <div class="bg-gradient-to-r from-blue-500 via-violet-500 to-purple-500 h-full rounded-full transition-all duration-1000" 
+                                            :style="{ width: Math.min(100, stats.completion_rate) + '%' }"></div>
+                                    </div>
+                                    <p class="mt-3 text-[11px] text-slate-500 leading-relaxed font-medium">
+                                        Baseado no desempenho histórico de todos os participantes que já finalizaram.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Challenge Details -->
-                    <div class="bg-linear-to-br from-white to-purple-50 rounded-2xl p-6 shadow-lg border border-purple-100">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                            <span class="mr-2">📋</span>
-                            Detalhes
-                        </h3>
-
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-purple-100">
-                                <span class="text-gray-600 font-medium">Duração</span>
-                                <span class="text-gray-900 font-bold">{{ challenge.duration_days }} dias</span>
+                    <!-- Creator info -->
+                    <div class="bg-slate-900 rounded-3xl p-6 shadow-2xl shadow-slate-900/20 relative overflow-hidden">
+                        <div class="absolute -top-8 -left-8 w-24 h-24 bg-violet-600/20 rounded-full blur-2xl"></div>
+                        <div class="relative z-10 flex items-center gap-4">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white">
+                                <Icon icon="lucide:user-plus" class="size-6" />
                             </div>
-                            <div class="flex justify-between items-center bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-purple-100">
-                                <span class="text-gray-600 font-medium">Dificuldade</span>
-                                <span :class="getDifficultyTextClasses(challenge.difficulty)" class="font-bold">
-                                    {{ formatDifficulty(challenge.difficulty) }}
-                                </span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-purple-100">
-                                <span class="text-gray-600 font-medium">Categoria</span>
-                                <span class="text-gray-900 font-bold">{{ formatCategory(challenge.category) }}</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-purple-100">
-                                <span class="text-gray-600 font-medium">Criado por</span>
-                                <span class="text-gray-900 font-bold">{{ challenge.creator?.name || 'Anônimo' }}</span>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Criado por</p>
+                                <p class="font-bold text-white text-lg">{{ challenge.creator?.name || 'Administrador' }}</p>
                             </div>
                         </div>
                     </div>
@@ -186,7 +192,7 @@ import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import Pagination from '@/components/Pagination.vue'
 import { computed } from 'vue'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
-import { formatUserChallengeStatus } from '@/utils/userChallengeStatus.js'
+import { Icon } from '@iconify/vue'
 
 // Props
 const props = defineProps({
@@ -208,67 +214,48 @@ useSeoMetaTags({
     title: computed(() => props.challenge?.title ? `Participantes - ${props.challenge.title}` : 'Participantes'),
 })
 
-// Helper methods
-const getCategoryIcon = (category) => {
+// Avatar initials fallback (like hero mock in Welcome.vue)
+const getInitials = (name) => {
+    return name
+        ?.split(' ')
+        .map(n => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase() || 'U'
+}
+
+// Icon slugs mapping
+const getCategoryIconSlug = (category) => {
     const icons = {
-        'fitness': '💪',
-        'mindfulness': '🧘',
-        'productivity': '⚡',
-        'learning': '📚',
-        'health': '🏥',
-        'creativity': '🎨',
-        'social': '👥',
-        'lifestyle': '🌟'
+        'fitness': 'lucide:dumbbell',
+        'mindfulness': 'lucide:brain',
+        'productivity': 'lucide:zap',
+        'learning': 'lucide:book-open',
+        'health': 'lucide:heart-pulse',
+        'creativity': 'lucide:palette',
+        'social': 'lucide:users',
+        'lifestyle': 'lucide:sparkles'
     }
-    return icons[category] || '🎯'
-}
-
-const getParticipantStatusLabel = (status) => formatUserChallengeStatus(status)
-
-const getParticipantStatusIcon = (status) => {
-    const icons = {
-        active: '🔄',
-        completed: '✅',
-        paused: '⏸️',
-        abandoned: '❌',
-        expired: '🏁',
-    }
-    return icons[status] || '⚪'
-}
-
-const formatCategory = (category) => {
-    const categoryMap = {
-        'fitness': '💪 Fitness',
-        'mindfulness': '🧘 Mindfulness',
-        'productivity': '⚡ Produtividade',
-        'learning': '📚 Aprendizado',
-        'health': '🏥 Saúde',
-        'creativity': '🎨 Criatividade',
-        'social': '👥 Social',
-        'lifestyle': '🌟 Estilo de Vida'
-    }
-    return categoryMap[category] || category
-}
-
-
-const getDifficultyTextClasses = (difficulty) => {
-    const classes = {
-        'beginner': 'text-green-600 font-medium',
-        'intermediate': 'text-yellow-600 font-medium',
-        'advanced': 'text-red-600 font-medium'
-    }
-    return classes[difficulty] || 'text-gray-600 font-medium'
+    return icons[category] || 'lucide:target'
 }
 
 const formatDifficulty = (difficulty) => {
     const difficultyMap = {
-        'beginner': '🟢 Iniciante',
-        'intermediate': '🟡 Intermediário',
-        'advanced': '🔴 Avançado'
+        'beginner': 'Iniciante',
+        'intermediate': 'Intermediário',
+        'advanced': 'Avançado'
     }
     return difficultyMap[difficulty] || difficulty
 }
 
+const getDifficultyTextClasses = (difficulty) => {
+    const classes = {
+        'beginner': 'text-emerald-600',
+        'intermediate': 'text-amber-600',
+        'advanced': 'text-rose-600'
+    }
+    return classes[difficulty] || 'text-slate-600'
+}
 
 const handlePageChange = (page) => {
     router.get(route('challenges.participants', { challenge: props.challenge.id }), { page }, {
@@ -276,4 +263,24 @@ const handlePageChange = (page) => {
         preserveScroll: true
     })
 }
-</script> 
+</script>
+
+<style scoped>
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+</style>
+ 

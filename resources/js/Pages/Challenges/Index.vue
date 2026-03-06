@@ -1,192 +1,199 @@
 <template>
-    <div class="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
+    <div class="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 relative overflow-x-clip pt-28">
+        <!-- Decorative blur elements -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-blue-400/5 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 -left-24 w-96 h-96 bg-purple-400/5 rounded-full blur-3xl"></div>
+        
         <!-- Header -->
-        <DopaHeaderWrapper subtitle="Desafios" max-width="7xl" />
+        <DopaHeaderWrapper subtitle="Explorar" max-width="7xl" />
 
-        <main class="max-w-7xl mx-auto px-4 pt-8">
-            <!-- Create Challenge Button -->
-            <div v-if="user" class="mb-6 flex justify-end">
-                <Link href="/challenges/create"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>Criar Desafio</span>
-                </Link>
-            </div>
-            <!-- Hero Section - Featured Challenges -->
-            <section v-if="featuredChallenges.length > 0" class="mb-12 hidden">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Desafios em Destaque</h2>
-                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Desafios populares escolhidos pela nossa comunidade para transformar sua rotina
+        <main class="max-w-7xl mx-auto px-4 pb-24 relative z-10">
+            <!-- Hero Header -->
+            <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div class="max-w-2xl">
+                    <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-4">
+                        Desafios da Comunidade
+                    </h2>
+                    <p class="text-base sm:text-lg text-slate-600 font-medium leading-relaxed">
+                        Encontre o desafio perfeito para transformar sua rotina e junte-se a milhares de pessoas em busca de progresso constante.
                     </p>
                 </div>
-
-                <div class="grid md:grid-cols-3 gap-6">
-                    <FeaturedChallengeCard v-for="challenge in featuredChallenges" :key="`featured-${challenge.id}`"
-                        :challenge="challenge" @view="handleViewChallenge" @join="handleJoinChallenge" />
+                
+                <div v-if="user" class="shrink-0">
+                    <Link href="/challenges/create"
+                        class="group bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-slate-900/10 flex items-center gap-3">
+                        <Icon icon="lucide:plus" class="size-5 group-hover:rotate-90 transition-transform duration-300" />
+                        <span>Criar Desafio</span>
+                    </Link>
                 </div>
-            </section>
+            </div>
 
             <!-- Filters & Search -->
-            <section class="mb-8">
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <section class="mb-12">
+                <div class="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-8 shadow-xl shadow-slate-200/50 border border-white/80">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                         <!-- Search -->
-                        <div class="flex-1 max-w-md">
-                            <div class="relative">
-                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                <input v-model="searchQuery" type="text" placeholder="Buscar desafios..."
-                                    class="dopa-input w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
+                        <div class="flex-1 max-w-full lg:max-w-md">
+                            <div class="relative group">
+                                <Icon icon="lucide:search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5 group-focus-within:text-blue-600 transition-colors" />
+                                <input v-model="searchQuery" type="text" placeholder="Buscar por título ou hashtag..."
+                                    class="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-900 placeholder-slate-400"
                                     @input="handleSearch">
                             </div>
                         </div>
 
                         <!-- Filters -->
-                        <div class="flex flex-wrap gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
                             <!-- Category Filter -->
-                            <select v-model="selectedCategory" @change="handleFilter"
-                                class="dopa-select px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900">
-                                <option value="" class="text-gray-500">Todas as categorias</option>
-                                <option v-for="category in categories" :key="category" :value="category"
-                                    class="text-gray-900">
-                                    {{ formatCategory(category) }}
-                                </option>
-                            </select>
+                            <div class="relative flex-1 sm:flex-initial min-w-[160px]">
+                                <Icon icon="lucide:layout-grid" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                                <select v-model="selectedCategory" @change="handleFilter"
+                                    class="w-full pl-10 pr-10 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-700 text-sm appearance-none cursor-pointer">
+                                    <option value="">Categorias</option>
+                                    <option v-for="category in categories" :key="category" :value="category">
+                                        {{ formatCategoryLabel(category) }}
+                                    </option>
+                                </select>
+                                <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                            </div>
 
                             <!-- Difficulty Filter -->
-                            <select v-model="selectedDifficulty" @change="handleFilter"
-                                class="dopa-select px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900">
-                                <option value="" class="text-gray-500">Todas as dificuldades</option>
-                                <option value="beginner" class="text-gray-900">🟢 Iniciante</option>
-                                <option value="intermediate" class="text-gray-900">🟡 Intermediário</option>
-                                <option value="advanced" class="text-gray-900">🔴 Avançado</option>
-                            </select>
+                            <div class="relative flex-1 sm:flex-initial min-w-[160px]">
+                                <Icon icon="lucide:bar-chart" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                                <select v-model="selectedDifficulty" @change="handleFilter"
+                                    class="w-full pl-10 pr-10 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-700 text-sm appearance-none cursor-pointer">
+                                    <option value="">Dificuldade</option>
+                                    <option value="beginner">Iniciante</option>
+                                    <option value="intermediate">Intermediário</option>
+                                    <option value="advanced">Avançado</option>
+                                </select>
+                                <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                            </div>
 
                             <!-- Sort -->
-                            <select v-model="selectedSort" @change="handleFilter"
-                                class="dopa-select px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900">
-                                <option value="popular" class="text-gray-900">Mais populares</option>
-                                <option value="newest" class="text-gray-900">Mais recentes</option>
-                                <option value="featured" class="text-gray-900">Em destaque</option>
-                            </select>
-
-                            <!-- Show Private Challenges -->
-                            <label v-if="user" class="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 cursor-pointer transition-colors">
-                                <div class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors" 
-                                     :class="showPrivateChallenges ? 'bg-blue-600' : 'bg-gray-200'">
-                                    <input v-model="showPrivateChallenges" type="checkbox" @change="handleFilter"
-                                        class="sr-only">
-                                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                                          :class="showPrivateChallenges ? 'translate-x-6' : 'translate-x-1'"></span>
-                                </div>
-                                <span class="text-sm text-gray-700 font-medium">Incluir Privados</span>
-                            </label>
+                            <div class="relative flex-1 sm:flex-initial min-w-[160px]">
+                                <Icon icon="lucide:arrow-up-down" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                                <select v-model="selectedSort" @change="handleFilter"
+                                    class="w-full pl-10 pr-10 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-700 text-sm appearance-none cursor-pointer">
+                                    <option value="newest">Mais recentes</option>
+                                    <option value="popular">Mais populares</option>
+                                    <option value="featured">Destaques</option>
+                                </select>
+                                <Icon icon="lucide:chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 size-4 pointer-events-none" />
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Active Filters -->
-                    <div v-if="hasActiveFilters" class="mt-4 flex flex-wrap gap-2">
-                        <span class="text-sm text-gray-600">Filtros ativos:</span>
+                    <!-- Toggle Private & Active Filters -->
+                    <div class="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-6 border-t border-slate-100">
+                        <div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-3">
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Filtrado por:</span>
 
-                        <button v-if="selectedCategory" @click="clearFilter('category')"
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">
-                            {{ formatCategory(selectedCategory) }}
-                            <svg class="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                            <button v-if="selectedCategory" @click="clearFilter('category')"
+                                class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-blue-50 text-blue-600 border border-blue-100/50 hover:bg-blue-100 transition-colors gap-2 cursor-pointer">
+                                <Icon :icon="getCategoryIconSlug(selectedCategory)" class="size-3.5" />
+                                {{ formatCategory(selectedCategory) }}
+                                <Icon icon="lucide:x" class="size-3" />
+                            </button>
 
-                        <button v-if="selectedDifficulty" @click="clearFilter('difficulty')"
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors">
-                            {{ formatDifficulty(selectedDifficulty) }}
-                            <svg class="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                            <button v-if="selectedDifficulty" @click="clearFilter('difficulty')"
+                                class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-100/50 hover:bg-emerald-100 transition-colors gap-2 cursor-pointer">
+                                <Icon icon="lucide:trello" class="size-3.5" />
+                                {{ formatDifficulty(selectedDifficulty) }}
+                                <Icon icon="lucide:x" class="size-3" />
+                            </button>
 
-                        <button v-if="user && showPrivateChallenges" @click="clearFilter('private')"
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors">
-                            🔒 Desafio Privado
-                            <svg class="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                            <button v-if="user && showPrivateChallenges" @click="clearFilter('private')"
+                                class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-purple-50 text-purple-600 border border-purple-100/50 hover:bg-purple-100 transition-colors gap-2 cursor-pointer">
+                                <Icon icon="lucide:lock" class="size-3.5" />
+                                Privados
+                                <Icon icon="lucide:x" class="size-3" />
+                            </button>
 
-                        <button @click="clearAllFilters" class="text-xs text-gray-500 hover:text-gray-700 underline">
-                            Limpar todos
-                        </button>
+                            <button v-if="searchQuery" @click="clearFilter('search')"
+                                class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-black bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 transition-colors gap-2 cursor-pointer">
+                                "{{ searchQuery }}"
+                                <Icon icon="lucide:x" class="size-3" />
+                            </button>
+
+                            <button @click="clearAllFilters" class="text-xs font-bold text-slate-400 hover:text-slate-900 underline underline-offset-4 decoration-slate-200 hover:decoration-slate-900 transition-all cursor-pointer">
+                                Limpar filtros
+                            </button>
+                        </div>
+                        <div v-else></div>
+
+                        <label v-if="user" class="relative inline-flex items-center cursor-pointer group px-5 py-3 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-all">
+                            <input v-model="showPrivateChallenges" type="checkbox" @change="handleFilter" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[15px] after:left-[22px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span class="ml-3 text-sm font-bold text-slate-600 group-hover:text-slate-900">Incluir Privados</span>
+                        </label>
                     </div>
                 </div>
             </section>
 
             <!-- Challenges Grid -->
             <section>
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-gray-900">
-                        Todos os Desafios
-                        <span class="text-lg font-normal text-gray-500 ml-2">
-                            ({{ challenges.total }} encontrados)
-                        </span>
-                    </h3>
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <div class="size-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                            <Icon icon="lucide:list" class="size-6" />
+                        </div>
+                        <h3 class="text-2xl font-black text-slate-900 tracking-tight">
+                            Resultados
+                            <span class="text-sm font-bold text-slate-400 ml-2 uppercase tracking-widest">
+                                {{ challenges.total }} encontrados
+                            </span>
+                        </h3>
+                    </div>
                 </div>
 
                 <!-- Loading State -->
-                <div v-if="loading" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div v-for="i in 6" :key="`skeleton-${i}`" class="animate-pulse">
-                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                            <div class="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                            <div class="h-3 bg-gray-200 rounded w-2/3 mb-4"></div>
-                            <div class="flex space-x-2 mb-4">
-                                <div class="h-6 bg-gray-200 rounded-full w-16"></div>
-                                <div class="h-6 bg-gray-200 rounded-full w-20"></div>
-                            </div>
-                            <div class="h-10 bg-gray-200 rounded"></div>
+                <div v-if="loading" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div v-for="i in 6" :key="`skeleton-${i}`" class="animate-pulse bg-white/50 rounded-[2.5rem] p-8 border border-white/80 h-80">
+                        <div class="flex justify-between mb-6">
+                            <div class="h-8 bg-slate-200 rounded-xl w-3/4"></div>
+                            <div class="size-16 bg-slate-200 rounded-2xl"></div>
                         </div>
+                        <div class="space-y-3 mb-8">
+                            <div class="h-4 bg-slate-200 rounded-lg w-full"></div>
+                            <div class="h-4 bg-slate-200 rounded-lg w-5/6"></div>
+                        </div>
+                        <div class="h-12 bg-slate-200 rounded-2xl w-full mt-auto"></div>
                     </div>
                 </div>
 
                 <!-- Empty State -->
-                <div v-else-if="challenges.data.length === 0" class="text-center py-12">
-                    <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                <div v-else-if="challenges.data.length === 0" class="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-12 sm:p-24 text-center border border-white/80 shadow-xl shadow-slate-200/50">
+                    <div class="w-32 h-32 mx-auto mb-8 bg-slate-50 rounded-[2.5rem] flex items-center justify-center relative">
+                        <Icon icon="lucide:search-x" class="size-14 text-slate-300" />
+                        <div class="absolute -top-2 -right-2 w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center text-white border-4 border-white">
+                            <Icon icon="lucide:alert-circle" class="size-4" />
+                        </div>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Nenhum desafio encontrado</h3>
-                    <p class="text-gray-600 mb-6">
-                        Tente ajustar os filtros ou criar um novo desafio
+                    <h3 class="text-2xl font-black text-slate-900 mb-3 tracking-tight">Nenhum desafio encontrado</h3>
+                    <p class="text-slate-500 font-medium mb-10 max-w-sm mx-auto">
+                        Não encontramos resultados para sua busca atual. Tente ajustar os filtros ou crie algo novo!
                     </p>
-                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
                         <button @click="clearAllFilters"
-                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                            Limpar Filtros
+                            class="px-8 py-4 border-2 border-slate-100 text-slate-700 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 cursor-pointer">
+                            Limpar filtros
                         </button>
                         <Link href="/challenges/create"
-                            class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                        Criar Desafio
+                            class="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95">
+                            Criar Novo Desafio
                         </Link>
                     </div>
                 </div>
 
                 <!-- Challenges List -->
-                <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <ChallengeCard v-for="challenge in challenges.data" :key="`challenge-${challenge.id}`"
                         :challenge="challenge" @join="handleJoinChallenge" @view="handleViewChallenge" />
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="challenges.last_page > 1" class="mt-8">
+                <div v-if="challenges.last_page > 1" class="mt-16">
                     <Pagination
                     :links="challenges.links"
                     :current-page="challenges.current_page"
@@ -204,9 +211,9 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import { Icon } from '@iconify/vue'
 import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
 import ChallengeCard from '@/components/ChallengeCard.vue'
-import FeaturedChallengeCard from '@/components/FeaturedChallengeCard.vue'
 import Pagination from '@/components/Pagination.vue'
 import { useChallenges } from '@/composables/useChallenges'
 import { useSeoMetaTags } from '@/composables/useSeoMetaTags.js'
@@ -238,7 +245,8 @@ const props = defineProps({
 const user = computed(() => props.auth.user)
 
 useSeoMetaTags({
-    title: 'Desafios',
+    title: 'Explorar Desafios',
+    description: 'Encontre desafios incríveis para transformar sua rotina.'
 })
   
 // Composables
@@ -249,7 +257,7 @@ const searchQuery = ref(props.filters.search || '')
 const selectedCategory = ref(props.filters.category || '')
 const selectedDifficulty = ref(props.filters.difficulty || '')
 const selectedSort = ref(props.filters.sort || 'newest')
-const showPrivateChallenges = ref(user.value ? (props.filters.show_private !== undefined ? props.filters.show_private : true) : false)
+const showPrivateChallenges = ref(user.value ? (props.filters.show_private !== undefined ? (props.filters.show_private === 'true' || props.filters.show_private === true) : true) : false)
 const searchTimeout = ref(null)
 
 // Computed
@@ -336,8 +344,36 @@ const handleViewChallenge = (challengeId) => {
     router.visit(`/challenges/${challengeId}`)
 }
 
+const getCategoryIconSlug = (category) => {
+    const icons = {
+        'fitness': 'lucide:dumbbell',
+        'mindfulness': 'lucide:brain-circuit',
+        'productivity': 'lucide:zap',
+        'learning': 'lucide:book-open',
+        'health': 'lucide:heart-pulse',
+        'creativity': 'lucide:palette',
+        'social': 'lucide:users-2',
+        'lifestyle': 'lucide:sparkles'
+    }
+    return icons[category] || 'lucide:target'
+}
+
 const formatCategory = (category) => {
     const categoryMap = {
+        'fitness': 'Fitness',
+        'mindfulness': 'Mindfulness',
+        'productivity': 'Produtividade',
+        'learning': 'Aprendizado',
+        'health': 'Saúde',
+        'creativity': 'Criatividade',
+        'social': 'Social',
+        'lifestyle': 'Estilo de Vida'
+    }
+    return categoryMap[category] || category
+}
+
+const formatCategoryLabel = (category) => {
+    const labels = {
         'fitness': '💪 Fitness',
         'mindfulness': '🧘 Mindfulness',
         'productivity': '⚡ Produtividade',
@@ -347,14 +383,14 @@ const formatCategory = (category) => {
         'social': '👥 Social',
         'lifestyle': '🌟 Estilo de Vida'
     }
-    return categoryMap[category] || category
+    return labels[category] || category
 }
 
 const formatDifficulty = (difficulty) => {
     const difficultyMap = {
-        'beginner': '🟢 Iniciante',
-        'intermediate': '🟡 Intermediário',
-        'advanced': '🔴 Avançado'
+        'beginner': 'Iniciante',
+        'intermediate': 'Intermediário',
+        'advanced': 'Avançado'
     }
     return difficultyMap[difficulty] || difficulty
 }
@@ -365,60 +401,36 @@ watch(() => props.filters, (newFilters) => {
     selectedCategory.value = newFilters.category || ''
     selectedDifficulty.value = newFilters.difficulty || ''
     selectedSort.value = newFilters.sort || 'newest'
-    showPrivateChallenges.value = user.value ? (newFilters.show_private !== undefined ? newFilters.show_private : true) : false
+    showPrivateChallenges.value = user.value ? (newFilters.show_private !== undefined ? (newFilters.show_private === 'true' || newFilters.show_private === true) : true) : false
 }, { immediate: true })
 </script>
 
 <style scoped>
-/* Force input/select styles */
-.dopa-input {
-    background-color: white !important;
-    color: #111827 !important;
-}
-
-.dopa-input::placeholder {
-    color: #6b7280 !important;
-}
-
-.dopa-select {
-    background-color: white !important;
-    color: #111827 !important;
-}
-
-.dopa-select option {
-    background-color: white !important;
-    color: #111827 !important;
-}
-
 /* Custom scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 3px;
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
 
-/* Smooth transitions */
-.transition-all {
-    transition: all 0.3s ease;
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* Hover effects */
-.hover-scale {
-    transition: transform 0.2s ease;
-}
-
-.hover-scale:hover {
-    transform: scale(1.02);
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
 }
 </style>

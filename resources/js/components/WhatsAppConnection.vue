@@ -1,24 +1,26 @@
 <template>
-  <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-    <div class="flex items-start justify-between mb-4">
-      <div class="flex items-center space-x-3">
-        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-          <span class="text-2xl">📱</span>
+  <div class="bg-white/70 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl shadow-blue-500/5 relative overflow-hidden group">
+    <div class="absolute -top-24 -right-24 w-64 h-64 bg-emerald-400/5 rounded-full blur-3xl group-hover:bg-emerald-400/10 transition-colors duration-500"></div>
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative z-10">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center border border-emerald-200 shadow-sm shadow-emerald-200/50">
+          <Icon icon="lucide:message-circle" class="size-8 text-emerald-600" />
         </div>
         <div>
-          <h4 class="font-bold text-gray-900">WhatsApp Bot</h4>
-          <p class="text-sm text-gray-600">Check-ins automáticos via foto + hashtag</p>
+          <h4 class="text-xl font-black text-slate-900 tracking-tight leading-none">WhatsApp Bot</h4>
+          <p class="text-sm text-slate-500 font-medium mt-1">Check-ins automáticos via foto + hashtag</p>
         </div>
       </div>
 
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center gap-2 bg-white/50 backdrop-blur-sm self-start md:self-auto px-3 py-1.5 rounded-full border border-white/80 shadow-sm">
         <span :class="[
-          'w-3 h-3 rounded-full',
-          isConnected ? 'bg-green-500' : 'bg-gray-300'
+          'w-2.5 h-2.5 rounded-full animate-pulse',
+          isConnected ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-slate-300'
         ]"></span>
         <span :class="[
-          'text-sm font-medium',
-          isConnected ? 'text-green-700' : 'text-gray-500'
+          'text-xs font-bold uppercase tracking-widest',
+          isConnected ? 'text-emerald-700' : 'text-slate-500'
         ]">
           {{ connectionStatus }}
         </span>
@@ -26,137 +28,143 @@
     </div>
 
     <!-- Connected State -->
-    <div v-if="isConnected" class="space-y-4">
+    <div v-if="isConnected" class="space-y-6 relative z-10">
       <!-- Bot Info -->
-      <div class="p-4 bg-green-50 rounded-xl border border-green-200">
-        <div class="flex items-center justify-between mb-3">
+      <div class="p-6 bg-emerald-500/5 rounded-3xl border border-emerald-500/10 relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
           <div>
-            <p class="font-semibold text-green-800">Como usar</p>
-            <p class="text-lg font-mono text-green-700">{{ formatPhoneNumber(whatsappSession.bot_number) }}</p>
+            <p class="text-[10px] font-black text-emerald-700 uppercase tracking-[0.2em] mb-2 opacity-60">Número do Bot</p>
+            <p class="text-2xl font-black text-slate-900 tracking-tight leading-none">{{ formatPhoneNumber(whatsappSession.bot_number) }}</p>
           </div>
           <a :href="whatsappLink" target="_blank"
-            class="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center space-x-2">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.520-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488" />
-            </svg>
-            <span>Fazer check-in</span>
+            class="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-emerald-500 hover:-translate-y-1 transition-all shadow-xl shadow-emerald-600/20 flex items-center justify-center gap-2 active:scale-95">
+            <Icon icon="lucide:send" class="size-5" />
+            <span>Check-in Agora</span>
           </a>
         </div>
 
         <!-- Usage Instructions -->
-        <div class="space-y-2">
-          <div class="space-y-1 text-sm text-green-700">
-            <p>1. Tire uma foto da sua atividade</p>
-            <p>2. Envie com a hashtag da task (ex: #leitura)</p>
-            <p>3. Receba confirmação automática ✅</p>
+        <div class="mt-8 pt-8 border-t border-emerald-500/10">
+          <p class="text-[10px] font-black text-emerald-700 uppercase tracking-[0.2em] mb-4 opacity-60">Instruções rápidas</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="flex items-center gap-3 bg-white/40 p-3 rounded-xl border border-white/60">
+              <div class="size-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 font-black text-sm">1</div>
+              <p class="text-xs font-bold text-slate-700 leading-tight">Tire uma foto da sua atividade</p>
+            </div>
+            <div class="flex items-center gap-3 bg-white/40 p-3 rounded-xl border border-white/60">
+              <div class="size-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 font-black text-sm">2</div>
+              <p class="text-xs font-bold text-slate-700 leading-tight">Envie com a #hashtag na legenda</p>
+            </div>
+            <div class="flex items-center gap-3 bg-white/40 p-3 rounded-xl border border-white/60">
+              <div class="size-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 font-black text-sm">3</div>
+              <p class="text-xs font-bold text-slate-700 leading-tight">Receba a confirmação na hora</p>
+            </div>
           </div>
-          <p class="text-sm text-green-700 mt-3 pt-3 border-t border-green-200">
-            <strong>Onde enviar:</strong> Se o desafio for de <strong>grupo/comunidade</strong>, faça o check-in (foto + legenda com #hashtag) dentro do grupo. Se for <strong>desafio privado/particular</strong>, pode enviar no inbox (conversa privada) do número do bot.
-          </p>
         </div>
       </div>
 
-      <!-- Stats -->
-      <div class="p-3 bg-gray-50 rounded-lg text-center">
-        <div class="text-xl font-bold text-gray-900">{{ whatsappSession.checkin_count ?? 0 }}</div>
-        <div class="text-xs text-gray-500">Check-ins via WhatsApp</div>
-      </div>
+      <!-- Footer Info -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+        <div class="flex items-center gap-6">
+          <div class="group/stat">
+            <div class="text-xl font-black text-slate-900 tracking-tight leading-none">{{ whatsappSession.checkin_count ?? 0 }}</div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Check-ins via Zap</div>
+          </div>
+          <div v-if="whatsappSession.last_activity" class="text-right sm:text-left">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Última Atividade</div>
+            <div class="text-xs font-black text-slate-900 tracking-tight">{{ formatRelativeTime(whatsappSession.last_activity) }}</div>
+          </div>
+        </div>
 
-      <!-- Last Activity -->
-      <div v-if="whatsappSession.last_activity" class="text-xs text-gray-500">
-        Última atividade: {{ formatRelativeTime(whatsappSession.last_activity) }}
+        <button @click="handleDisconnect" :disabled="disconnecting"
+          class="cursor-pointer text-slate-400 hover:text-red-600 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-red-50 transition-all disabled:opacity-50">
+          <Icon v-if="disconnecting" icon="lucide:loader-2" class="size-4 animate-spin" />
+          <Icon v-else icon="lucide:log-out" class="size-4" />
+          <span>{{ disconnecting ? 'Desconectando...' : 'Desconectar WhatsApp' }}</span>
+        </button>
       </div>
-
-      <!-- Disconnect Button -->
-      <Button @click="handleDisconnect" :disabled="disconnecting" variant="destructive" size="lg"
-        class="w-full cursor-pointer hover:bg-red-700 text-white hover:shadow-md transition-all duration-200">
-        <svg v-if="disconnecting" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-          </path>
-        </svg>
-        <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-        <span>{{ disconnecting ? 'Desconectando...' : 'Desconectar WhatsApp' }}</span>
-      </Button>
     </div>
 
     <!-- Disconnected State -->
-    <div v-else class="space-y-4">
-      <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
-        <div class="flex items-start space-x-3">
-          <div class="flex-shrink-0">
-            <span class="text-blue-600 text-xl">💡</span>
+    <div v-else class="space-y-6 relative z-10">
+      <div class="p-6 bg-blue-500/5 rounded-3xl border border-blue-500/10 relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+        <div class="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+          <div class="bg-white p-4 rounded-2xl shadow-xl shadow-blue-500/5 border border-blue-100 flex-shrink-0 animate-bounce transition-all duration-1000">
+            <Icon icon="lucide:zap" class="size-8 text-blue-600" />
           </div>
-          <div class="text-sm text-blue-800">
-            <p class="font-semibold mb-2">Conecte seu WhatsApp para:</p>
-            <ul class="space-y-1 text-blue-700">
-              <li>• Check-ins automáticos por foto</li>
-              <li>• Confirmações em tempo real</li>
-              <li>• Zero fricção - use o app que já tem</li>
-            </ul>
+          <div>
+            <p class="text-xl font-black text-slate-900 tracking-tight leading-snug">Conecte seu WhatsApp para ter zero fricção!</p>
+            <p class="text-sm text-slate-600 font-medium mt-1">Automatize seus check-ins enviando fotos diretamente no app que você já usa todo dia.</p>
           </div>
         </div>
       </div>
 
-      <Button @click="handleConnect" :disabled="connecting" size="lg"
-        class="w-full bg-green-600 hover:bg-green-700 text-white cursor-pointer hover:shadow-md transition-all duration-200">
-        <svg v-if="connecting" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-          </path>
-        </svg>
-        <svg v-else class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-          <path
-            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.520-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488" />
-        </svg>
-        <span>{{ connecting ? 'Conectando...' : 'Conectar WhatsApp' }}</span>
-      </Button>
+      <button @click="handleConnect" :disabled="connecting"
+        class="cursor-pointer w-full bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-slate-800 hover:-translate-y-1 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 active:scale-[0.98]">
+        <Icon v-if="connecting" icon="lucide:loader-2" class="size-6 animate-spin" />
+        <Icon v-else icon="lucide:qr-code" class="size-6 text-blue-400" />
+        <span>{{ connecting ? 'Conectando...' : 'Conectar agora via QR Code' }}</span>
+      </button>
 
       <!-- Free Plan Limitation -->
-      <div v-if="!user.is_pro" class="p-3 bg-amber-50 rounded-lg border border-amber-200">
-        <div class="flex items-center space-x-2">
-          <span class="text-amber-600">⚠️</span>
-          <div class="text-sm text-amber-800">
-            <span class="font-medium">Plano Free:</span> Check-ins manuais via WhatsApp.
-            <Link href="/upgrade" class="text-amber-700 underline hover:text-amber-900">
-            Upgrade para PRO
-            </Link> para análise automática com IA.
-          </div>
+      <div v-if="!user.is_pro" class="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 flex items-start gap-3">
+        <Icon icon="lucide:alert-triangle" class="size-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div class="text-xs font-medium text-amber-900 leading-relaxed">
+          <span class="font-black uppercase tracking-widest text-[9px] block mb-1 opacity-60">Plano Standard</span>
+          No plano free você faz check-ins manuais pelo WhatsApp. 
+          <Link href="/upgrade" class="text-amber-700 font-black underline hover:text-amber-900 ml-1">
+            Vire PRO
+          </Link> para análise automática de atividade com Visão Computacional.
         </div>
       </div>
     </div>
   </div>
 
-  <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-    <div class="bg-white rounded-xl p-6 shadow-lg w-full max-w-sm">
-      <h3 class="text-lg font-semibold mb-2">Informe seu número do WhatsApp</h3>
-      <input v-model="phone" type="tel" placeholder="Ex: 11999998888" class="w-full border rounded-lg px-3 py-2 mb-4" />
-      <div class="flex justify-end space-x-2">
-        <Button @click="showModal = false" variant="outline" size="sm">
-          Cancelar
-        </Button>
-        <Button @click="handleSubmitPhone" :disabled="connecting" size="sm" class="bg-green-600 hover:bg-green-700">
-          <svg v-if="connecting" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
-          </svg>
-          <span>{{ connecting ? 'Conectando...' : 'Conectar' }}</span>
-        </Button>
-      </div>
-    </div>
-  </div>
+  <!-- Modal para coletar telefone (Teleported) -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="showPhoneModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+          <div class="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full relative border border-white/50 animate-in zoom-in-95 duration-300">
+            <button @click="showPhoneModal = false" class="cursor-pointer absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full transition-all">
+              <Icon icon="lucide:x" class="size-6" />
+            </button>
+            <div class="text-center mb-8">
+              <div class="size-20 mx-auto bg-blue-100 rounded-3xl flex items-center justify-center text-blue-600 mb-4 shadow-inner">
+                <Icon icon="lucide:phone" class="size-10" />
+              </div>
+              <h3 class="text-2xl font-black text-slate-900 tracking-tight">Conectar WhatsApp</h3>
+              <p class="text-slate-500 font-medium mt-1">Digite seu número com DDD (apenas números)</p>
+            </div>
+            
+            <div class="space-y-6">
+              <div class="relative group">
+                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                  <Icon icon="lucide:smartphone" class="size-5" />
+                </div>
+                <input v-model="phoneNumber" type="tel" placeholder="Ex: 5511999999999"
+                  class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-black text-lg tracking-tight placeholder:font-medium placeholder:text-slate-300"
+                  @keyup.enter="startConnection" />
+              </div>
+              
+              <button @click="startConnection" :disabled="connecting"
+                class="cursor-pointer w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-slate-800 disabled:opacity-50 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 active:scale-[0.98]">
+                <Icon v-if="connecting" icon="lucide:loader-2" class="size-5 animate-spin" />
+                <Icon v-else icon="lucide:zap" class="size-5 text-blue-400" />
+                <span>{{ connecting ? 'Iniciando...' : 'Gerar QR Code' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 </template>
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import { Icon } from '@iconify/vue'
 import { Button } from '@/components/ui/button'
 import { csrfFetch } from '@/utils/csrf.js'
 
@@ -164,6 +172,10 @@ const props = defineProps({
   user: {
     type: Object,
     required: true
+  },
+  currentChallenge: {
+    type: Object,
+    default: null
   }
 })
 // Emits
@@ -172,8 +184,8 @@ const emit = defineEmits(['connection-updated'])
 // State
 const connecting = ref(false)
 const disconnecting = ref(false)
-const showModal = ref(false)
-const phone = ref(props.user.whatsapp_number || '')
+const showPhoneModal = ref(false)
+const phoneNumber = ref(props.user.whatsapp_number || '')
 
 // Estado reativo do WhatsApp
 const isConnected = ref(false)
@@ -185,6 +197,9 @@ const connectionStatus = computed(() => {
 })
 
 const whatsappLink = computed(() => {
+  if (props.currentChallenge?.whatsapp_checkin_url) {
+    return props.currentChallenge.whatsapp_checkin_url
+  }
   return `https://wa.me/5571993676365`
 })
 
@@ -200,9 +215,9 @@ const fetchStatus = async () => {
       whatsappSession.value = data.session || {}
       // Só atualize se vier do backend, senão mantenha o que já tem
       if (data.session?.phone_number) {
-        phone.value = data.session.phone_number
+        phoneNumber.value = data.session.phone_number
       } else if (props.user.phone || props.user.whatsapp_number) {
-        phone.value = props.user.phone || props.user.whatsapp_number
+        phoneNumber.value = props.user.phone || props.user.whatsapp_number
       }
     } else {
       isConnected.value = false
@@ -217,7 +232,7 @@ const fetchStatus = async () => {
 onMounted(fetchStatus)
 
 const handleConnect = async () => {
-  if (phone.value.match(/^\d{10,15}$/)) {
+  if (phoneNumber.value.match(/^\d{10,15}$/)) {
     connecting.value = true
     try {
       const response = await csrfFetch('/whatsapp/connect', {
@@ -226,7 +241,7 @@ const handleConnect = async () => {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ phone_number: phone.value })
+        body: JSON.stringify({ phone_number: phoneNumber.value })
       })
       if (response.ok) {
         const data = await response.json()
@@ -245,12 +260,12 @@ const handleConnect = async () => {
       connecting.value = false
     }
   } else {
-    showModal.value = true
+    showPhoneModal.value = true
   }
 }
 
-const handleSubmitPhone = async () => {
-  if (!phone.value.match(/^\d{10,15}$/)) {
+const startConnection = async () => {
+  if (!phoneNumber.value.match(/^\d{10,15}$/)) {
     alert('Digite um número de WhatsApp válido.')
     return
   }
@@ -262,12 +277,12 @@ const handleSubmitPhone = async () => {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({ phone_number: phone.value })
+      body: JSON.stringify({ phone_number: phoneNumber.value })
     })
     if (response.ok) {
       const data = await response.json()
       if (data.success && data.whatsapp_url) {
-        showModal.value = false
+        showPhoneModal.value = false
         await fetchStatus()
         emit('connection-updated', { is_active: true })
         window.open(data.whatsapp_url, '_blank')

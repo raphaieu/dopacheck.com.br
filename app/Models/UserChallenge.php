@@ -108,6 +108,14 @@ class UserChallenge extends Model
     }
 
     /**
+     * Get the team for this participation
+     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    /**
      * Get check-ins for this user challenge
      */
     public function checkins(): HasMany

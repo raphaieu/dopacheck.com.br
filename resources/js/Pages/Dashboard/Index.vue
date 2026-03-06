@@ -1,55 +1,64 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-x-clip pt-28">
     <!-- Header -->
     <DopaHeader 
       :subtitle="currentChallenge ? `Dia ${subtitleDay} de ${currentChallenge.challenge.duration_days}` : null"
       max-width="4xl"
     />
 
-    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <main class="max-w-4xl mx-auto px-4 pb-6 space-y-6">
       <!-- CTA de Upgrade (FREE -> PRO) -->
       <div
         v-if="user && !user.is_pro"
-        class="hidden bg-white rounded-2xl shadow-sm border border-purple-100 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        class="bg-white/70 backdrop-blur-xl rounded-2xl shadow-sm border border-white/80 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative overflow-hidden"
       >
-        <div>
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-sm font-medium">
-            ✨ PRO
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-purple-400/10 rounded-full blur-3xl"></div>
+        <div class="relative z-10 flex-1">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-bold tracking-wider uppercase mb-3 shadow-sm">
+            <Icon icon="lucide:sparkles" class="size-3.5" />
+            Premium
           </div>
-          <h3 class="text-lg font-bold text-gray-900 mt-3">
-            Desbloqueie limites maiores e recursos PRO
+          <h3 class="text-xl font-bold text-slate-900 tracking-tight">
+            Desbloqueie limites maiores e recursos exclusivos
           </h3>
-          <p class="text-gray-600 text-sm mt-1">
-            Faça upgrade em poucos cliques com checkout seguro da Stripe.
+          <p class="text-slate-600 text-sm mt-1 max-w-lg">
+            Aumente sua produtividade com análise de IA, check-ins ilimitados e estatísticas avançadas.
           </p>
         </div>
         <Link
           href="/subscriptions/create"
-          class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-colors text-center"
+          class="relative z-10 bg-gradient-to-r from-blue-600 to-violet-600 text-white px-8 py-3.5 rounded-xl font-bold hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 text-center flex items-center justify-center gap-2 group"
         >
-          Virar PRO
+          <span>Virar PRO</span>
+          <Icon icon="lucide:arrow-right" class="size-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
 
       <!-- Se não há desafios ativos -->
-      <div v-if="activeChallenges.length === 0" class="text-center py-12">
-        <div
-          class="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
-          <span class="text-4xl">🎯</span>
-        </div>
-        <h2 class="text-2xl font-bold text-gray-900 mb-3">Pronto para um novo desafio?</h2>
-        <p class="text-gray-600 mb-6 max-w-md mx-auto">
-          Escolha um dos nossos desafios populares ou crie o seu próprio para começar sua jornada.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/challenges"
-            class="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-          Ver Desafios
-          </Link>
-          <Link href="/challenges/create"
-            class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-          Criar Desafio
-          </Link>
+      <div v-if="activeChallenges.length === 0" class="py-16 px-6 text-center bg-white/40 backdrop-blur-sm rounded-3xl border border-white/60 shadow-sm relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-400/5 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-400/5 rounded-full blur-3xl"></div>
+        
+        <div class="relative z-10">
+          <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl flex items-center justify-center border border-white/50 shadow-inner">
+            <Icon icon="lucide:target" class="size-10 text-blue-600" />
+          </div>
+          <h2 class="text-2xl font-black text-slate-900 mb-3 tracking-tight">Pronto para um novo desafio?</h2>
+          <p class="text-slate-600 mb-8 max-w-sm mx-auto text-lg leading-relaxed">
+            Escolha um dos nossos desafios populares ou crie o seu próprio para começar sua jornada hoje.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/challenges"
+              class="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2">
+              <Icon icon="lucide:search" class="size-5" />
+              Explorar Desafios
+            </Link>
+            <Link href="/challenges/create"
+              class="bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+              <Icon icon="lucide:plus" class="size-5" />
+              Criar Desafio
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -58,134 +67,167 @@
         <!-- challenges carousel arrows -->
         <div class="flex items-center justify-center relative py-6">
           <!-- left arrow -->
-          <button v-if="activeChallenges.length > 1" @click="prevChallenge" class="cursor-pointer absolute -left-3.5 md:left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-blue-600 shadow-lg transition text-white
-                opacity-60 hover:opacity-100 focus:opacity-100 md:opacity-100 md:hover:opacity-100"
+          <button v-if="activeChallenges.length > 1" @click="prevChallenge" class="cursor-pointer absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-md border border-white/80 shadow-lg transition-all duration-300 text-slate-900 hover:scale-110 active:scale-95 group"
             aria-label="Desafio anterior">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <Icon icon="lucide:chevron-left" class="size-6 group-hover:-translate-x-0.5 transition-transform" />
           </button>
 
           <!-- challenges card -->
           <div class="w-full mx-auto" :class="[activeChallenges.length > 1 ? 'max-w-2xl' : '']"
             @touchstart="onTouchStart" @touchend="onTouchEnd" @mousedown="onMouseDown" @mouseup="onMouseUp"
             @mouseleave="onMouseLeave">
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div class="flex items-start justify-between mb-4">
+            <div class="bg-white/70 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-xl shadow-blue-500/5 border border-white/80 relative overflow-hidden group/card">
+              <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl group-hover/card:bg-blue-400/20 transition-colors duration-500"></div>
+              
+              <div class="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
                 <div class="flex-1">
-                  <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold tracking-wider uppercase mb-4 shadow-sm">
+                    <Icon icon="lucide:rocket" class="size-3" />
+                    Desafio Ativo
+                  </div>
+                  <h2 class="text-2xl font-black text-slate-900 mb-3 tracking-tight leading-tight">
                     {{ currentChallenge.challenge.title }}
                   </h2>
-                  <p class="text-gray-600 mb-4">{{ currentChallenge.challenge.description }}</p>
+                  <p class="text-slate-600 mb-6 text-sm leading-relaxed">{{ currentChallenge.challenge.description }}</p>
 
-                  <!-- Progress Info -->
-                  <div class="flex items-center space-x-6 text-sm">
-                    <div class="flex items-center space-x-2">
-                      <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                      <span class="text-gray-600">Dia {{ currentDay }} de {{ currentChallenge.challenge.duration_days
-                        }}</span>
+                  <!-- Progress Info Labels -->
+                  <div class="flex flex-wrap items-center gap-y-3 gap-x-3">
+                    <div class="flex items-center gap-2 bg-slate-100/50 px-3 py-1.5 rounded-lg border border-slate-200/50">
+                      <Icon icon="lucide:calendar" class="size-4 text-blue-600" />
+                      <span class="text-sm font-bold text-slate-700">Dia {{ currentDay }} de {{ currentChallenge.challenge.duration_days }}</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                      <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span class="text-gray-600">{{ currentChallenge.total_checkins }} check-ins</span>
+                    <div class="flex items-center gap-2 bg-slate-100/50 px-3 py-1.5 rounded-lg border border-slate-200/50">
+                      <Icon icon="lucide:check-circle" class="size-4 text-emerald-600" />
+                      <span class="text-sm font-bold text-slate-700">{{ currentChallenge.total_checkins }} check-ins</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                      <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
-                      <span class="text-gray-600">{{ currentChallenge.streak_days }} dias seguidos</span>
+                    <div class="flex items-center gap-2 bg-slate-100/50 px-3 py-1.5 rounded-lg border border-slate-200/50">
+                      <Icon icon="lucide:flame" class="size-4 text-orange-600" />
+                      <span class="text-sm font-bold text-slate-700">{{ currentChallenge.streak_days }} dias seguidos</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Progress Ring -->
-                <div class="hidden sm:block">
-                  <ProgressRing :progress="progressPercentage" :size="80" :stroke-width="8" class="text-blue-600" />
+                <div class="flex justify-center md:flex-none">
+                  <div class="relative p-2 rounded-2xl bg-white/50">
+                    <ProgressRing :progress="progressPercentage" :size="100" :stroke-width="10" color="blue" />
+                  </div>
                 </div>
               </div>
 
-              <!-- Mobile Progress Bar -->
-              <div class="sm:hidden mb-4">
-                <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
-                  <span>Progresso</span>
+              <!-- Mobile/Tablet Progress Bar (if ring is hidden or small) -->
+              <div class="md:hidden mt-2 mb-8">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                  <span>Progresso Geral</span>
                   <span>{{ Math.round(progressPercentage) }}%</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                <div class="w-full bg-slate-200/50 rounded-full h-2.5 p-0.5 border border-slate-200/30 shadow-inner">
+                  <div class="bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 h-1.5 rounded-full transition-all duration-1000 ease-out shadow-lg shadow-blue-500/20"
                     :style="`width: ${progressPercentage}%`"></div>
                 </div>
               </div>
 
-              <!-- Quick Stats -->
-              <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-blue-600">{{ currentChallenge.streak_days }}</div>
-                  <div class="text-xs text-gray-500">Sequência</div>
+              <!-- Quick Stats Grid -->
+              <div class="grid grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-200/50">
+                <div class="text-center group/stat">
+                  <div class="text-2xl font-black text-blue-600 group-hover/stat:scale-110 transition-transform duration-300">{{ currentChallenge.streak_days }}</div>
+                  <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sequência</div>
                 </div>
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-green-600">{{ todayCompletionRate }}%
+                <div class="text-center group/stat">
+                  <div class="text-2xl font-black text-emerald-600 group-hover/stat:scale-110 transition-transform duration-300 text-nowrap">
+                    {{ todayCompletionRate }}%
                   </div>
-                  <div class="text-xs text-gray-500">Concluído</div>
+                  <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Hoje</div>
                 </div>
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-purple-600">{{ daysRemaining }}</div>
-                  <div class="text-xs text-gray-500">Restantes</div>
+                <div class="text-center group/stat">
+                  <div class="text-2xl font-black text-purple-600 group-hover/stat:scale-110 transition-transform duration-300">{{ daysRemaining }}</div>
+                  <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 text-nowrap">Restantes</div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- right arrow -->
-          <button v-if="activeChallenges.length > 1" @click="nextChallenge" class="cursor-pointer absolute -right-3.5 md:right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-blue-600 shadow-lg transition text-white
-                opacity-60 hover:opacity-100 focus:opacity-100 md:opacity-100 md:hover:opacity-100"
+          <button v-if="activeChallenges.length > 1" @click="nextChallenge" class="cursor-pointer absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-md border border-white/80 shadow-lg transition-all duration-300 text-slate-900 hover:scale-110 active:scale-95 group"
             aria-label="Próximo desafio">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+            <Icon icon="lucide:chevron-right" class="size-6 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
 
-        <!-- Bolinhas logo abaixo do card -->
-        <div v-if="activeChallenges.length > 1" class="flex justify-center mt-2 mb-6">
-          <span v-for="(challenge, idx) in activeChallenges" :key="challenge.id" class="w-3 h-3 rounded-full mx-1"
-            :class="idx === currentIndex ? 'bg-blue-600' : 'bg-gray-300'"></span>
+        <!-- Indicators Dots -->
+        <div v-if="activeChallenges.length > 1" class="flex justify-center gap-2 mt-4 mb-8">
+          <button 
+            v-for="(challenge, idx) in activeChallenges" 
+            :key="challenge.id" 
+            @click="currentIndex = idx"
+            class="transition-all duration-300 rounded-full cursor-pointer"
+            :class="idx === currentIndex ? 'w-8 h-2 bg-blue-600' : 'w-2 h-2 bg-slate-300 hover:bg-slate-400'"
+            :aria-label="`Ir para desafio ${idx + 1}`"
+          ></button>
         </div>
 
         <!-- Espaçamento entre card e bloco de tasks -->
         <div class="mb-6"></div>
 
         <!-- Bloco de tasks do dia, visual separado -->
-        <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200 mb-6">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-            <h3 class="text-xl font-bold text-gray-900 mb-2 sm:mb-0 text-center">
-              {{ todayFormatted }}
-            </h3>
-            <span class="text-sm text-gray-500 text-center">
-              {{ completedTasksToday }}/{{ totalTasksToday }} concluídas
-            </span>
+        <div class="bg-white/70 backdrop-blur-xl rounded-3xl p-6 md:p-8 border border-white/80 shadow-xl shadow-blue-500/5 mb-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div class="text-center sm:text-left">
+              <h3 class="text-2xl font-black text-slate-900 tracking-tight">
+                {{ todayFormatted }}
+              </h3>
+              <div class="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                <div class="flex -space-x-1">
+                  <div v-for="n in totalTasksToday" :key="n" 
+                    class="size-2 rounded-full border border-white"
+                    :class="n <= completedTasksToday ? 'bg-emerald-500' : 'bg-slate-200'"
+                  ></div>
+                </div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">
+                  {{ completedTasksToday }}/{{ totalTasksToday }} Concluídas
+                </span>
+              </div>
+            </div>
+            
+            <div class="flex items-center justify-center sm:justify-end gap-3 text-sm text-slate-600 bg-slate-100/50 px-4 py-2 rounded-xl border border-slate-200/50">
+              <Icon icon="lucide:hash" class="size-4 text-blue-600" />
+              <span>Dia <span class="font-black text-slate-900">{{ subtitleDay }}</span> de {{ currentChallenge.challenge.duration_days }}</span>
+            </div>
           </div>
 
           <!-- Ir para data -->
-          <div v-if="currentChallenge?.challenge?.start_date" class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
-            <div class="flex-1">
-              <label for="goto-date" class="block text-sm font-medium text-gray-700 mb-1">Ir para data</label>
-              <input
-                id="goto-date"
-                v-model="selectedDate"
-                type="date"
-                :min="dateBounds.min"
-                :max="dateBounds.max"
-                class="w-full sm:max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-              />
-              <p class="mt-1 text-xs text-gray-500">
-                Disponível de {{ formatDateBR(dateBounds.min) }} até {{ formatDateBR(dateBounds.max) }}.
-              </p>
+          <div v-if="currentChallenge?.challenge?.start_date" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-4 rounded-2xl bg-slate-50/50 border border-slate-200/50">
+            <div>
+              <label for="goto-date" class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">
+                <Icon icon="lucide:calendar-search" class="size-3.5 text-blue-600" />
+                Ir para data
+              </label>
+              <div class="relative group">
+                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                  <Icon icon="lucide:calendar" class="size-5" />
+                </div>
+                <input
+                  id="goto-date"
+                  v-model="selectedDate"
+                  type="date"
+                  :min="dateBounds.min"
+                  :max="dateBounds.max"
+                  class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 bg-white text-slate-900 transition-all font-medium"
+                />
+              </div>
             </div>
-            <div class="text-sm text-gray-600 text-center sm:text-right">
-              Dia <span class="font-semibold text-gray-900">{{ subtitleDay }}</span> de {{ currentChallenge.challenge.duration_days }}
+            <div class="flex items-center">
+              <div class="flex items-start gap-3 p-3 rounded-xl bg-blue-50/50 border border-blue-100/50 w-full">
+                <Icon icon="lucide:info" class="size-5 text-blue-600 mt-0.5" />
+                <p class="text-xs text-blue-900 leading-relaxed">
+                  Mostrando registros de <strong>{{ formatDateBR(dateBounds.min) }}</strong> até <strong>{{ formatDateBR(dateBounds.max) }}</strong>.
+                </p>
+              </div>
             </div>
           </div>
 
           <!-- Task Cards -->
-          <div class="space-y-3">
+          <div class="space-y-4">
             <TaskCard v-for="task in todayTasks" :key="`task-${task.id}`" :task="task"
               :user-challenge="currentChallenge" :is-completed="task.is_completed" :checkin="task.checkin"
               :selected-date="selectedDate"
@@ -193,87 +235,114 @@
           </div>
 
           <!-- Botão Compartilhar Card do Dia -->
-          <div v-if="todayTasks.some(task => task.checkin)" class="flex justify-center mt-6">
+          <div v-if="todayTasks.some(task => task.checkin)" class="flex justify-center mt-10">
             <button @click="showShareModal = true"
-              class="bg-gradient-to-r cursor-pointer from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all flex items-center space-x-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-check" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0"/>
-              </svg>
+              class="cursor-pointer bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-slate-900/10 hover:bg-slate-800 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center gap-3 group">
+              <Icon icon="lucide:share-2" class="size-5 text-blue-400 group-hover:scale-110 transition-transform" />
               <span>Compartilhar meu dia</span>
             </button>
           </div>
 
           <!-- All Tasks Completed -->
-          <div v-if="allTasksCompleted"
-            class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 text-center border border-green-200 mt-6">
-            <div class="text-4xl mb-3">🎉</div>
-            <h4 class="text-lg font-bold text-green-800 mb-2">Parabéns! Desafio concluído!</h4>
-            <p class="text-green-700 text-sm">
-              Você completou todas as tasks do desafio de hoje. Continue assim!
-            </p>
-          </div>
+          <transition name="fade">
+            <div v-if="allTasksCompleted"
+              class="bg-emerald-500/10 backdrop-blur-sm rounded-3xl p-8 text-center border border-emerald-500/20 mt-10 relative overflow-hidden">
+              <div class="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+              <div class="relative z-10">
+                <div class="w-16 h-16 mx-auto mb-4 bg-emerald-100 rounded-2xl flex items-center justify-center border border-emerald-200 shadow-sm">
+                  <Icon icon="lucide:party-popper" class="size-8 text-emerald-600" />
+                </div>
+                <h4 class="text-xl font-black text-emerald-900 mb-2 tracking-tight">Dia Concluído!</h4>
+                <p class="text-emerald-700 font-medium max-w-xs mx-auto text-sm leading-relaxed">
+                  Você completou todas as suas metas de hoje. Mantenha essa energia!
+                </p>
+              </div>
+            </div>
+          </transition>
         </div>
 
-        <!-- WhatsApp Connection, separado das tasks -->
-        <div class="mb-6"></div>
-        <WhatsAppConnection :user="user" @connection-updated="handleWhatsAppUpdate" />
+        <!-- WhatsApp Connection Wrapper -->
+        <WhatsAppConnection 
+          :user="user" 
+          :current-challenge="currentChallenge"
+          @connection-updated="handleWhatsAppUpdate" 
+        />
       </div>
     </main>
 
-    <!-- Loading Overlay -->
-    <div v-if="loading" class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl p-6 shadow-xl">
-        <div class="flex items-center space-x-3">
-          <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-          <span class="text-gray-700 font-medium">Carregando...</span>
+    <!-- Loading Overlay (Teleported) -->
+    <Teleport to="body">
+      <transition name="fade">
+        <div v-if="loading" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[150]">
+          <div class="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50 flex flex-col items-center gap-4">
+            <div class="relative">
+              <div class="size-12 rounded-full border-4 border-slate-100 border-t-blue-600 animate-spin"></div>
+              <Icon icon="lucide:loader-2" class="size-6 text-blue-600 absolute inset-0 m-auto animate-pulse" />
+            </div>
+            <span class="text-slate-900 font-bold tracking-tight">Processando...</span>
+          </div>
         </div>
-      </div>
-    </div>
+      </transition>
+    </Teleport>
 
-    <!-- Modal de Preview do Card do Dia -->
-    <template v-if="showShareModal">
-      <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-xl p-4 md:p-8 max-w-md md:max-w-xl w-full relative" style="max-height:95vh; overflow:auto;">
-          <button @click="showShareModal = false" class="cursor-pointer absolute top-3 right-3 text-gray-400 hover:text-gray-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <h2 class="text-xl font-bold mb-4 text-center">Compartilhar meu dia</h2>
-          <div class="w-full flex justify-center items-center" style="min-height: 60vh;">
-            <div class="relative" style="aspect-ratio:9/16; height:70vh; max-height:80vh; max-width:calc(80vh*9/16);">
-              <div v-if="generatingImage" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded">
-                <div class="text-4xl mb-2">⏳</div>
-                <p class="text-sm">Gerando imagem personalizada...</p>
-                <p class="text-xs text-gray-500 mt-1">Aguarde alguns segundos</p>
-              </div>
-              <img v-else-if="shareCardImageUrl" :src="shareCardImageUrl" alt="Preview do Card do Dia" class="absolute inset-0 w-full h-full object-contain rounded shadow" />
-              <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded">
-                <div class="text-4xl mb-2">❌</div>
-                <p class="text-sm">Erro ao gerar imagem</p>
+    <!-- Modal de Preview do Card do Dia (Teleported) -->
+    <Teleport to="body">
+      <template v-if="showShareModal">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+          <div class="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl p-6 md:p-10 max-w-lg w-full relative border border-white/50 animate-in zoom-in-95 duration-300" style="max-height:95vh; overflow:auto;">
+            <button @click="showShareModal = false" class="cursor-pointer absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all">
+              <Icon icon="lucide:x" class="size-6" />
+            </button>
+            
+            <div class="text-center mb-8">
+              <h2 class="text-xl font-black text-slate-900 tracking-tight">Compartilhar meu dia</h2>
+              <p class="text-slate-500 text-sm font-medium mt-1">Gere uma imagem personalizada do seu progresso</p>
+            </div>
+
+            <div class="w-full flex justify-center items-center bg-slate-100/50 rounded-3xl border border-slate-200/50 p-4 min-h-[50vh]">
+              <div class="relative w-full max-w-[300px]" style="aspect-ratio:9/16;">
+                <div v-if="generatingImage" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-white/50 backdrop-blur-md rounded-2xl border border-white/80">
+                  <div class="relative mb-4">
+                    <Icon icon="lucide:image" class="size-12 text-slate-200 animate-pulse" />
+                    <Icon icon="lucide:refresh-cw" class="size-6 text-blue-600 absolute -bottom-1 -right-1 animate-spin" />
+                  </div>
+                  <p class="font-bold text-slate-900 tracking-tight">Gerando imagem...</p>
+                  <p class="text-xs text-slate-500 mt-1">Aguarde alguns segundos</p>
+                </div>
+                <img v-else-if="shareCardImageUrl" :src="shareCardImageUrl" alt="Preview do Card do Dia" class="absolute inset-0 w-full h-full object-contain rounded-2xl shadow-2xl ring-1 ring-black/5" />
+                <div v-else class="absolute inset-0 flex flex-col items-center justify-center text-red-400 bg-red-50/50 backdrop-blur-md rounded-2xl border border-red-100/50">
+                  <Icon icon="lucide:alert-circle" class="size-12 mb-2" />
+                  <p class="font-bold">Ops! Algo deu errado</p>
+                  <p class="text-xs">Tente novamente em instantes</p>
+                </div>
               </div>
             </div>
+
+            <div class="mt-8 flex flex-col gap-3">
+              <button 
+                @click="downloadShareCard"
+                :disabled="!shareCardImageUrl || generatingImage"
+                class="cursor-pointer w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-900/10 active:scale-[0.98]"
+              >
+                <Icon v-if="generatingImage" icon="lucide:loader-2" class="size-5 animate-spin" />
+                <Icon v-else icon="lucide:download" class="size-5 text-blue-400" />
+                <span>{{ generatingImage ? 'Gerando...' : 'Baixar ou Compartilhar' }}</span>
+              </button>
+              <p class="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest px-4">
+                Essa imagem contém o resumo do seu dia e estatísticas atuais do desafio.
+              </p>
+            </div>
           </div>
-          <button 
-            @click="downloadShareCard"
-            :disabled="!shareCardImageUrl"
-            class="cursor-pointer w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center space-x-2 mt-6"
-          >
-            <svg v-if="generatingImage" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>{{ generatingImage ? 'Gerando...' : 'Baixar imagem' }}</span>
-          </button>
         </div>
-      </div>
-    </template>
+      </template>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import { Icon } from '@iconify/vue'
 import DopaHeader from '@/components/DopaHeader.vue'
 import TaskCard from '@/components/TaskCard.vue'
 import ProgressRing from '@/components/ProgressRing.vue'

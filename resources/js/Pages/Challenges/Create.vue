@@ -1,9 +1,9 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-x-clip pt-28">
         <!-- Header -->
         <DopaHeader :subtitle="isEditMode ? 'Editar Desafio' : 'Criar Desafio'" max-width="4xl" :show-back-button="true" back-link="/challenges" />
 
-        <main class="max-w-4xl mx-auto px-4 py-8">
+        <main class="max-w-4xl mx-auto px-4 pb-8">
             <!-- Progress Steps -->
             <div class="mb-8">
                 <div class="flex items-center justify-center space-x-4">

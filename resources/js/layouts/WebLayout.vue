@@ -12,7 +12,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen pt-16 overflow-x-clip">
     <DopaHeaderGuest home-link="/" />
 
     <slot />

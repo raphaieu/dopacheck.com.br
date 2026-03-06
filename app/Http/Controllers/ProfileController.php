@@ -189,6 +189,7 @@ class ProfileController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'nickname' => $user->nickname,
                 'email' => $user->email,
                 'username' => $user->username,
                 'phone' => $user->phone,
@@ -210,6 +211,7 @@ class ProfileController extends Controller
         
         $validated = $request->validate([
             'username' => ['nullable', 'string', 'max:50', 'unique:users,username,' . $user->id, 'regex:/^[a-zA-Z0-9_]+$/'],
+            'nickname' => ['nullable', 'string', 'max:50'],
             'phone' => ['nullable', 'string', 'max:20'],
             'preferences.notifications.email' => ['boolean'],
             'preferences.notifications.whatsapp' => ['boolean'],
@@ -221,6 +223,10 @@ class ProfileController extends Controller
         // Update basic fields
         if (isset($validated['username'])) {
             $user->username = $validated['username'];
+        }
+
+        if (isset($validated['nickname'])) {
+            $user->nickname = $validated['nickname'];
         }
         
         if (isset($validated['phone'])) {

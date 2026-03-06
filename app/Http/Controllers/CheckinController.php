@@ -224,14 +224,15 @@ class CheckinController extends Controller
                 
                 $filename = 'checkin_' . $user->id . '_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
                 
-                // Salvar localmente por enquanto (futuro: Cloudflare R2)
-                $imagePath = $image->storeAs('checkins', $filename, 'public');
+                // Use s3 disk as the default for cloud storage, fallback to public for local development if STORAGE_DISK is local
+                $disk = env('FILESYSTEM_DISK', 's3');
+                $imagePath = $image->storeAs('checkins', $filename, $disk);
                 
                 if (!$imagePath) {
                     throw new \Exception('Falha ao salvar imagem');
                 }
                 
-                $imageUrl = Storage::url($imagePath);
+                $imageUrl = Storage::disk($disk)->url($imagePath);
             }
 
             // Criar check-in dentro de transação
@@ -296,14 +297,17 @@ class CheckinController extends Controller
             ]);
 
             // Cleanup da imagem se houver erro
-            if ($imagePath && Storage::disk('public')->exists($imagePath)) {
-                try {
-                    Storage::disk('public')->delete($imagePath);
-                } catch (\Exception $cleanupException) {
-                    Log::error('Erro ao limpar imagem após falha', [
-                        'image_path' => $imagePath,
-                        'error' => $cleanupException->getMessage()
-                    ]);
+            if ($imagePath) {
+                $disk = env('FILESYSTEM_DISK', 's3');
+                if (Storage::disk($disk)->exists($imagePath)) {
+                    try {
+                        Storage::disk($disk)->delete($imagePath);
+                    } catch (\Exception $cleanupException) {
+                        Log::error('Erro ao limpar imagem após falha', [
+                            'image_path' => $imagePath,
+                            'error' => $cleanupException->getMessage()
+                        ]);
+                    }
                 }
             }
 
@@ -537,8 +541,9 @@ class CheckinController extends Controller
         try {
             // Remover imagem se existir (antes de deletar o check-in)
             if ($imagePath) {
+                $disk = env('FILESYSTEM_DISK', 's3');
                 try {
-                    Storage::disk('public')->delete($imagePath);
+                    Storage::disk($disk)->delete($imagePath);
                 } catch (\Exception $imageError) {
                     Log::warning('Erro ao remover imagem do check-in', [
                         'checkin_id' => $checkin->id,

@@ -1,51 +1,62 @@
 <template>
-    <div class="relative inline-flex items-center justify-center">
-      <svg
-        :width="size"
-        :height="size"
-        class="transform -rotate-90"
-        :class="class"
-      >
-        <!-- Background circle -->
-        <circle
-          :cx="center"
-          :cy="center"
-          :r="radius"
-          :stroke-width="strokeWidth"
-          stroke="currentColor"
-          fill="none"
-          class="text-gray-200 opacity-20"
-        />
-        
-        <!-- Progress circle -->
-        <circle
-          :cx="center"
-          :cy="center"
-          :r="radius"
-          :stroke-width="strokeWidth"
-          stroke="currentColor"
-          fill="none"
-          :stroke-dasharray="circumference"
-          :stroke-dashoffset="strokeDashoffset"
-          :stroke-linecap="rounded ? 'round' : 'butt'"
-          class="transition-all duration-1000 ease-out"
-          :class="progressColor"
-        />
-      </svg>
+  <div class="relative inline-flex items-center justify-center group/ring">
+    <svg
+      :width="size"
+      :height="size"
+      class="transform -rotate-90"
+      :class="props.class"
+    >
+      <defs>
+        <linearGradient :id="`gradient-${color}`" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" :style="{ stopColor: gradientColors.start, stopOpacity: 1 }" />
+          <stop offset="100%" :style="{ stopColor: gradientColors.end, stopOpacity: 1 }" />
+        </linearGradient>
+        <filter :id="`glow-${color}`" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+
+      <!-- Background circle -->
+      <circle
+        :cx="center"
+        :cy="center"
+        :r="radius"
+        :stroke-width="strokeWidth"
+        stroke="currentColor"
+        fill="none"
+        class="text-slate-200 opacity-30 group-hover/ring:opacity-40 transition-opacity duration-500"
+      />
       
-      <!-- Center content -->
-      <div class="absolute inset-0 flex items-center justify-center">
-        <div class="text-center text-gray-800">
-          <div :class="textSizeClass" class="font-bold leading-none">
-            {{ Math.round(progress) }}%
-          </div>
-          <div v-if="subtitle" :class="subtitleSizeClass" class="text-gray-500 mt-1">
-            {{ subtitle }}
-          </div>
+      <!-- Progress circle -->
+      <circle
+        :cx="center"
+        :cy="center"
+        :r="radius"
+        :stroke-width="strokeWidth"
+        :stroke="`url(#gradient-${color})`"
+        fill="none"
+        :stroke-dasharray="circumference"
+        :stroke-dashoffset="strokeDashoffset"
+        :stroke-linecap="rounded ? 'round' : 'butt'"
+        class="transition-all duration-1000 ease-out"
+        :filter="`url(#glow-${color})`"
+      />
+    </svg>
+    
+    <!-- Center content -->
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="text-center">
+        <div :class="[textSizeClass, 'font-black leading-none tracking-tight text-slate-900 drop-shadow-sm']">
+          {{ Math.round(progress) }}<span class="text-[0.6em] opacity-40 ml-0.5">%</span>
+        </div>
+        <div v-if="subtitle" :class="[subtitleSizeClass, 'text-slate-400 font-bold uppercase tracking-widest mt-0.5 scale-90']">
+          {{ subtitle }}
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
   
   <script setup>
   import { computed } from 'vue'
@@ -93,30 +104,31 @@
     const progress = Math.max(0, Math.min(100, props.progress))
     return circumference.value - (progress / 100) * circumference.value
   })
-  
-  const progressColor = computed(() => {
-    const colorMap = {
-      blue: 'text-blue-500',
-      green: 'text-green-500',
-      purple: 'text-purple-500',
-      red: 'text-red-500',
-      yellow: 'text-yellow-500',
-      indigo: 'text-indigo-500'
+
+  const gradientColors = computed(() => {
+    const map = {
+      blue: { start: '#2563eb', end: '#7c3aed' },
+      green: { start: '#059669', end: '#10b981' },
+      purple: { start: '#7c3aed', end: '#d946ef' },
+      red: { start: '#dc2626', end: '#f87171' },
+      yellow: { start: '#ca8a04', end: '#facc15' },
+      indigo: { start: '#4f46e5', end: '#818cf8' }
     }
-    return colorMap[props.color] || 'text-blue-500'
+    return map[props.color] || map.blue
   })
   
   const textSizeClass = computed(() => {
     if (props.size <= 60) return 'text-xs'
     if (props.size <= 80) return 'text-sm'
+    if (props.size <= 100) return 'text-base'
     if (props.size <= 120) return 'text-lg'
     return 'text-xl'
   })
   
   const subtitleSizeClass = computed(() => {
-    if (props.size <= 60) return 'text-xs'
-    if (props.size <= 80) return 'text-xs'
-    if (props.size <= 120) return 'text-sm'
-    return 'text-base'
+    if (props.size <= 60) return 'text-[8px]'
+    if (props.size <= 80) return 'text-[9px]'
+    if (props.size <= 120) return 'text-[10px]'
+    return 'text-xs'
   })
-  </script>
+</script>
