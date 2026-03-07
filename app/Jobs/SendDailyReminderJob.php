@@ -106,8 +106,18 @@ class SendDailyReminderJob implements ShouldQueue
     {
         $instance = env('EVOLUTION_INSTANCE');
         if (!$instance || empty($groupsToNotify)) {
+            Log::info('SendDailyReminderJob: notifyGroups ignorado (sem instance ou sem grupos)', [
+                'has_instance' => !empty($instance),
+                'groups_count' => count($groupsToNotify),
+            ]);
             return;
         }
+
+        Log::info('SendDailyReminderJob: enviando resumo diário para grupos', [
+            'instance' => $instance,
+            'groups_count' => count($groupsToNotify),
+            'group_jids' => array_keys($groupsToNotify),
+        ]);
 
         foreach ($groupsToNotify as $jid => $data) {
             $teamName = $data['team_name'];
@@ -115,7 +125,10 @@ class SendDailyReminderJob implements ShouldQueue
             $pending = array_unique($data['pending']);
             
             $total = count($completed) + count($pending);
-            if ($total === 0) continue;
+            if ($total === 0) {
+                Log::debug('SendDailyReminderJob: grupo sem participantes hoje', ['jid' => $jid, 'team' => $teamName]);
+                continue;
+            }
             
             $rate = round((count($completed) / $total) * 100);
 
@@ -143,13 +156,27 @@ class SendDailyReminderJob implements ShouldQueue
 
             $message .= "\n👉 " . url('/dopa');
 
+            Log::info('SendDailyReminderJob: enviando resumo para grupo', [
+                'group_jid' => $jid,
+                'team_name' => $teamName,
+                'message_length' => strlen($message),
+                'completed_count' => count($completed),
+                'pending_count' => count($pending),
+            ]);
+
             try {
                 $evolution->sendTextMessage($instance, $jid, $message);
-            } catch (\Throwable $e) {
-                Log::error('Erro ao enviar resumo diário via WhatsApp', [
+                Log::info('SendDailyReminderJob: resumo enviado com sucesso para grupo', [
                     'group_jid' => $jid,
-                    'team' => $teamName,
-                    'error' => $e->getMessage()
+                    'team_name' => $teamName,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('SendDailyReminderJob: erro ao enviar resumo diário via WhatsApp', [
+                    'group_jid' => $jid,
+                    'team_name' => $teamName,
+                    'error' => $e->getMessage(),
+                    'exception_class' => $e::class,
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -177,11 +204,13 @@ class SendDailyReminderJob implements ShouldQueue
 
         try {
             $evolution->sendTextMessage($instance, $phone, $message);
+            Log::info('SendDailyReminderJob: lembrete DM enviado', ['user_id' => $user->id, 'phone' => $phone]);
         } catch (\Throwable $e) {
-            Log::error('Erro ao enviar lembrete via WhatsApp', [
+            Log::error('SendDailyReminderJob: erro ao enviar lembrete via WhatsApp (DM)', [
                 'user_id' => $user->id,
                 'phone' => $phone,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'exception_class' => $e::class,
             ]);
         }
     }
