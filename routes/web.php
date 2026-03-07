@@ -26,6 +26,8 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\TeamJoinController;
 use App\Http\Controllers\TeamApplicationsController;
+use App\Http\Controllers\TeamCreateFromChallengeController;
+use App\Http\Controllers\MyTeamsController;
 
 // ========================================
 // HEALTH CHECK
@@ -137,7 +139,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     
     // DOPA Check dashboard (principal)
     Route::get('/dopa', [DopaController::class, 'dashboard'])->name('dopa.dashboard');
-    
+
+    // Meus times (listagem + acesso a editar/excluir/criar)
+    Route::get('/dopa/meus-times', [MyTeamsController::class, 'index'])->name('teams.my-index');
+    Route::get('/dopa/meus-times/{team}/editar', [MyTeamsController::class, 'edit'])->name('teams.edit');
+    Route::put('/dopa/meus-times/{team}', [MyTeamsController::class, 'update'])->name('teams.dopa-update');
+
     // ========================================
     // CHALLENGES MANAGEMENT
     // ========================================
@@ -203,6 +210,15 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/challenge/{userChallenge}', [ReportController::class, 'challenge'])->name('challenge');
         Route::get('/export', [ReportController::class, 'export'])->name('export');
     });
+
+    // ========================================
+    // TEAM SELF-SERVICE (Novo time a partir de Criar desafio)
+    // Caminho fora de /teams/* para não ser capturado por Jetstream's GET /teams/{team}
+    // ========================================
+    Route::get('/dopa/novo-time', [TeamCreateFromChallengeController::class, 'show'])
+        ->name('teams.create-from-challenge');
+    Route::post('/dopa/novo-time', [TeamCreateFromChallengeController::class, 'store'])
+        ->name('teams.create-from-challenge.store');
 
     // ========================================
     // TEAM APPLICATIONS (onboarding approvals)

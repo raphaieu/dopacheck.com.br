@@ -204,6 +204,7 @@
                                                   👥 {{ team.name }}
                                                 </option>
                                               </optgroup>
+                                              <option value="new_team">➕ Novo time</option>
                                             </select>
                                             <Icon icon="lucide:chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 size-4" />
                                         </div>
@@ -500,6 +501,10 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    preselected_team_id: {
+        type: Number,
+        default: null,
+    },
 })
 
 const isEditMode = computed(() => !!props.challenge?.id)
@@ -512,15 +517,23 @@ const shareScope = ref('global') // 'global' | teamId (string)
 
 const visibility = computed(() => {
     if (!shareEnabled.value) return 'private'
-    if (shareScope.value === 'global') return 'global'
+    if (shareScope.value === 'global' || shareScope.value === 'new_team') return 'global'
     return 'team'
 })
 
 const visibilityPreview = computed(() => {
     if (visibility.value === 'private') return '🔒 Privado (só você)'
+    if (shareScope.value === 'new_team') return '➕ Novo time (será redirecionado)'
     if (visibility.value === 'global') return '🌍 Global'
     const team = teamOptions.value.find(t => String(t.id) === String(shareScope.value))
     return `👥 Time: ${team?.name ?? 'Selecionado'}`
+})
+
+// Ao selecionar "Novo time", redireciona para a tela de cadastro; ao voltar, o time virá em preselected_team_id
+watch(shareScope, (val) => {
+    if (val === 'new_team') {
+        router.visit(route('teams.create-from-challenge'))
+    }
 })
 
 // Edição: confirmação de perda de progresso quando há alterações sensíveis
@@ -801,11 +814,19 @@ if (isEditMode.value) {
             icon: t.icon ?? '📝',
             color: t.color ?? '#3B82F6',
         }))
-} else if (form.tasks.length === 0) {
-    // Defaults de datas no create
-    form.start_date = toLocalIsoDate(new Date())
-    form.end_date = addDaysIso(form.start_date, Number(form.duration_days) - 1)
-    addTask()
+} else {
+    // Create mode: pré-seleção de time (retorno do fluxo "Novo time")
+    if (props.preselected_team_id) {
+        shareEnabled.value = true
+        shareScope.value = String(props.preselected_team_id)
+        form.visibility = 'team'
+        form.team_id = props.preselected_team_id
+    }
+    if (form.tasks.length === 0) {
+        form.start_date = toLocalIsoDate(new Date())
+        form.end_date = addDaysIso(form.start_date, Number(form.duration_days) - 1)
+        addTask()
+    }
 }
 </script>
 

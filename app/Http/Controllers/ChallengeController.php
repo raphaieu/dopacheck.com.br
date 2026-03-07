@@ -573,18 +573,28 @@ class ChallengeController extends Controller
     public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        
+
         if (!$user->canCreateChallenge()) {
             return redirect()->route('challenges.index')
                 ->with('error', 'Você já tem o máximo de desafios ativos. Upgrade para PRO para desafios ilimitados.');
         }
-        
+
+        $teamId = $request->query('team_id');
+        $teamId = is_numeric($teamId) ? (int) $teamId : null;
+        if ($teamId !== null) {
+            $belongsToTeam = $user->allTeams()->contains('id', $teamId);
+            if (!$belongsToTeam) {
+                $teamId = null;
+            }
+        }
+
         return Inertia::render('Challenges/Create', [
             'teams' => $user->allTeams()->map(fn ($team) => [
                 'id' => $team->id,
                 'name' => $team->name,
                 'personal_team' => (bool) ($team->personal_team ?? false),
             ])->values(),
+            'preselected_team_id' => $teamId,
         ]);
     }
 

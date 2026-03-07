@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Challenge;
 use App\Models\ChallengeTask;
 use App\Models\Checkin;
 use App\Models\UserChallenge;
@@ -109,6 +110,15 @@ class CheckinController extends Controller
                 return response()->json(['message' => 'Desafio não encontrado ou inativo'], 404);
             }
             return back()->withErrors(['message' => 'Desafio não encontrado ou inativo']);
+        }
+
+        // Desafio de time cujo time foi excluído: não permite check-in
+        $challenge = $userChallenge->challenge;
+        if ($challenge->visibility === Challenge::VISIBILITY_TEAM && $challenge->team_id === null) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Este desafio não está mais disponível (o time foi removido).'], 403);
+            }
+            return back()->withErrors(['message' => 'Este desafio não está mais disponível (o time foi removido).']);
         }
 
         // Verificar se o desafio não está expirado
@@ -366,6 +376,12 @@ class CheckinController extends Controller
 
         if (!$userChallenge) {
             return response()->json(['message' => 'Desafio não encontrado ou inativo'], 404);
+        }
+
+        // Desafio de time cujo time foi excluído: não permite check-in
+        $challenge = $userChallenge->challenge;
+        if ($challenge->visibility === Challenge::VISIBILITY_TEAM && $challenge->team_id === null) {
+            return response()->json(['message' => 'Este desafio não está mais disponível (o time foi removido).'], 403);
         }
 
         // Verificar se o desafio não está expirado

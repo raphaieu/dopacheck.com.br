@@ -216,11 +216,19 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     }
 
     /**
-     * Get active challenges for the user
+     * Get active challenges for the user.
+     * Exclui participações cujo desafio era de um time que foi excluído (visibility=team e team_id=null).
      */
     public function activeChallenges(): HasMany
     {
-        return $this->userChallenges()->where('status', 'active');
+        return $this->userChallenges()
+            ->where('status', 'active')
+            ->whereHas('challenge', function ($q) {
+                $q->where(function ($q2) {
+                    $q2->where('visibility', '!=', Challenge::VISIBILITY_TEAM)
+                        ->orWhereNotNull('team_id');
+                });
+            });
     }
     
     /**

@@ -40,6 +40,13 @@
                   Assinaturas
                 </Link>
                 <Link
+                  :href="route('teams.my-index')"
+                  class="bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-5 py-2.5 rounded-2xl font-bold hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2 text-sm shadow-sm"
+                >
+                  <Icon icon="lucide:users" class="size-4" />
+                  Meus times
+                </Link>
+                <Link
                   href="/profile/settings"
                   class="bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-5 py-2.5 rounded-2xl font-bold hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2 text-sm shadow-sm"
                 >
