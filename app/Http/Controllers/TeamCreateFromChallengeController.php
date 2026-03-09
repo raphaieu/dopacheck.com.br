@@ -24,10 +24,14 @@ class TeamCreateFromChallengeController extends Controller
         $user = $request->user();
         $phone = $user->whatsapp_number ?? '';
         $phone = is_string($phone) ? preg_replace('/\D/', '', $phone) : '';
-        if (strlen($phone) === 11 && !str_starts_with($phone, '55')) {
+        if (strlen($phone) === 11 && ! str_starts_with($phone, '55')) {
             $phone = '55' . $phone;
         }
-        $hasSession = $phone !== '' && $whatsappSession->get($user->whatsapp_number ?? '') !== null;
+
+        $hasSession = (bool) ($user->whatsapp_confirmed ?? false);
+        if (! $hasSession) {
+            $hasSession = $phone !== '' && $whatsappSession->get($user->whatsapp_number ?? '') !== null;
+        }
 
         if (!$hasSession) {
             return Inertia::render('Teams/CreateFromChallenge', [
@@ -50,10 +54,14 @@ class TeamCreateFromChallengeController extends Controller
         $user = $request->user();
         $phone = $user->whatsapp_number ?? '';
         $phone = is_string($phone) ? preg_replace('/\D/', '', $phone) : '';
-        if (strlen($phone) === 11 && !str_starts_with($phone, '55')) {
+        if (strlen($phone) === 11 && ! str_starts_with($phone, '55')) {
             $phone = '55' . $phone;
         }
-        $hasSession = $phone !== '' && $whatsappSession->get($user->whatsapp_number ?? '') !== null;
+
+        $hasSession = (bool) ($user->whatsapp_confirmed ?? false);
+        if (! $hasSession) {
+            $hasSession = $phone !== '' && $whatsappSession->get($user->whatsapp_number ?? '') !== null;
+        }
 
         if (!$hasSession) {
             return redirect()->route('teams.create-from-challenge')

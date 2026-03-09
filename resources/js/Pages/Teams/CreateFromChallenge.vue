@@ -19,11 +19,16 @@
                     <p class="text-slate-600 text-sm max-w-md mx-auto">
                         Para criar um time para grupo, você precisa ter seu WhatsApp vinculado. Envie uma mensagem no privado para o bot para vincular — assim conseguimos correlacionar o grupo ao seu time quando você adicionar o bot.
                     </p>
-                    <a :href="whatsapp_connect_url"
-                        class="inline-flex items-center gap-2 px-6 py-4 bg-emerald-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-emerald-700 transition-colors">
-                        <Icon icon="lucide:link" class="size-5" />
-                        Conectar WhatsApp
-                    </a>
+                    <button
+                        type="button"
+                        @click="handleConnect"
+                        :disabled="connecting"
+                        class="cursor-pointer inline-flex items-center gap-2 px-6 py-4 bg-emerald-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-emerald-700 transition-colors disabled:opacity-60"
+                    >
+                        <Icon v-if="connecting" icon="lucide:loader-2" class="size-5 animate-spin" />
+                        <Icon v-else icon="lucide:link" class="size-5" />
+                        <span>{{ connecting ? 'Conectando...' : 'Conectar WhatsApp' }}</span>
+                    </button>
                     <p class="text-xs text-slate-500">
                         <Link :href="route('challenges.create')" class="underline hover:text-slate-700">Voltar para Criar desafio</Link>
                     </p>
@@ -115,13 +120,64 @@
             </form>
         </main>
     </div>
+
+    <!-- Modal para coletar telefone (reaproveita fluxo do componente de conexão) -->
+    <Teleport to="body">
+        <Transition name="fade">
+            <div v-if="showPhoneModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+                <div class="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full relative border border-white/50 animate-in zoom-in-95 duration-300">
+                    <button
+                        type="button"
+                        @click="showPhoneModal = false"
+                        class="cursor-pointer absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-100 p-2 rounded-full transition-all"
+                    >
+                        <Icon icon="lucide:x" class="size-6" />
+                    </button>
+                    <div class="text-center mb-8">
+                        <div class="size-20 mx-auto bg-blue-100 rounded-3xl flex items-center justify-center text-blue-600 mb-4 shadow-inner">
+                            <Icon icon="lucide:phone" class="size-10" />
+                        </div>
+                        <h3 class="text-2xl font-black text-slate-900 tracking-tight">Conectar WhatsApp</h3>
+                        <p class="text-slate-500 font-medium mt-1">Digite seu número com DDD (apenas números)</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                <Icon icon="lucide:smartphone" class="size-5" />
+                            </div>
+                            <input
+                                v-model="phoneNumber"
+                                type="tel"
+                                placeholder="Ex: 5511999999999"
+                                class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-black text-lg tracking-tight placeholder:font-medium placeholder:text-slate-300"
+                                @keyup.enter="startConnection"
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            @click="startConnection"
+                            :disabled="connecting"
+                            class="cursor-pointer w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-slate-800 disabled:opacity-50 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 active:scale-[0.98]"
+                        >
+                            <Icon v-if="connecting" icon="lucide:loader-2" class="size-5 animate-spin" />
+                            <Icon v-else icon="lucide:zap" class="size-5 text-blue-400" />
+                            <span>{{ connecting ? 'Iniciando...' : 'Conectar agora' }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+    </Teleport>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useForm, Link, usePage } from '@inertiajs/vue3'
+import { computed, ref, onMounted } from 'vue'
+import { useForm, Link, usePage, router } from '@inertiajs/vue3'
 import { Icon } from '@iconify/vue'
 import DopaHeaderWrapper from '@/components/DopaHeaderWrapper.vue'
+import { csrfFetch } from '@/utils/csrf.js'
 
 const props = defineProps({
     whatsapp_required: { type: Boolean, default: false },
@@ -145,4 +201,60 @@ const whatsappRaphaelUrl = computed(() => {
     const text = encodeURIComponent('Olá, vim pelo DOPA Check – quero personalizar a landing do meu time.')
     return `https://wa.me/5511948863848?text=${text}`
 })
+
+// Estado de conexão WhatsApp (reuso simplificado do componente WhatsAppConnection)
+const connecting = ref(false)
+const showPhoneModal = ref(false)
+const phoneNumber = ref('')
+
+onMounted(() => {
+    const user = page.props.auth?.user || {}
+    if (typeof user.whatsapp_number === 'string' && user.whatsapp_number.trim() !== '') {
+        phoneNumber.value = user.whatsapp_number
+    } else if (typeof user.phone === 'string' && user.phone.trim() !== '') {
+        phoneNumber.value = user.phone
+    }
+})
+
+const handleConnect = async () => {
+    if (phoneNumber.value.match(/^\d{10,15}$/)) {
+        await startConnection()
+    } else {
+        showPhoneModal.value = true
+    }
+}
+
+const startConnection = async () => {
+    if (!phoneNumber.value.match(/^\d{10,15}$/)) {
+        alert('Digite um número de WhatsApp válido.')
+        return
+    }
+    connecting.value = true
+    try {
+        const response = await csrfFetch('/whatsapp/connect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ phone_number: phoneNumber.value }),
+        })
+        if (!response.ok) {
+            throw new Error('Erro na resposta do servidor')
+        }
+        const data = await response.json()
+        if (data.success && data.whatsapp_url) {
+            showPhoneModal.value = false
+            // Abre o WhatsApp em nova aba para o usuário enviar a DM de confirmação
+            window.open(data.whatsapp_url, '_blank')
+            // Recarrega a página para reavaliar o bloqueio (usa sessão Redis / whatsapp_confirmed)
+            router.visit(route('teams.create-from-challenge'))
+        }
+    } catch (error) {
+        console.error('Erro ao conectar WhatsApp:', error)
+        alert('Erro ao conectar WhatsApp. Tente novamente.')
+    } finally {
+        connecting.value = false
+    }
+}
 </script>

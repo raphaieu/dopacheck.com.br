@@ -181,6 +181,84 @@ class WhatsAppController extends Controller
                     'media_url_source' => $item['media_url_source'] ?? null,
                 ]);
 
+                // 1) Confirmação permanente do número do usuário (1:1 com o bot)
+                try {
+                    $remoteJid = (string) ($item['remote_jid'] ?? '');
+                    $senderPhoneRaw = (string) ($item['sender_phone'] ?? '');
+                    $senderPhone = preg_replace('/\D/', '', $senderPhoneRaw);
+
+                    if ($senderPhone !== '' && $remoteJid !== '' && ! str_contains($remoteJid, '@g.us')) {
+                        /** @var \App\Services\PhoneNumberService $phoneService */
+                        $phoneService = app(\App\Services\PhoneNumberService::class);
+                        $user = $phoneService->findUserByPhone($senderPhoneRaw);
+
+                        if ($user) {
+                            if (! $user->whatsapp_confirmed) {
+                                $user->forceFill([
+                                    'whatsapp_confirmed' => true,
+                                ])->save();
+                            }
+
+                            if (! is_string($user->whatsapp_number) || trim($user->whatsapp_number) === '') {
+                                $normalized = $phoneService->normalize($senderPhoneRaw);
+                                if ($normalized !== '') {
+                                    $user->forceFill([
+                                        'whatsapp_number' => $normalized,
+                                    ])->save();
+                                }
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Falha ao marcar usuário como confirmado no WhatsApp', [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+
+                // 2) Vincular automaticamente o JID do grupo ao time do dono (primeira interação)
+                try {
+                    $remoteJid = (string) ($item['remote_jid'] ?? '');
+                    $senderPhoneRaw = (string) ($item['sender_phone'] ?? '');
+
+                    if ($remoteJid !== '' && str_contains($remoteJid, '@g.us') && $senderPhoneRaw !== '') {
+                        /** @var \App\Services\PhoneNumberService $phoneService */
+                        $phoneService = app(\App\Services\PhoneNumberService::class);
+                        $user = $phoneService->findUserByPhone($senderPhoneRaw);
+
+                        if ($user) {
+                            // Se já existe time com esse JID, não faz nada
+                            $existingTeam = \App\Models\Team::query()
+                                ->where('whatsapp_group_jid', $remoteJid)
+                                ->first();
+
+                            if (! $existingTeam) {
+                                // Pega o time mais recente do usuário sem JID preenchido
+                                $teamToUpdate = \App\Models\Team::query()
+                                    ->where('user_id', $user->id)
+                                    ->whereNull('whatsapp_group_jid')
+                                    ->orderByDesc('id')
+                                    ->first();
+
+                                if ($teamToUpdate) {
+                                    $teamToUpdate->update([
+                                        'whatsapp_group_jid' => $remoteJid,
+                                    ]);
+
+                                    Log::info('WhatsApp group JID vinculado automaticamente ao time', [
+                                        'team_id' => $teamToUpdate->id,
+                                        'user_id' => $user->id,
+                                        'remote_jid' => $remoteJid,
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Falha ao vincular automaticamente whatsapp_group_jid ao time', [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+
                 // Para imagem com hashtag: processa check-in (mesmo sem base64)
                 if (($item['type'] ?? null) === 'image' && !empty($item['hashtags'])) {
                     $stored = null;

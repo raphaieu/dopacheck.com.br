@@ -69,7 +69,7 @@
         <div class="flex items-center gap-6">
           <div class="group/stat">
             <div class="text-xl font-black text-slate-900 tracking-tight leading-none">{{ whatsappSession.checkin_count ?? 0 }}</div>
-            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Check-ins via Zap</div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Check-ins via WhatsApp</div>
           </div>
           <div v-if="whatsappSession.last_activity" class="text-right sm:text-left">
             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Última Atividade</div>
@@ -152,7 +152,7 @@
                 class="cursor-pointer w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-slate-800 disabled:opacity-50 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 active:scale-[0.98]">
                 <Icon v-if="connecting" icon="lucide:loader-2" class="size-5 animate-spin" />
                 <Icon v-else icon="lucide:zap" class="size-5 text-blue-400" />
-                <span>{{ connecting ? 'Iniciando...' : 'Gerar QR Code' }}</span>
+                <span>{{ connecting ? 'Iniciando...' : 'Conectar agora' }}</span>
               </button>
             </div>
           </div>

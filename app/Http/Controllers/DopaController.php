@@ -216,9 +216,9 @@ class DopaController extends Controller
         $whatsappSession = $user->whatsapp_number
             ? $whatsappSessionService->get($user->whatsapp_number)
             : null;
-        
+
         $userArray = $user->toArray();
-        $userArray['whatsapp_connected'] = $whatsappSession !== null;
+        $userArray['whatsapp_connected'] = (bool) ($user->whatsapp_confirmed ?? false) || $whatsappSession !== null;
         $userArray['whatsapp_session'] = $whatsappSession;
         
         return Inertia::render('Dashboard/Index', [

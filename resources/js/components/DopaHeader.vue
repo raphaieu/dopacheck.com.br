@@ -80,6 +80,16 @@
                   </div>
                   Perfil
                 </Link>
+                <Link
+                  :href="route('teams.my-index')"
+                  class="flex items-center px-4 py-2.5 hover:bg-emerald-50/60 text-slate-600 hover:text-emerald-600 transition-all font-bold text-sm mx-1.5 rounded-xl"
+                  @click="showMenu = false"
+                >
+                  <div class="size-8 rounded-lg bg-emerald-50 flex items-center justify-center mr-3">
+                    <Icon icon="lucide:users" class="size-4.5" />
+                  </div>
+                  Meus Times
+                </Link>
                 <Link 
                   href="/challenges" 
                   class="flex items-center px-4 py-2.5 hover:bg-indigo-50/50 text-slate-600 hover:text-indigo-600 transition-all font-bold text-sm mx-1.5 rounded-xl"

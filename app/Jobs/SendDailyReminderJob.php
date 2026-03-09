@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\UserChallenge;
-use App\Notifications\CheckinReminderNotification;
+use App\Notifications\DailyCheckinSummaryNotification;
 use App\Services\EvolutionApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,6 +33,7 @@ class SendDailyReminderJob implements ShouldQueue
 
         $remindersSentCount = 0;
         $groupsToNotify = []; // [jid => ['team_name' => str, 'completed' => [], 'pending' => []]]
+        $pendingByUser = []; // [user_id => ['user' => User, 'participations' => UserChallenge[]]]
 
         foreach ($activeParticipations as $participation) {
             $user = $participation->user;
@@ -71,15 +72,15 @@ class SendDailyReminderJob implements ShouldQueue
                 continue;
             }
 
-            // 1. Notificação via Canais Padrão (E-mail/Database)
-            try {
-                $user->notify(new CheckinReminderNotification($participation));
-            } catch (\Throwable $e) {
-                Log::error('Erro ao enviar notificação de lembrete (Mail/DB)', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage()
-                ]);
+            // Guarda participação pendente para resumo consolidado por usuário
+            $userId = $user->id;
+            if (! isset($pendingByUser[$userId])) {
+                $pendingByUser[$userId] = [
+                    'user' => $user,
+                    'participations' => [],
+                ];
             }
+            $pendingByUser[$userId]['participations'][] = $participation;
 
             // 2. Tenta DM se não há grupo (ou se habilitado especificamente)
             if (!$groupJid) {
@@ -90,6 +91,21 @@ class SendDailyReminderJob implements ShouldQueue
             }
 
             $remindersSentCount++;
+        }
+
+        // 2. Enviar uma notificação consolidada por usuário (e-mail/DB)
+        foreach ($pendingByUser as $bucket) {
+            $user = $bucket['user'];
+            $participations = $bucket['participations'];
+
+            try {
+                $user->notify(new DailyCheckinSummaryNotification($participations));
+            } catch (\Throwable $e) {
+                Log::error('Erro ao enviar notificação de resumo diário consolidado (Mail/DB)', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // 3. Enviar notificações de grupo acumuladas

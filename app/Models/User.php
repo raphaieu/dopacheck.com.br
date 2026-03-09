@@ -46,6 +46,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         'password',
         'plan',
         'whatsapp_number',
+        'whatsapp_confirmed',
         'phone',
         'subscription_ends_at',
         'preferences',
@@ -78,6 +79,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     {
         return [
             'email_verified_at' => 'datetime',
+            'whatsapp_confirmed' => 'boolean',
             'password' => 'hashed',
             'trial_ends_at' => 'datetime',
             'subscription_ends_at' => 'datetime',
