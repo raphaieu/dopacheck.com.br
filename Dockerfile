@@ -62,7 +62,7 @@ RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interacti
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
 
-EXPOSE 8000
+EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
-CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8000", "--no-interaction"]
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=80", "--no-interaction"]

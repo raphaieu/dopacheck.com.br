@@ -8,7 +8,7 @@ services:
     container_name: dopacheck_app
     restart: unless-stopped
     expose:
-      - "8000"
+      - "80"
     environment:
       APP_ENV: ${APP_ENV:-production}
       APP_DEBUG: ${APP_DEBUG:-false}
@@ -43,7 +43,7 @@ services:
     networks:
       - dopacheck-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 10s
       retries: 3

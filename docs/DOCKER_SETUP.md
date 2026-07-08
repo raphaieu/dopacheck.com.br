@@ -83,7 +83,7 @@ Se a porta 8000 estiver ocupada, defina no `.env`: `APP_PORT=8001` (ou outra liv
 
 ### Produção / Coolify
 
-Nenhuma porta é publicada no host — o Traefik do Coolify roteia para o serviço `app` na rede interna (porta 8000 do container). MySQL e Redis ficam acessíveis apenas entre containers.
+Nenhuma porta é publicada no host — o Traefik do Coolify roteia para o serviço `app` na rede interna (porta **80** do container). MySQL e Redis ficam acessíveis apenas entre containers.
 
 ## 🔄 Comparação dos Modos de Desenvolvimento
 
@@ -249,7 +249,7 @@ Use o arquivo `docker-compose.coolify.yml`, otimizado para VPS com Coolify + Tra
 
 | Serviço | Função |
 |---------|--------|
-| **app** | FrankenPHP + Octane (porta 8000 interna) |
+| **app** | FrankenPHP + Octane (porta 80 interna) |
 | **horizon** | Processamento de filas |
 | **scheduler** | Cron do Laravel (`schedule:work`) |
 | **mysql** | Banco de dados (sem porta exposta) |
@@ -259,7 +259,8 @@ Use o arquivo `docker-compose.coolify.yml`, otimizado para VPS com Coolify + Tra
 
 1. **Novo recurso** → Docker Compose → conecte o repositório Git
 2. **Compose file**: `docker-compose.coolify.yml`
-3. **Domínio**: configure `dopacheck.com.br` apontando para o serviço `app`, porta `8000`
+3. **Domínio**: configure `https://dopacheck.com.br` apontando para o serviço **`app`**, porta **`80`**
+   - No Coolify o domínio deve incluir a porta: `https://dopacheck.com.br:80` (isso define o load balancer do Traefik)
 4. **Variáveis de ambiente**: cole o `.env` de produção (mínimo abaixo)
 5. **Deploy**
 
