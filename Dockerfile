@@ -17,7 +17,7 @@ COPY public ./public
 RUN npm run build
 
 # Stage 3: Final image
-FROM dunglas/frankenphp:1.4.0-php8.3-alpine AS base
+FROM dunglas/frankenphp:1.5-php8.3-alpine AS base
 
 RUN apk add --no-cache curl bash su-exec
 
@@ -65,4 +65,4 @@ RUN chmod +x /usr/local/bin/entrypoint
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
-CMD ["php", "artisan", "octane:start", "--host=0.0.0.0", "--port=8000"]
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8000", "--no-interaction"]
