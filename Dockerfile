@@ -1,28 +1,40 @@
-# Stage 1: Frontend Assets build
-FROM oven/bun:1-slim AS node-builder
+# Stage 1: PHP dependencies (needed by Vite/Ziggy)
+FROM composer:2 AS composer-builder
 WORKDIR /app
-COPY . .
-RUN bun install --frozen-lockfile
-#RUN bun run build
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-scripts \
+    --ignore-platform-req=ext-intl --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-bcmath
 
-# Stage 2: Final image
+# Stage 2: Frontend assets
+FROM node:22-alpine AS node-builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY --from=composer-builder /app/vendor ./vendor
+COPY vite.config.ts tsconfig.json postcss.config.js components.json ./
+COPY resources ./resources
+COPY public ./public
+RUN npm run build
+
+# Stage 3: Final image
 FROM dunglas/frankenphp:1.4.0-php8.3-alpine AS base
 
-# Create required directories with proper permissions
+RUN apk add --no-cache curl bash su-exec
+
 RUN mkdir -p /data/caddy /config/caddy /home/.local/share/caddy && \
     chmod -R 755 /data /config /home/.local && \
-    # Add non-root user
     addgroup -g 1000 appgroup && \
     adduser -u 1000 -G appgroup -h /app -s /bin/sh -D appuser && \
-    # Give ownership of Caddy directories
     chown -R appuser:appgroup /data /config /home/.local
 
-# Set Caddy environment variables
 ENV XDG_CONFIG_HOME=/config \
-    XDG_DATA_HOME=/data
+    XDG_DATA_HOME=/data \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    OCTANE_SERVER=frankenphp
 
-# Install composer and PHP extensions
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 RUN install-php-extensions \
     pcntl \
     intl \
@@ -32,47 +44,25 @@ RUN install-php-extensions \
     zip \
     bcmath \
     redis && \
-    # Install Bun globally
-    apk add --no-cache curl bash && \
-    curl -fsSL https://bun.sh/install | bash && \
-    mv /root/.bun /usr/local/bun && \
-    ln -s /usr/local/bun/bin/bun /usr/local/bin/bun && \
-    chown -R appuser:appgroup /usr/local/bun && \
-    # Cleanup
     rm -rf /tmp/* /var/cache/apk/*
 
-# Environment configuration
-ENV APP_ENV=development \
-    APP_DEBUG=true \
-    OCTANE_SERVER=frankenphp
-
-# Configure PHP based on environment
-COPY docker/php/production.ini $PHP_INI_DIR/conf.d/
-COPY docker/php/development.ini $PHP_INI_DIR/conf.d/
+COPY docker/php/production.ini $PHP_INI_DIR/conf.d/99-production.ini
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
-# Set up application
 WORKDIR /app
 COPY --chown=appuser:appgroup . .
-# COPY --from=node-builder --chown=appuser:appgroup /app/public/build/ ./public/build/
+COPY --from=node-builder --chown=appuser:appgroup /app/public/build ./public/build/
 
-# Install dependencies and optimize
-RUN composer install --prefer-dist --optimize-autoloader && \
-    php artisan optimize && \
-    php artisan view:cache && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan event:cache && \
-    # Set proper permissions
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction && \
     chown -R appuser:appgroup /app && \
-    chmod -R 755 storage bootstrap/cache && \
+    chmod -R ug+rwX storage bootstrap/cache && \
     rm -rf tests node_modules .git* && \
     composer clear-cache
 
-USER appuser
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint
 
-# Expose port
 EXPOSE 8000
 
-# Default command (can be overridden by docker-compose)
-CMD ["php", "artisan", "octane:start", "--host=0.0.0.0"]
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+CMD ["php", "artisan", "octane:start", "--host=0.0.0.0", "--port=8000"]

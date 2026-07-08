@@ -70,18 +70,28 @@ docker compose --profile tools up -d
 
 ## 🌐 Acessos
 
-- **Aplicação Laravel**: http://localhost:8000
-- **phpMyAdmin**: http://localhost:8082 (se usar --profile tools)
-- **MySQL**: localhost:3306
-- **Redis**: localhost:6379
+### Desenvolvimento local (`docker compose up`)
+
+O `docker-compose.override.yml` expõe portas no host (configuráveis via `.env`):
+
+- **Aplicação Laravel**: http://localhost:${APP_PORT:-8000}
+- **phpMyAdmin**: http://localhost:${FORWARD_PHPMYADMIN_PORT:-8082} (com `--profile tools`)
+- **MySQL**: localhost:${FORWARD_DB_PORT:-3306}
+- **Redis**: localhost:${FORWARD_REDIS_PORT:-6379}
+
+Se a porta 8000 estiver ocupada, defina no `.env`: `APP_PORT=8001` (ou outra livre).
+
+### Produção / Coolify
+
+Nenhuma porta é publicada no host — o Traefik do Coolify roteia para o serviço `app` na rede interna (porta 8000 do container). MySQL e Redis ficam acessíveis apenas entre containers.
 
 ## 🔄 Comparação dos Modos de Desenvolvimento
 
 | Modo | Comando | Vantagens | Desvantagens | Uso Recomendado |
 |------|---------|-----------|--------------|-----------------|
-| **Docker (Core Web)** | `docker compose up -d` | Ambiente consistente com MySQL + Redis + Horizon | Mais pesado que rodar local | Desenvolvimento geral |
+| **Docker (Core Web)** | `docker compose up -d` | Ambiente consistente com MySQL + Redis + Horizon; portas via override | Mais pesado que rodar local | Desenvolvimento geral |
 | **Docker + tools** | `docker compose --profile tools up -d` | Inclui phpMyAdmin | Mais serviços | Debug/inspeção |
-| **Produção Local** | `docker compose -f docker-compose.yml up -d` | Idêntico ao deploy | Sem hot reload | Testes finais |
+| **Produção Local** | `docker compose -f docker-compose.yml up -d` | Sem bind de portas no host (como Coolify) | Sem acesso direto localhost | Testes finais |
 
 ## 🔧 Comandos Úteis
 
@@ -227,14 +237,101 @@ docker compose ps
 - Use senhas fortes para `DB_PASSWORD` (MySQL) e `EVOLUTION_API_KEY` (WhatsApp)
 - Configure `REDIS_PASSWORD` em produção
 
-### Firewall
-Em produção, considere:
-- Expor apenas as portas necessárias
-- Usar reverse proxy (Nginx/Traefik)
-- Configurar SSL/TLS
-- Implementar rate limiting
+### Firewall / portas
+
+Em produção (Coolify), **não mapeie portas no compose** — o proxy (Traefik) cuida do roteamento. No dev local, use `APP_PORT`, `FORWARD_DB_PORT`, etc. no `.env` se alguma porta padrão estiver ocupada.
 
 ## 🚀 Deploy em Produção
+
+### Coolify (recomendado)
+
+Use o arquivo `docker-compose.coolify.yml`, otimizado para VPS com Coolify + Traefik:
+
+| Serviço | Função |
+|---------|--------|
+| **app** | FrankenPHP + Octane (porta 8000 interna) |
+| **horizon** | Processamento de filas |
+| **scheduler** | Cron do Laravel (`schedule:work`) |
+| **mysql** | Banco de dados (sem porta exposta) |
+| **redis** | Cache, sessão e filas |
+
+#### Passo a passo no Coolify
+
+1. **Novo recurso** → Docker Compose → conecte o repositório Git
+2. **Compose file**: `docker-compose.coolify.yml`
+3. **Domínio**: configure `dopacheck.com.br` apontando para o serviço `app`, porta `8000`
+4. **Variáveis de ambiente**: cole o `.env` de produção (mínimo abaixo)
+5. **Deploy**
+
+#### Variáveis obrigatórias no Coolify
+
+```env
+APP_KEY=base64:...
+APP_URL=https://dopacheck.com.br
+
+DB_DATABASE=dopacheck
+DB_USERNAME=dopacheck_user
+DB_PASSWORD=<senha-forte>
+MYSQL_ROOT_PASSWORD=<senha-root-forte>
+
+REDIS_PASSWORD=          # opcional, mas recomendado
+
+STRIPE_KEY=...
+STRIPE_SECRET=...
+STRIPE_WEBHOOK_SECRET=...
+
+SENTRY_LARAVEL_DSN=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
+
+> **DB_HOST**, **REDIS_HOST** e drivers (`CACHE_STORE`, `QUEUE_CONNECTION`, etc.) já estão definidos no compose — não precisa sobrescrever.
+
+#### Storage e symlink (`public/storage`)
+
+O entrypoint (`docker/entrypoint.sh`) roda automaticamente no deploy:
+
+- Cria diretórios em `storage/` e `bootstrap/cache`
+- Ajusta permissões como usuário **appuser** (uid 1000, equivalente ao `www-data`)
+- Executa `php artisan storage:link` sem root
+- Roda migrations (`RUN_MIGRATIONS=true` por padrão)
+- Gera caches de config/rota/view em produção
+
+Volumes persistentes: `storage_data` e `bootstrap_cache`.
+
+#### MySQL: um container por app ou compartilhado?
+
+**Não é obrigatório** ter um MySQL separado para cada aplicação. São duas abordagens válidas:
+
+| Abordagem | Quando usar |
+|-----------|-------------|
+| **MySQL por app** (padrão Coolify) | Isolamento, backup independente, deploy simples. **Recomendado** para produção. |
+| **MySQL compartilhado** | VPS com pouca RAM (ex.: Oracle A1). Um único container MySQL com **bancos separados** (`dopacheck`, `outro_app`, etc.). |
+
+No seu servidor já existem vários MySQL (`mysql-nisdi...`, `mysql-pzkd4...`, `db-j10h0...`). Cada um consome ~300–500 MB de RAM. Se a memória apertar, considere:
+
+1. Criar um serviço MySQL standalone no Coolify
+2. Remover o serviço `mysql` do `docker-compose.coolify.yml`
+3. Apontar `DB_HOST` para o hostname do MySQL compartilhado na rede Docker
+
+Para o DOPA Check, manter MySQL dedicado no compose é a opção mais segura e simples.
+
+#### WhatsApp (Evolution API)
+
+Continua em servidor separado — **não inclua** `docker-compose.whatsapp.yml` neste deploy. Apenas configure no `.env`:
+
+```env
+WHATSAPP_API_URL=https://seu-evolution.exemplo.com
+WHATSAPP_API_KEY=...
+```
+
+---
+
+### Produção local (sem Coolify)
+
+```bash
+docker compose -f docker-compose.yml up -d --build
+```
 
 ### 1. Configurar variáveis de produção
 ```bash

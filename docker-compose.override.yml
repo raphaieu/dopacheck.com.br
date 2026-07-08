@@ -1,21 +1,51 @@
 
+# Override para desenvolvimento local — carregado automaticamente com `docker compose up`
+# Expõe portas no host; ajuste via .env se 8000/3306/6379 estiverem ocupadas.
+#
+# Produção / Coolify: use docker-compose.coolify.yml ou:
+#   docker compose -f docker-compose.yml up -d   (sem este override)
 
 services:
   app:
+    build:
+      target: base
+    ports:
+      - "${APP_PORT:-8000}:8000"
     environment:
       APP_ENV: local
-      APP_DEBUG: true
+      APP_DEBUG: "true"
+      RUN_MIGRATIONS: "false"
     volumes:
       - .:/app
-      - ./storage:/app/storage
-      - ./bootstrap/cache:/app/bootstrap/cache
+      - storage_data:/app/storage
+      - bootstrap_cache:/app/bootstrap/cache
+
+  mysql:
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+
+  redis:
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
 
   horizon:
     environment:
       APP_ENV: local
-      APP_DEBUG: true
+      APP_DEBUG: "true"
     volumes:
       - .:/app
-      - ./storage:/app/storage
-      - ./bootstrap/cache:/app/bootstrap/cache
-    command: php artisan horizon 
+      - storage_data:/app/storage
+      - bootstrap_cache:/app/bootstrap/cache
+
+  scheduler:
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+    volumes:
+      - .:/app
+      - storage_data:/app/storage
+      - bootstrap_cache:/app/bootstrap/cache
+
+  phpmyadmin:
+    ports:
+      - "${FORWARD_PHPMYADMIN_PORT:-8082}:80"
