@@ -4,6 +4,12 @@
 # Variáveis obrigatórias no Coolify (copie do .env de produção):
 #   APP_KEY, APP_URL, DB_*, REDIS_*, STRIPE_*, SENTRY_*, etc.
 
+x-app-image: &app-image
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: dopacheck-app:latest
+
 x-app-env: &app-env
   APP_NAME: ${APP_NAME:-DOPACheck}
   APP_ENV: production
@@ -84,9 +90,7 @@ x-app-volumes: &app-volumes
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    <<: *app-image
     restart: unless-stopped
     expose:
       - "80"
@@ -106,9 +110,7 @@ services:
       start_period: 120s
 
   horizon:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: dopacheck-app:latest
     restart: unless-stopped
     environment:
       <<: *app-env
@@ -127,9 +129,7 @@ services:
       start_period: 30s
 
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: dopacheck-app:latest
     restart: unless-stopped
     environment:
       <<: *app-env

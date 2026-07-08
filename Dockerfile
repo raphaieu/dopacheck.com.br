@@ -39,11 +39,9 @@ RUN install-php-extensions \
     pcntl \
     intl \
     pdo_mysql \
-    pdo_pgsql \
-    pgsql \
     zip \
-    bcmath \
-    redis && \
+    bcmath && \
+    install-php-extensions redis && \
     rm -rf /tmp/* /var/cache/apk/*
 
 COPY docker/php/production.ini $PHP_INI_DIR/conf.d/99-production.ini

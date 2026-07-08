@@ -88,9 +88,7 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
 
   horizon:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: dopacheck/app:latest
     container_name: dopacheck_horizon
     restart: unless-stopped
     environment:
@@ -132,9 +130,7 @@ services:
       retries: 3
 
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: dopacheck/app:latest
     container_name: dopacheck_scheduler
     restart: unless-stopped
     environment:
