@@ -65,4 +65,4 @@ RUN chmod +x /usr/local/bin/entrypoint
 EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
-CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=80", "--no-interaction"]
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=80", "--admin-port=2019", "--no-interaction"]
