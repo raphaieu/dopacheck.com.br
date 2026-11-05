@@ -8,44 +8,119 @@
 services:
   app:
     build:
-      target: base
+      target: development
+    image: dopacheck/app:dev
+    env_file:
+      - .env
     ports:
       - "${APP_PORT:-8000}:80"
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
       RUN_MIGRATIONS: "false"
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
     volumes:
       - .:/app
+      - vendor_data:/app/vendor
+      - node_modules_data:/app/node_modules
       - storage_data:/app/storage
       - bootstrap_cache:/app/bootstrap/cache
 
   mysql:
     ports:
-      - "${FORWARD_DB_PORT:-3306}:3306"
+      - "127.0.0.1:${FORWARD_DB_PORT:-3307}:3306"
 
   redis:
     ports:
-      - "${FORWARD_REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${FORWARD_REDIS_PORT:-6380}:6379"
 
   horizon:
+    image: dopacheck/app:dev
+    env_file:
+      - .env
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
     volumes:
       - .:/app
+      - vendor_data:/app/vendor
       - storage_data:/app/storage
       - bootstrap_cache:/app/bootstrap/cache
 
   scheduler:
+    image: dopacheck/app:dev
+    env_file:
+      - .env
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
     volumes:
       - .:/app
+      - vendor_data:/app/vendor
       - storage_data:/app/storage
       - bootstrap_cache:/app/bootstrap/cache
+    healthcheck:
+      test: ["CMD", "php", "artisan", "schedule:list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   phpmyadmin:
     ports:
-      - "${FORWARD_PHPMYADMIN_PORT:-8082}:80"
+      - "127.0.0.1:${FORWARD_PHPMYADMIN_PORT:-8083}:80"
+
+  vite:
+    image: dopacheck/app:dev
+    container_name: dopacheck_vite
+    restart: unless-stopped
+    working_dir: /app
+    entrypoint: ["npm"]
+    command:
+      - run
+      - dev
+      - --
+      - --host
+      - 0.0.0.0
+      - --strictPort
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:8010}
+      VITE_APP_NAME: ${APP_NAME:-DOPA Check}
+      VITE_ORIGIN: ${VITE_ORIGIN:-http://localhost:5173}
+    volumes:
+      - .:/app
+      - vendor_data:/app/vendor
+      - node_modules_data:/app/node_modules
+    depends_on:
+      app:
+        condition: service_started
+    networks:
+      - dopacheck-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5173/@vite/client"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: dopacheck_mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${FORWARD_MAILPIT_PORT:-8025}:8025"
+    expose:
+      - "1025"
+    networks:
+      - dopacheck-net
+
+volumes:
+  vendor_data:
+  node_modules_data:

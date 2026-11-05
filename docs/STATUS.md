@@ -80,7 +80,7 @@
 Extraído e reavaliado do BMAD (`_bmad-output`, removido em 2026-11-05):
 
 1. **P1 — Correções baratas e de rota**: criar página `WhatsApp/Connect.vue`; corrigir `useWhatsApp.ts`; remover nº do bot hardcoded → env/config central.
-2. **P2 — Robustez da Fase 2**: `config/whatsapp.php`; healthcheck de instância Evolution (integrar ao `/whatsapp/status`); testes do webhook/controller e do reminder job.
+2. **P2 — Robustez da Fase 2**: `config/whatsapp.php`; healthcheck de instância Evolution (integrar ao `/whatsapp/status`); testes do webhook/controller e do reminder job. *Nota (2026-11-05): a suite de testes do ambiente local funciona em teste único, mas o arquivo completo `ProcessWhatsappCheckinJobTest.php` trava — suspeita: teste "usa media_url (S3/MinIO)" faz HTTP real para `files.dopacheck.com.br` (o `Http::fake` só cobre `mmg.whatsapp.net/*`). Investigar/mockar antes de re-habilitar runs completos.*
 3. **P3 — Bot conversacional (Fase 2 completa)**: comandos básicos no buffer (`oi/menu/meu status`), respostas de confirmação em texto, drop do schema `whatsapp_sessions` morto.
 4. **P4 — Monetização honesta**: implementar ou remover das promises de plano (export de relatórios, insights).
 5. **P5 — Fase 3 (IA)**: reviver o buffer com `AnalyzeImageJob`/`AnalyzeTextJob` (`docs/archive/DOC_TEC_WHATSAPP_IA.md` tem o plano original).

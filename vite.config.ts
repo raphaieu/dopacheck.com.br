@@ -4,6 +4,10 @@ import vue from '@vitejs/plugin-vue'
 import laravel from 'laravel-vite-plugin'
 import { defineConfig } from 'vite'
 
+const viteOrigin = process.env.VITE_ORIGIN || 'http://localhost:5173'
+const viteUrl = new URL(viteOrigin)
+const appOrigin = process.env.APP_URL || 'http://localhost:8010'
+
 export default defineConfig({
   plugins: [
     laravel({
@@ -34,6 +38,15 @@ export default defineConfig({
     },
   },
   server: {
+    origin: viteOrigin,
+    cors: {
+      origin: appOrigin,
+    },
+    hmr: {
+      host: viteUrl.hostname,
+      clientPort: Number(viteUrl.port || (viteUrl.protocol === 'https:' ? 443 : 80)),
+      protocol: viteUrl.protocol === 'https:' ? 'wss' : 'ws',
+    },
     watch: {
       // Evita reload infinito no dev por arquivos gerados (views compiladas, tmp, cache, etc.)
       ignored: [

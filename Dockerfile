@@ -64,3 +64,23 @@ EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=80", "--admin-port=2019", "--no-interaction"]
+
+# Development image: keeps the production runtime but adds the tools and
+# dependencies needed by the bind-mounted source tree and the Vite service.
+FROM base AS development
+
+USER root
+
+RUN apk add --no-cache nodejs npm
+
+COPY docker/php/development.ini $PHP_INI_DIR/conf.d/100-development.ini
+
+RUN composer install --prefer-dist --no-interaction && \
+    npm ci && \
+    chown -R appuser:appgroup /app/vendor /app/node_modules
+
+ENV APP_ENV=local \
+    APP_DEBUG=true
+
+# Keep the default (no --target) image production-only.
+FROM base AS production
