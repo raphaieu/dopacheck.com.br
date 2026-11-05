@@ -1,5 +1,7 @@
 # 📋 Documentação Técnica Completa - DOPA Check
 
+> ⚠️ **Este documento é um snapshot de 13/01/2026** ("MVP sem WhatsApp"). Desde então, a integração WhatsApp (check-in via webhook + reações, lembretes diários, `/admin` Filament, MySQL em produção etc.) avançou. **Use [`STATUS.md`](STATUS.md) como fonte de verdade** e este documento apenas como referência técnica de base (banco, controllers, jobs, planos, deploy).
+
 ## 🎯 **Status Atual - Beta Funcional**
 
 **Versão**: 1.0-beta  

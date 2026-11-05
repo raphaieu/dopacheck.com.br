@@ -1,6 +1,8 @@
 # PRD — DOPA Check
 ## Infraestrutura de Disciplina via WhatsApp
 
+> **Status real (2026-11-05):** MVP web completo em produção e monetização + check-in via WhatsApp (foto + hashtag, com deduplicação e reações do bot) funcionando com testes. O que ainda falta da fase WhatsApp: bot conversacional, healthcheck/lifecycle de instância e camada de IA. Fonte de verdade: [`docs/STATUS.md`](STATUS.md).
+
 ## 1. Visão do Produto
 
 O DOPA Check é uma infraestrutura plugável para transformar grupos de WhatsApp em ambientes estruturados de disciplina e consistência.
@@ -75,6 +77,8 @@ O sistema só estrutura e registra.
 
 ### Check-in via WhatsApp
 
+> **Status (2026-11-05):** fluxo principal implementado (webhook ativo, grupo vinculado por JID, foto + `#hashtag` → check-in com dedup, streak, reação ✅/❌) e coberto por testes. Pendente: respostas conversacionais do bot (hoje só reação), healthcheck/lifecycle de instância Evolution e análise de IA.
+
 Fluxo:
 
 1. Bot está no grupo
@@ -102,7 +106,7 @@ Fluxo:
 ### PRO
 - Desafios ilimitados
 - Check-in via WhatsApp
-- Relatórios avançados
+- Relatórios avançados *(⚠️ em 2026-11 ainda não implementados — ver STATUS.md §2/§5)*
 - Storage permanente
 - Recursos futuros de IA
 
